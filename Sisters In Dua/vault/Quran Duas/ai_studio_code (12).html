@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Complete Collection of Quranic Duas</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1a5f7a;
+            --secondary: #159895;
+            --bg: #f8f9fa;
+            --text: #2d3436;
+            --card-bg: #ffffff;
+            --border: #dfe6e9;
+            --context-bg: #eef2f3;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* Sidebar / Index Styles */
+        .layout {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        h1 { margin: 0; font-weight: 800; letter-spacing: -1px; }
+        .subtitle { opacity: 0.9; margin-top: 10px; font-size: 0.95rem; }
+
+        /* Search Bar */
+        .search-container {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            text-align: center;
+        }
+
+        #searchInput {
+            width: 100%;
+            max-width: 600px;
+            padding: 12px 20px;
+            border: 2px solid var(--border);
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #searchInput:focus { border-color: var(--secondary); }
+
+        /* Index Buttons */
+        .index-container {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .index-btn {
+            background: #f1f2f6;
+            border: 1px solid #dfe6e9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--primary);
+            transition: all 0.2s;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .index-btn:hover { background: var(--secondary); color: white; border-color: var(--secondary); }
+
+        /* Dua Cards */
+        .content-area {
+            padding: 20px;
+        }
+
+        .dua-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            scroll-margin-top: 160px; /* For anchor offset */
+        }
+
+        .dua-header {
+            background: #f8f9fa;
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ref-tag {
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .topic-tag {
+            background: var(--secondary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .dua-body { padding: 30px; }
+
+        .arabic {
+            font-family: 'Amiri', serif;
+            font-size: 34px;
+            text-align: right;
+            direction: rtl;
+            color: #000;
+            line-height: 2.2;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 15px;
+        }
+
+        .transliteration {
+            color: #636e72;
+            font-style: italic;
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        .translation {
+            font-weight: 600;
+            color: #2d3436;
+            font-size: 1.1rem;
+            border-left: 4px solid var(--secondary);
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+
+        /* Context Box Styling */
+        .context-box {
+            background: var(--context-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #444;
+            border-left: 4px solid var(--primary);
+        }
+
+        .info-row {
+            margin-bottom: 8px;
+        }
+        .info-row:last-child { margin-bottom: 0; }
+
+        .label {
+            font-weight: 800;
+            color: var(--primary);
+            margin-right: 5px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .layout { padding: 20px; }
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>The Complete Quranic Duas</h1>
+    <p class="subtitle">With Context, Relevance & Hadith References</p>
+</header>
+
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="Search for 'parents', 'anxiety', 'marriage', 'Prophet Musa'...">
+</div>
+
+<div class="layout">
+    <!-- Quick Index -->
+    <div class="index-container">
+        <a href="#s1" class="index-btn">1. Al-Fatiha</a>
+        <a href="#s2" class="index-btn">2. Al-Baqarah</a>
+        <a href="#s3" class="index-btn">3. Al-Imran</a>
+        <a href="#s4" class="index-btn">4. An-Nisa</a>
+        <a href="#s5" class="index-btn">5. Al-Ma'idah</a>
+        <a href="#s7" class="index-btn">7. Al-A'raf</a>
+        <a href="#s9" class="index-btn">9. At-Tawbah</a>
+        <a href="#s10" class="index-btn">10. Yunus</a>
+        <a href="#s11" class="index-btn">11. Hud</a>
+        <a href="#s12" class="index-btn">12. Yusuf</a>
+        <a href="#s14" class="index-btn">14. Ibrahim</a>
+        <a href="#s17" class="index-btn">17. Al-Isra</a>
+        <a href="#s18" class="index-btn">18. Al-Kahf</a>
+        <a href="#s19" class="index-btn">19. Maryam</a>
+        <a href="#s20" class="index-btn">20. Ta-Ha</a>
+        <a href="#s21" class="index-btn">21. Al-Anbiya</a>
+        <a href="#s23" class="index-btn">23. Al-Mu'minun</a>
+        <a href="#s25" class="index-btn">25. Al-Furqan</a>
+        <a href="#s26" class="index-btn">26. Ash-Shu'ara</a>
+        <a href="#s27" class="index-btn">27. An-Naml</a>
+        <a href="#s28" class="index-btn">28. Al-Qasas</a>
+        <a href="#s29" class="index-btn">29. Al-Ankabut</a>
+        <a href="#s37" class="index-btn">37. As-Saffat</a>
+        <a href="#s38" class="index-btn">38. Sad</a>
+        <a href="#s40" class="index-btn">40. Ghafir</a>
+        <a href="#s43" class="index-btn">43. Az-Zukhruf</a>
+        <a href="#s46" class="index-btn">46. Al-Ahqaf</a>
+        <a href="#s54" class="index-btn">54. Al-Qamar</a>
+        <a href="#s59" class="index-btn">59. Al-Hashr</a>
+        <a href="#s60" class="index-btn">60. Al-Mumtahanah</a>
+        <a href="#s66" class="index-btn">66. At-Tahrim</a>
+        <a href="#s71" class="index-btn">71. Nuh</a>
+        <a href="#s113" class="index-btn">113/114. Protection</a>
+    </div>
+
+    <div class="content-area" id="duaList">
+
+        <!-- SURAH AL-FATIHA -->
+        <div class="dua-card" id="s1" data-keywords="guidance straight path opening prayer salah">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Fatiha 1:6-7</span>
+                <span class="topic-tag">Guidance</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ * صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلاَ الضَّالِّينَ</div>
+                <div class="transliteration">Ihdinas-siratal-mustaqim. Siratal-ladhina an'amta 'alayhim ghayril-maghdubi 'alayhim wa lad-dallin.</div>
+                <div class="translation">"Show us the straight path, The path of those whom Thou hast favoured; Not the (path) of those who earn Thine anger nor of those who go astray."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The opening prayer of the Quran.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Recited at least 17 times a day in Salah. It is the most essential prayer for staying on the correct path in life and religion.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> The Prophet (ﷺ) said: "Al-Fatiha is the Mother of the Quran... and it is the Seven Oft-Repeated Verses." (Bukhari)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-BAQARAH -->
+        <div class="dua-card" id="s2" data-keywords="acceptance good deeds ibrahim ismail kaaba">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Baqarah 2:127</span>
+                <span class="topic-tag">Acceptance of Deeds</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا تَقَبَّلْ مِنَّا إِنَّكَ أَنتَ السَّمِيعُ الْعَلِيمُ</div>
+                <div class="transliteration">Rabbana taqabbal minna innaka antas-sami'ul-'alim.</div>
+                <div class="translation">"Our Lord! Accept (this duty) from us. Lo! Thou, only Thou, art the Hearer, the Knower."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Recited by Prophet Ibrahim and Ismail (AS) while they were raising the foundations of the Kaaba.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Use this after performing any act of worship (Salah, charity, fasting) or a good deed to ask Allah to accept it despite its imperfections.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="descendants muslim submission ibrahim family">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Baqarah 2:128</span>
+                <span class="topic-tag">Family & Faith</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا وَاجْعَلْنَا مُسْلِمَيْنِ لَكَ وَمِن ذُرِّيَّتِنَا أُمَّةً مُّسْلِمَةً لَّكَ وَأَرِنَا مَنَاسِكَنَا وَتُبْ عَلَيْنَا ۖ إِنَّكَ أَنتَ التَّوَّابُ الرَّحِيمُ</div>
+                <div class="transliteration">Rabbana waj'alna muslimayni laka wa min dhurriyyatina ummatan muslimatan laka wa arina manasikana wa tub 'alayna innaka antat-tawwabur-rahim.</div>
+                <div class="translation">"Our Lord! And make us submissive unto Thee and of our seed a nation submissive unto Thee, and show us our ways of worship, and relent toward us. Lo! Thou, only Thou, art the Relenting, the Merciful."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Continuation of Ibrahim (AS)'s prayer for his lineage.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> For parents praying that their children and future generations remain steadfast on Islam.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="dunya akhirah good world hereafter fire hell">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Baqarah 2:201</span>
+                <span class="topic-tag">Comprehensive Good</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ</div>
+                <div class="transliteration">Rabbana atina fid-dunya hasanatan wa fil 'akhirati hasanatan waqina 'adhaban-nar.</div>
+                <div class="translation">"Our Lord! Give unto us in the world that which is good and in the Hereafter that which is good, and guard us from the doom of Fire."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Allah contrasts those who only ask for worldly gain with those who ask for the best of both worlds.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> The most all-encompassing Dua for success in life (health, wealth, family) and salvation in the afterlife.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> Anas (RA) reported that this was the supplication most frequently recited by the Prophet (ﷺ). (Bukhari & Muslim)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="patience victory david goliath talut jalut">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Baqarah 2:250</span>
+                <span class="topic-tag">Patience & Victory</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا أَفْرِغْ عَلَيْنَا صَبْرًا وَثَبِّتْ أَقْدَامَنَا وَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ</div>
+                <div class="transliteration">Rabbana afrigh 'alayna sabran wa thabbit aqdamana wansurna 'alal-qawmil-kafirin.</div>
+                <div class="translation">"Our Lord! Bestow on us endurance, make our foothold sure, and give us help against the disbelieving folk."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Recited by the small army of Talut (Saul) when facing the massive army of Jalut (Goliath).</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Use when facing a massive challenge, an intimidating enemy, or a situation where the odds are stacked against you.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="forgiveness forget error mistake burden">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Baqarah 2:286</span>
+                <span class="topic-tag">Forgiveness & Ease</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا لاَ تُؤَاخِذْنَا إِن نَّسِينَا أَوْ أَخْطَأْنَا ۚ رَبَّنَا وَلاَ تَحْمِلْ عَلَيْنَا إِصْرًا كَمَا حَمَلْتَهُ عَلَى الَّذِينَ مِن قَبْلِنَا ۚ رَبَّنَا وَلاَ تُحَمِّلْنَا مَا لاَ طَاقَةَ لَنَا بِهِ ۖ وَاعْفُ عَنَّا وَاغْفِرْ لَنَا وَارْحَمْنَا</div>
+                <div class="transliteration">Rabbana la tu’akhidhna in-nasina aw akhta’na, Rabbana wa la tahmil 'alayna isran kama hamaltahu 'alal-ladhina min qablina, Rabbana wa la tuhammilna ma la taqata lana bih, wa'fu 'anna waghfir lana warhamna.</div>
+                <div class="translation">"Our Lord! Condemn us not if we forget, or miss the mark! Our Lord! Lay not on us such a burden as thou didst lay on those before us! Our Lord! Impose not on us that which we have not the strength to bear! Pardon us, absolve us and have mercy on us."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The concluding verse of Surah Al-Baqarah.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking Allah not to punish us for honest mistakes or forgetfulness, and to not burden us beyond our capacity.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> The Prophet (ﷺ) said: "Whoever recites the last two verses of Surah Al-Baqarah at night, they will suffice him." (Bukhari)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-IMRAN -->
+        <div class="dua-card" id="s3" data-keywords="heart deviation guidance steadfastness">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:8</span>
+                <span class="topic-tag">Firmness of Faith</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا لاَ تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِن لَّدُنكَ رَحْمَةً ۚ إِنَّكَ أَنتَ الْوَهَّابُ</div>
+                <div class="transliteration">Rabbana la tuzigh qulubana ba'da idh hadaytana wa hab lana min ladunka rahmah, innaka antal-Wahhab.</div>
+                <div class="translation">"Our Lord! Cause not our hearts to stray after Thou hast guided us, and bestow upon us mercy from Thy Presence. Lo! Thou, only Thou, art the Bestower."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of those "firm in knowledge" (Al-Rasikhuna fil-'Ilm).</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Essential for keeping one's faith intact in times of confusion (fitnah) and doubt.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> Umm Salama (RA) asked the Prophet (ﷺ) what his most frequent supplication was, and he replied: "O Turner of the hearts, make my heart firm on Your religion." (Tirmidhi) - This verse supports that sentiment.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="kingdom power debt sovereignty honor humiliation">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:26</span>
+                <span class="topic-tag">Sovereignty & Debt</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">قُلِ اللَّهُمَّ مَالِكَ الْمُلْكِ تُؤْتِي الْمُلْكَ مَن تَشَاءُ وَتَنزِعُ الْمُلْكَ مِمَّن تَشَاءُ وَتُعِزُّ مَن تَشَاءُ وَتُذِلُّ مَن تَشَاءُ ۖ بِيَدِكَ الْخَيْرُ ۖ إِنَّكَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ</div>
+                <div class="transliteration">Qulillahumma Malikal-mulki tu'til-mulka man tasha'u wa tanzi'ul-mulka mimman tasha'u wa tu'izzu man tasha'u wa tudhillu man tasha'u, biyadikal-khayr, innaka 'ala kulli shay'in qadir.</div>
+                <div class="translation">"Say: O Allah! Owner of Sovereignty! Thou givest sovereignty unto whom Thou wilt, and Thou withdrawest sovereignty from whom Thou wilt. Thou exaltest whom Thou wilt, and Thou abasest whom Thou wilt. In Thy hand is the good. Lo! Thou art Able to do all things."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Revealed when the Prophet (ﷺ) promised the conquest of Persia/Rome, and hypocrites mocked the idea.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Acknowledging Allah's control over all power. Specifically used for debt relief.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> The Prophet (ﷺ) taught Mu'adh ibn Jabal (RA) to recite this to clear debts, even if they were as large as a mountain of gold. (Tabarani)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="zakariya offspring pure child tayyibah">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:38</span>
+                <span class="topic-tag">Pure Offspring</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ هَبْ لِي مِن لَّدُنكَ ذُرِّيَّةً طَيِّبَةً ۖ إِنَّكَ سَمِيعُ الدُّعَاءِ</div>
+                <div class="transliteration">Rabbi hab li min ladunka dhurriyyatan tayyibah, innaka sami'ud-du'a.</div>
+                <div class="translation">"My Lord! Bestow upon me from Thy presence a goodly offspring. Lo! Thou art the Hearer of Prayer."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Zakariya (AS) prayed this after seeing the miraculous provision given to Maryam (AS).</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Primary Dua for those struggling with infertility or wishing for righteous children.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="witnesses faith revelation disciples isa jesus">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:53</span>
+                <span class="topic-tag">To Be Recorded as Believers</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا آمَنَّا بِمَا أَنزَلْتَ وَاتَّبَعْنَا الرَّسُولَ فَاكْتُبْنَا مَعَ الشَّاهِدِينَ</div>
+                <div class="transliteration">Rabbana amanna bima anzalta wattaba'nar-rasula faktubna ma'ash-shahidin.</div>
+                <div class="translation">"Our Lord! We believe in that which Thou hast revealed and we follow him whom Thou hast sent. Enroll us among those who witness (to the truth)."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of the Disciples (Hawariyyun) of Jesus (Isa AS).</div>
+                    <div class="info-row"><span class="label">Relevance:</span> To renew commitment to the Prophet's path and ask to be counted among the truthful witnesses of Islam.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="forgiveness sins excess victory uhud">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:147</span>
+                <span class="topic-tag">Forgiveness in Struggle</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا اغْفِرْ لَنَا ذُنُوبَنَا وَإِسْرَافَنَا فِي أَمْرِنَا وَثَبِّتْ أَقْدَامَنَا وَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ</div>
+                <div class="transliteration">Rabbana-ghfir lana dhunubana wa israfana fi amrina wa thabbit aqdamana wansurna 'alal-qawmil-kafirin.</div>
+                <div class="translation">"Our Lord! Forgive us our sins and our transgression of our duty, and make our foothold sure, and give us help against the disbelieving folk."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of the righteous who fought alongside Prophets of the past; revealed in the context of the Battle of Uhud.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> When facing setbacks caused by one's own shortcomings, asking for forgiveness and strength to continue the struggle.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="creation fire hell protection reflection">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:191-192</span>
+                <span class="topic-tag">Reflection & Protection</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا مَا خَلَقْتَ هَذا بَاطِلاً سُبْحَانَكَ فَقِنَا عَذَابَ النَّارِ * رَبَّنَا إِنَّكَ مَن تُدْخِلِ النَّارَ فَقَدْ أَخْزَيْتَهُ</div>
+                <div class="transliteration">Rabbana ma khalaqta hadha batilan subhanaka faqina 'adhaban-nar. Rabbana innaka man tudkhilin-nara faqad akhzaytah.</div>
+                <div class="translation">"Our Lord! Thou createdst not this in vain. Glory be to Thee! Preserve us from the doom of Fire. Our Lord! Whom Thou causest to enter the Fire, him indeed Thou hast confounded."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of the "People of Understanding" (Ulul Albab) who reflect on the creation of the heavens and earth.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Recited to affirm purpose in life and seek protection from Hellfire.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> It is reported that the Prophet (ﷺ) would recite the last ten verses of Al-Imran upon waking up for Tahajjud. (Bukhari)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AN-NISA -->
+        <div class="dua-card" id="s4" data-keywords="oppression rescue weak city">
+            <div class="dua-header">
+                <span class="ref-tag">An-Nisa 4:75</span>
+                <span class="topic-tag">Dua of the Oppressed</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا أَخْرِجْنَا مِنْ هَٰذِهِ الْقَرْيَةِ الظَّالِمِ أَهْلُهَا وَاجْعَل لَّنَا مِن لَّدُنكَ وَلِيًّا وَاجْعَل لَّنَا مِن لَّدُنكَ نَصِيرًا</div>
+                <div class="transliteration">Rabbana akhrijna min hadhihil-qaryatiz-zalimi ahluha waj'al lana min ladunka waliyyan waj'al lana min ladunka nasira.</div>
+                <div class="translation">"Our Lord! Bring us forth from this town of which the people are oppressors! Oh, give us from Thy presence some protecting friend! Oh, give us from Thy presence some defender!"</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The cry of the weak men, women, and children trapped in Makkah during the period of persecution.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> For anyone living under oppression, tyranny, or in an abusive environment seeking a way out.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-MA'IDAH -->
+        <div class="dua-card" id="s5" data-keywords="isa jesus food provision sustenance eid">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Ma'idah 5:114</span>
+                <span class="topic-tag">Sustenance</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">اللَّهُمَّ رَبَّنَا أَنزِلْ عَلَيْنَا مَائِدَةً مِّنَ السَّمَاءِ تَكُونُ لَنَا عِيدًا لِّأَوَّلِنَا وَآخِرِنَا وَآيَةً مِّنكَ ۖ وَارْزُقْنَا وَأَنتَ خَيْرُ الرَّازِقِينَ</div>
+                <div class="transliteration">Allahumma rabbana anzil 'alayna ma'idatan minas-sama'i takunu lana 'idan li-awwalina wa akhirina wa ayatan minka warzuqna wa anta khayrur-raziqin.</div>
+                <div class="translation">"O Allah, Lord of us! Send down for us a table spread with food from heaven, that it may be a feast for us, for the first of us and for the last of us, and a sign from Thee. Give us sustenance, for Thou art the Best of Sustainers."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of Isa (Jesus AS) when his disciples asked for a table spread from heaven.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking for provision (Rizq) and blessings that bring joy to the community.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-A'RAF -->
+        <div class="dua-card" id="s7" data-keywords="adam hawwa eve repentance wrongdoers">
+            <div class="dua-header">
+                <span class="ref-tag">Al-A'raf 7:23</span>
+                <span class="topic-tag">Repentance</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا ظَلَمْنَا أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ</div>
+                <div class="transliteration">Rabbana zalamna anfusana wa in lam taghfir lana wa tarhamna lanakunanna minal-khasirin.</div>
+                <div class="translation">"Our Lord! We have wronged ourselves. If thou forgive us not and have not mercy on us, surely we are of the lost!"</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The words taught to Adam and Hawwa (Eve) by Allah to seek forgiveness after eating from the forbidden tree.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> The standard Dua for Tawbah (repentance) when one realizes they have committed a sin.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="judgment truth decision shuayb opening">
+            <div class="dua-header">
+                <span class="ref-tag">Al-A'raf 7:89</span>
+                <span class="topic-tag">Seeking Judgment</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا افْتَحْ بَيْنَنَا وَبَيْنَ قَوْمِنَا بِالْحَقِّ وَأَنتَ خَيْرُ الْفَاتِحِينَ</div>
+                <div class="transliteration">Rabbana-ftah baynana wa bayna qawmina bil-haqqi wa anta khayrul-fatihin.</div>
+                <div class="translation">"Our Lord! Decide with truth between us and our folk, for Thou art the best of those who make decision."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Prophet Shu'ayb (AS) asking Allah to judge between him and his disbelieving people.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Used when seeking a resolution to a conflict, a court case, or asking Allah to "open" a way out of a deadlock.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="patience muslim death magicians pharaoh">
+            <div class="dua-header">
+                <span class="ref-tag">Al-A'raf 7:126</span>
+                <span class="topic-tag">Steadfastness in Death</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا أَفْرِغْ عَلَيْنَا صَبْرًا وَتَوَفَّنَا مُسْلِمِينَ</div>
+                <div class="transliteration">Rabbana afrigh 'alayna sabran wa tawaffana muslimin.</div>
+                <div class="translation">"Our Lord! Vouchsafe unto us patience and cause us to die as men who have surrendered (unto Thee)."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of Pharaoh's magicians after they accepted the truth and were threatened with crucifixion.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking for patience during severe persecution and a good end (Husn al-Khatimah).</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="musa moses forgiveness brother harun aaron anger">
+            <div class="dua-header">
+                <span class="ref-tag">Al-A'raf 7:151</span>
+                <span class="topic-tag">Forgiveness for Siblings</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ اغْفِرْ لِي وَلِأَخِي وَأَدْخِلْنَا فِي رَحْمَتِكَ ۖ وَأَنتَ أَرْحَمُ الرَّاحِمِينَ</div>
+                <div class="transliteration">Rabbi-ghfir li wa li-akhi wa adkhilna fi rahmatika wa anta arhamur-rahimin.</div>
+                <div class="translation">"My Lord! Forgive me and my brother and cause us to enter into Thy mercy. Thou art the Most Merciful of those who show mercy."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Musa (AS) prayed this after his anger subsided regarding the incident of the Golden Calf, seeking forgiveness for himself and his brother Harun.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Praying for oneself and one's siblings, and seeking reconciliation after anger.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AT-TAWBAH -->
+        <div class="dua-card" id="s9" data-keywords="sufficiency anxiety worry stress hasbi">
+            <div class="dua-header">
+                <span class="ref-tag">At-Tawbah 9:129</span>
+                <span class="topic-tag">Ultimate Sufficiency</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">حَسْبِيَ اللَّهُ لاَ إِلَٰهَ إِلاَّ هُوَ ۖ عَلَيْهِ تَوَكَّلْتُ ۖ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ</div>
+                <div class="transliteration">Hasbiyallahu la ilaha illa hu, 'alayhi tawakkaltu wa huwa Rabbul-'arshil-'azim.</div>
+                <div class="translation">"Allah sufficeth me. There is no God save Him. In Him have I put my trust, and He is Lord of the Tremendous Throne."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The final verse of Surah At-Tawbah, instructing the Prophet (ﷺ) to rely on Allah if people turn away.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> The ultimate cure for anxiety and worry.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> The Prophet (ﷺ) said whoever recites this 7 times morning and evening, Allah will suffice him for whatever worries him in this world and the Hereafter. (Sunan Abi Dawud)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH YUNUS -->
+        <div class="dua-card" id="s10" data-keywords="trial oppression trust tawakkul fitnah">
+            <div class="dua-header">
+                <span class="ref-tag">Yunus 10:85-86</span>
+                <span class="topic-tag">Protection from Oppression</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">عَلَى اللَّهِ تَوَكَّلْنَا رَبَّنَا لاَ تَجْعَلْنَا فِتْنَةً لِّلْقَوْمِ الظَّالِمِينَ * وَنَجِّنَا بِرَحْمَتِكَ مِنَ الْقَوْمِ الْكَافِرِينَ</div>
+                <div class="transliteration">Alallahi tawakkalna, Rabbana la taj'alna fitnatan lil-qawmiz-zalimin. Wa najjina birahmatika minal-qawmil-kafirin.</div>
+                <div class="translation">"In Allah we put our trust. Our Lord! Oh, make us not a lure for the wrongdoing folk; And, of Thy mercy, save us from the folk that disbelieve."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of the followers of Musa (AS) when they were afraid of Pharaoh and his chiefs.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking Allah not to make us a test for oppressors (i.e., don't let them defeat us, thinking they are right) and for safety.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH HUD -->
+        <div class="dua-card" id="s11" data-keywords="nuh noah knowledge asking ignorance">
+            <div class="dua-header">
+                <span class="ref-tag">Hud 11:47</span>
+                <span class="topic-tag">Seeking Refuge from Ignorance</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ إِنِّي أَعُوذُ بِكَ أَنْ أَسْأَلَكَ مَا لَيْسَ لِي بِهِ عِلْمٌ ۖ وَإِلاَّ تَغْفِرْ لِي وَتَرْحَمْنِي أَكُن مِّنَ الْخَاسِرِينَ</div>
+                <div class="transliteration">Rabbi inni a'udhu bika an as'alaka ma laysa li bihi 'ilm, wa illa taghfir li wa tarhamni akun minal-khasirin.</div>
+                <div class="translation">"My Lord! I seek refuge in Thee that I should ask Thee that whereof I have no knowledge. Unless Thou forgive me and have mercy on me, I shall be among the lost."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Nuh (AS) prayed this after asking Allah to save his disbelieving son, and Allah corrected him.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Seeking forgiveness for asking for things that may not be good for us, or for speaking without knowledge.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH YUSUF -->
+        <div class="dua-card" id="s12" data-keywords="yusuf joseph prison sin temptation women">
+            <div class="dua-header">
+                <span class="ref-tag">Yusuf 12:33</span>
+                <span class="topic-tag">Protection from Sin</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ السِّجْنُ أَحَبُّ إِلَيَّ مِمَّا يَدْعُونَنِي إِلَيْهِ ۖ وَإِلاَّ تَصْرِفْ عَنِّي كَيْدَهُنَّ أَصْبُ إِلَيْهِنَّ وَأَكُن مِّنَ الْجَاهِلِينَ</div>
+                <div class="transliteration">Rabbis-sijnu ahabbu ilayya mimma yad'unani ilayh, wa illa tasrif 'anni kaydahunna asbu ilayhinna wa akun minal-jahilin.</div>
+                <div class="translation">"My Lord! Prison is more dear than that unto which they urge me, and if Thou fend not off their wiles from me I shall incline unto them and become of the foolish."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Yusuf (AS) preferring prison over committing Zina (adultery) when seduced by the women of the city.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking for protection when facing severe temptation or peer pressure to commit sin.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="death muslim righteous yusuf power end">
+            <div class="dua-header">
+                <span class="ref-tag">Yusuf 12:101</span>
+                <span class="topic-tag">Good End</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">فَاطِرَ السَّمَاوَاتِ وَالأَرْضِ أَنتَ وَلِيِّي فِي الدُّنْيَا وَالآخِرَةِ ۖ تَوَفَّنِي مُسْلِمًا وَأَلْحِقْنِي بِالصَّالِحِينَ</div>
+                <div class="transliteration">Fatiras-samawati wal-ardi anta waliyyi fid-dunya wal-akhirah, tawaffani musliman wa alhiqni bis-salihin.</div>
+                <div class="translation">"Creator of the heavens and the earth! Thou art my Protecting Friend in the world and the Hereafter. Make me to die submissive (unto Thee), and join me to the righteous."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Yusuf (AS) praying at the height of his power and reunion with his family.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Praying for *Husn al-Khatimah* (a good ending) and to die in a state of Islam.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH IBRAHIM -->
+        <div class="dua-card" id="s14" data-keywords="city security makkah idols ibrahim shirk">
+            <div class="dua-header">
+                <span class="ref-tag">Ibrahim 14:35</span>
+                <span class="topic-tag">Security of City & Faith</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ اجْعَلْ هَٰذَا الْبَلَدَ آمِنًا وَاجْنُبْنِي وَبَنِيَّ أَن نَّعْبُدَ الأَصْنَامَ</div>
+                <div class="transliteration">Rabbij-'al hadhal-balada aminan wajnubni wa baniyya an na'budal-asnam.</div>
+                <div class="translation">"My Lord! Make this city secure, and keep me and my sons away from worshipping idols."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Ibrahim (AS) praying for Makkah and his children.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Praying for the safety of one's country/city and protection from Shirk (polytheism) for oneself and children.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="prayer salah descendants ibrahim">
+            <div class="dua-header">
+                <span class="ref-tag">Ibrahim 14:40</span>
+                <span class="topic-tag">Establishing Prayer</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ اجْعَلْنِي مُقِيمَ الصَّلاَةِ وَمِن ذُرِّيَّتِي ۚ رَبَّنَا وَتَقَبَّلْ دُعَاءِ</div>
+                <div class="transliteration">Rabbij-'alni muqimas-salati wa min dhurriyyati, Rabbana wa taqabbal du'a.</div>
+                <div class="translation">"My Lord! Make me to establish proper worship, and some of my posterity (also); our Lord! and accept my prayer."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Ibrahim (AS) praying for himself and his lineage.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking Allah to help you and your children maintain the daily Salah.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="parents forgiveness reckoning judgment">
+            <div class="dua-header">
+                <span class="ref-tag">Ibrahim 14:41</span>
+                <span class="topic-tag">Parents & Believers</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ يَوْمَ يَقُومُ الْحِسَابُ</div>
+                <div class="transliteration">Rabbana-ghfir li wa liwalidayya wa lil-mu'minina yawma yaqumul-hisab.</div>
+                <div class="translation">"Our Lord! Forgive me and my parents and believers on the day when the reckoning cometh."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Ibrahim (AS) praying for the Ummah and his parents.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> A comprehensive prayer for forgiveness for oneself, parents, and the entire Muslim community.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-ISRA -->
+        <div class="dua-card" id="s17" data-keywords="parents mercy childhood upbringing">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Isra 17:24</span>
+                <span class="topic-tag">Mercy for Parents</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَّبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا</div>
+                <div class="transliteration">Rabbir-hamhuma kama rabbayani saghira.</div>
+                <div class="translation">"My Lord! Have mercy on them both as they did care for me when I was little."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> A command from Allah on how to pray for parents.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> The essential Dua for parents, acknowledging their sacrifice in raising you.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="entry exit truth authority job new beginning">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Isra 17:80</span>
+                <span class="topic-tag">Honorable Entry & Exit</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَّبِّ أَدْخِلْنِي مُدْخَلَ صِدْقٍ وَأَخْرِجْنِي مُخْرَجَ صِدْقٍ وَاجْعَل لِّي مِن لَّدُنكَ سُلْطَانًا نَّصِيرًا</div>
+                <div class="transliteration">Rabbi adkhilni mudkhala sidqin wa akhrijni mukhraja sidqin waj'al li min ladunka sultanan nasira.</div>
+                <div class="translation">"My Lord! Cause me to come in with a firm incoming and to go out with a firm outgoing. And give me from Thy presence a sustaining Power."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Revealed regarding the Prophet's Hijrah (migration) from Makkah to Madinah.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Excellent for starting a new job, moving to a new city, or entering/exiting any new phase of life honorably.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-KAHF -->
+        <div class="dua-card" id="s18" data-keywords="cave sleepers mercy guidance affair confusion">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Kahf 18:10</span>
+                <span class="topic-tag">Guidance in Affairs</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا آتِنَا مِن لَّدُنكَ رَحْمَةً وَهَيِّئْ لَنَا مِنْ أَمْرِنَا رَشَدًا</div>
+                <div class="transliteration">Rabbana atina min ladunka rahmatan wa hayyi' lana min amrina rashada.</div>
+                <div class="translation">"Our Lord! Give us mercy from Thy presence, and shape for us right conduct in our plight."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of the Youths of the Cave (Ashab al-Kahf) when they fled for their religion and had nowhere to go.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> When you are confused, have a difficult decision to make, or need a solution to a complex problem.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH MARYAM -->
+        <div class="dua-card" id="s19" data-keywords="zakariya zechariah bones heir child infertility">
+            <div class="dua-header">
+                <span class="ref-tag">Maryam 19:4-6</span>
+                <span class="topic-tag">Asking for an Heir</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ إِنِّي وَهَنَ الْعَظْمُ مِنِّي وَاشْتَعَلَ الرَّأْسُ شَيْبًا وَلَمْ أَكُن بِدُعَائِكَ رَبِّ شَقِيًّا ... فَهَبْ لِي مِن لَّدُنكَ وَلِيًّا</div>
+                <div class="transliteration">Rabbi inni wahanal-'azmu minni washta'alar-ra'su shayban wa lam akun bidu'a'ika Rabbi shaqiyya... fahab li min ladunka waliyya.</div>
+                <div class="translation">"My Lord! Lo! the bones of me wax feeble and my head is shining with grey hair, and I have never been unblest in prayer to Thee, my Lord... Oh, give me from Thy presence a successor."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Zakariya (AS) complaining of his weakness and old age while asking for a child.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Using one's weakness and past answered prayers as a means to ask Allah for something "impossible" (like a child in old age).</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH TA-HA -->
+        <div class="dua-card" id="s20" data-keywords="musa moses speech confidence chest tongue interview">
+            <div class="dua-header">
+                <span class="ref-tag">Ta-Ha 20:25-28</span>
+                <span class="topic-tag">Confidence & Speech</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ اشْرَحْ لِي صَدْرِي * وَيَسِّرْ لِي أَمْرِي * وَاحْلُلْ عُقْدَةً مِّن لِّسَانِي * يَفْقَهُوا قَوْلِي</div>
+                <div class="transliteration">Rabbish-rah li sadri, wa yassir li amri, wahlul 'uqdatan min lisani, yafqahu qawli.</div>
+                <div class="translation">"My Lord! Open my breast for me, And ease my task for me; And loose a knot from my tongue, That they may understand my saying."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Musa (AS) praying before going to confront Pharaoh.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Perfect for public speaking, interviews, exams, or difficult conversations.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="knowledge increase study student exam">
+            <div class="dua-header">
+                <span class="ref-tag">Ta-Ha 20:114</span>
+                <span class="topic-tag">Increase in Knowledge</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَّبِّ زِدْنِي عِلْمًا</div>
+                <div class="transliteration">Rabbi zidni 'ilma.</div>
+                <div class="translation">"My Lord! Increase me in knowledge."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Allah instructing the Prophet (ﷺ) not to rush with the Quran but to ask for more knowledge.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> For students, scholars, and anyone seeking to learn a new skill or deepen their understanding.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-ANBIYA -->
+        <div class="dua-card" id="s21" data-keywords="ayyub job illness disease distress mercy health">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Anbiya 21:83</span>
+                <span class="topic-tag">Healing from Illness</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">أَنِّي مَسَّنِيَ الضُّرُّ وَأَنتَ أَرْحَمُ الرَّاحِمِينَ</div>
+                <div class="transliteration">Anni massaniyad-durru wa anta arhamur-rahimin.</div>
+                <div class="translation">"Adversity hath touched me, and Thou art the Most Merciful of all who show mercy."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Prophet Ayyub (Job AS) after suffering from severe illness and loss for many years.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> The most polite and powerful way to ask for healing and relief from suffering.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="yunus jonah whale distress grief depression">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Anbiya 21:87</span>
+                <span class="topic-tag">Relief from Distress</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">لَّا إِلَهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ</div>
+                <div class="transliteration">La ilaha illa anta subhanaka inni kuntu minaz-zalimin.</div>
+                <div class="translation">"There is no God save Thee. Be Thou Glorified! Lo! I have been a wrong-doer."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Yunus (Jonah AS) in the belly of the whale.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> For deep distress, depression, or impossible situations.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> The Prophet (ﷺ) said: "No Muslim supplicates with it for anything, ever, but Allah answers him." (Tirmidhi)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="zakariya alone heir inheritor child marriage">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Anbiya 21:89</span>
+                <span class="topic-tag">Against Loneliness</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ لاَ تَذَرْنِي فَرْدًا وَأَنتَ خَيْرُ الْوَارِثِينَ</div>
+                <div class="transliteration">Rabbi la tadharni fardan wa anta khayrul-warithin.</div>
+                <div class="translation">"My Lord! Leave me not alone, though Thou art the Best of inheritors."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Zakariya (AS) asking for an heir.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Used for seeking children, but also widely used by those seeking a spouse to end their loneliness.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-MU'MINUN -->
+        <div class="dua-card" id="s23" data-keywords="landing place blessed home nuh moving">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Mu'minun 23:29</span>
+                <span class="topic-tag">Blessed Landing/Home</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَّبِّ أَنزِلْنِي مُنزَلاً مُّبَارَكًا وَأَنتَ خَيْرُ الْمُنزِلِينَ</div>
+                <div class="transliteration">Rabbi anzilni munzalan mubarakan wa anta khayrul-munzilin.</div>
+                <div class="translation">"My Lord! Cause me to land at a blessed landing-place, for Thou art Best of all who bring to land."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Nuh (AS) praying upon disembarking from the Ark.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Recited when moving to a new house, migrating to a new country, or arriving at a destination.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="devils whispers refuge protection shaytan">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Mu'minun 23:97-98</span>
+                <span class="topic-tag">Protection from Evil Whispers</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَّبِّ أَعُوذُ بِكَ مِنْ هَمَزَاتِ الشَّيَاطِينِ * وَأَعُوذُ بِكَ رَبِّ أَن يَحْضُرُونِ</div>
+                <div class="transliteration">Rabbi a'udhu bika min hamazatish-shayatin, wa a'udhu bika Rabbi an yahdurun.</div>
+                <div class="translation">"My Lord! I seek refuge in Thee from suggestions of the evil ones, And I seek refuge in Thee, my Lord, lest they be present with me."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Command to the Prophet (ﷺ) to seek refuge.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> When feeling angry, having bad thoughts, or feeling the presence of evil.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="forgiveness mercy best merciful">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Mu'minun 23:118</span>
+                <span class="topic-tag">General Mercy</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَّبِّ اغْفِرْ وَارْحَمْ وَأَنتَ خَيْرُ الرَّاحِمِينَ</div>
+                <div class="transliteration">Rabbi-ghfir warham wa anta khayrur-rahimin.</div>
+                <div class="translation">"My Lord! Forgive and have mercy, for Thou art Best of all who show mercy."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The very last verse of Surah Al-Mu'minun.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> A concise and powerful prayer for forgiveness and mercy.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-FURQAN -->
+        <div class="dua-card" id="s25" data-keywords="hell fire avert punishment">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Furqan 25:65</span>
+                <span class="topic-tag">Protection from Hell</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا اصْرِفْ عَنَّا عَذَابَ جَهَنَّمَ ۖ إِنَّ عَذَابَهَا كَانَ غَرَامًا</div>
+                <div class="transliteration">Rabbanas-rif 'anna 'adhaba jahannama inna 'adhabaha kana gharama.</div>
+                <div class="translation">"Our Lord! Avert from us the doom of hell; lo! the doom thereof is anguish."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Description of the "Servants of the Most Merciful" (Ibad-ur-Rahman).</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Seeking protection from the punishment of the Hereafter.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="wives offspring children comfort eyes family">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Furqan 25:74</span>
+                <span class="topic-tag">Righteous Family</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا</div>
+                <div class="transliteration">Rabbana hab lana min azwajina wa dhurriyyatina qurrata a'yunin waj'alna lil-muttaqina imama.</div>
+                <div class="translation">"Our Lord! Vouchsafe us comfort of our wives and of our offspring, and make us patterns for (all) those who ward off (evil)."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Another prayer of the "Servants of the Most Merciful."</div>
+                    <div class="info-row"><span class="label">Relevance:</span> The standard Dua for a happy marriage and righteous children who bring joy to the heart.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH ASH-SHU'ARA -->
+        <div class="dua-card" id="s26" data-keywords="wisdom righteous tongue truth honor ibrahim legacy">
+            <div class="dua-header">
+                <span class="ref-tag">Ash-Shu'ara 26:83-85</span>
+                <span class="topic-tag">Wisdom & Legacy</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ هَبْ لِي حُكْمًا وَأَلْحِقْنِي بِالصَّالِحِينَ * وَاجْعَل لِّي لِسَانَ صِدْقٍ فِي الآخِرِينَ * وَاجْعَلْنِي مِن وَرَثَةِ جَنَّةِ النَّعِيمِ</div>
+                <div class="transliteration">Rabbi hab li hukman wa alhiqni bis-salihin. Waj'al li lisana sidqin fil-akhirin. Waj'alni min warathati jannatin-na'im.</div>
+                <div class="translation">"My Lord! Vouchsafe me wisdom and unite me with the righteous. And give unto me a good report in later generations. And place me among the inheritors of the Garden of Delight."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Ibrahim (AS) asking for wisdom and a good reputation.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking for wisdom, good company, and to leave a positive legacy after death.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AN-NAML -->
+        <div class="dua-card" id="s27" data-keywords="gratitude favor parents righteous deeds sulaiman">
+            <div class="dua-header">
+                <span class="ref-tag">An-Naml 27:19</span>
+                <span class="topic-tag">Gratitude</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ أَوْزِعْنِي أَنْ أَشْكُرَ نِعْمَتَكَ الَّتِي أَنْعَمْتَ عَلَيَّ وَعَلَى وَالِدَيَّ وَأَنْ أَعْمَلَ صَالِحًا تَرْضَاهُ وَأَدْخِلْنِي بِرَحْمَتِكَ فِي عِبَادِكَ الصَّالِحِينَ</div>
+                <div class="transliteration">Rabbi awzi'ni an ashkura ni'matakal-lati an'amta 'alayya wa 'ala walidayya wa an a'mala salihan tardahu wa adkhilni birahmatika fi 'ibadikas-salihin.</div>
+                <div class="translation">"My Lord! Arouse me that I may thank Thee for Thy favour wherewith Thou hast favoured me and my parents, and that I may do right acceptable unto Thee, and include me (by Thy mercy) among Thy righteous slaves."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Sulaiman (AS) smiled and prayed this after hearing an ant warn its colony about his army.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> To express gratitude for success and blessings, and to ask for the ability to do good deeds.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-QASAS -->
+        <div class="dua-card" id="s28" data-keywords="wronged myself forgiveness musa moses">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Qasas 28:16</span>
+                <span class="topic-tag">Admitting Fault</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ إِنِّي ظَلَمْتُ نَفْسِي فَاغْفِرْ لِي</div>
+                <div class="transliteration">Rabbi inni zalamtu nafsi faghfir li.</div>
+                <div class="translation">"My Lord! I have wronged my soul, so forgive me."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Musa (AS) immediately after accidentally killing the Egyptian man.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Immediate repentance after realizing a mistake or sin.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="escape fear danger musa moses wrongdoing people">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Qasas 28:21</span>
+                <span class="topic-tag">Safety from Oppressors</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ نَجِّنِي مِنَ الْقَوْمِ الظَّالِمِينَ</div>
+                <div class="transliteration">Rabbi najjini minal-qawmiz-zalimin.</div>
+                <div class="translation">"My Lord! Save me from the wrongdoing folk."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Musa (AS) fleeing Egypt in fear for his life.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Recited when in physical danger, facing a lawsuit, or dealing with a tyrant boss/oppressor.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="needy good provision job marriage musa moses">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Qasas 28:24</span>
+                <span class="topic-tag">Desperate Need</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ إِنِّي لِمَا أَنزَلْتَ إِلَيَّ مِنْ خَيْرٍ فَقِيرٌ</div>
+                <div class="transliteration">Rabbi inni lima anzalta ilayya min khayrin faqir.</div>
+                <div class="translation">"My Lord! I am needy of whatever good Thou sendest down for me."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Musa (AS) alone in Madyan, homeless and hungry, after helping two women water their flock.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> The ultimate Dua for employment, marriage, and sustenance. (Musa AS received food, shelter, a job, and a wife shortly after this).</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-ANKABUT -->
+        <div class="dua-card" id="s29" data-keywords="help corruption lut lot">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Ankabut 29:30</span>
+                <span class="topic-tag">Help Against Corruption</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ انصُرْنِي عَلَى الْقَوْمِ الْمُفْسِدِينَ</div>
+                <div class="transliteration">Rabbin-surni 'alal-qawmil-mufsidin.</div>
+                <div class="translation">"My Lord! Give me victory over the corrupting folk."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Prophet Lut (Lot AS) asking for help against his people who were spreading immorality.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking for help against those who spread corruption and vice in society.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AS-SAFFAT -->
+        <div class="dua-card" id="s37" data-keywords="righteous child son ibrahim">
+            <div class="dua-header">
+                <span class="ref-tag">As-Saffat 37:100</span>
+                <span class="topic-tag">Righteous Child</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ هَبْ لِي مِنَ الصَّالِحِينَ</div>
+                <div class="transliteration">Rabbi hab li minas-salihin.</div>
+                <div class="translation">"My Lord! Vouchsafe me of the righteous."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Ibrahim (AS) praying for a child after leaving his people.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> A short and powerful Dua for a righteous child.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH SAD -->
+        <div class="dua-card" id="s38" data-keywords="kingdom sovereignty sulaiman solomon forgiveness wealth">
+            <div class="dua-header">
+                <span class="ref-tag">Sad 38:35</span>
+                <span class="topic-tag">Kingdom & Forgiveness</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ اغْفِرْ لِي وَهَبْ لِي مُلْكًا لَّا يَنبَغِي لِأَحَدٍ مِّن بَعْدِي ۖ إِنَّكَ أَنتَ الْوَهَّابُ</div>
+                <div class="transliteration">Rabbi-ghfir li wa hab li mulkan la yanbaghi li-ahadin min ba'di, innaka antal-Wahhab.</div>
+                <div class="translation">"My Lord! Forgive me and bestow on me sovereignty such as shall not belong to any after me. Lo! Thou art the Bestower."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Sulaiman (AS) asking for a kingdom unlike any other.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking for forgiveness first, then asking for immense blessings/wealth/status.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH GHAFIR -->
+        <div class="dua-card" id="s40" data-keywords="angels throne forgiveness believers repentance">
+            <div class="dua-header">
+                <span class="ref-tag">Ghafir 40:7</span>
+                <span class="topic-tag">Angels' Prayer for Believers</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا وَسِعْتَ كُلَّ شَيْءٍ رَّحْمَةً وَعِلْمًا فَاغْفِرْ لِلَّذِينَ تَابُوا وَاتَّبَعُوا سَبِيلَكَ وَقِهِمْ عَذَابَ الْجَحِيمِ</div>
+                <div class="transliteration">Rabbana wasi'ta kulla shay'in rahmatan wa 'ilman faghfir lilladhina tabu wattaba'u sabilaka waqihim 'adhabal-jahim.</div>
+                <div class="translation">"Our Lord! Thou comprehendest all things in mercy and knowledge, therefor forgive those who repent and follow Thy way. Ward off from them the punishment of hell."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of the Angels who carry the Throne of Allah, praying for the believers.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Recited to ask for forgiveness for oneself and the community of believers.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="trust affairs plot protection pharaoh family">
+            <div class="dua-header">
+                <span class="ref-tag">Ghafir 40:44</span>
+                <span class="topic-tag">Entrusting Affairs to Allah</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">وَأُفَوِّضُ أَمْرِي إِلَى اللَّهِ ۚ إِنَّ اللَّهَ بَصِيرٌ بِالْعِبَادِ</div>
+                <div class="transliteration">Wa ufawwidu amri ilallah, innallaha basirun bil-'ibad.</div>
+                <div class="translation">"And I entrust my affair to Allah. Lo! Allah is Seer of (His) slaves."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Spoken by the "Believer from the family of Pharaoh" when threatened with plots.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Used when the outcome is out of your hands and you are stressed. The Quran confirms immediately after: "So Allah protected him from the evils which they plotted."</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AZ-ZUKHRUF -->
+        <div class="dua-card" id="s43" data-keywords="travel transport vehicle journey">
+            <div class="dua-header">
+                <span class="ref-tag">Az-Zukhruf 43:13-14</span>
+                <span class="topic-tag">Travel Dua</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَٰذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ * وَإِنَّا إِلَىٰ رَبِّنَا لَمُنقَلِبُونَ</div>
+                <div class="transliteration">Subhanalladhi sakh-khara lana hadha wa ma kunna lahu muqrinin, wa inna ila Rabbina lamunqalibun.</div>
+                <div class="translation">"Glorified be He Who hath subdued these unto us, and we were not capable (of subduing them); And lo! unto our Lord we are surely returning."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Taught by Allah to be recited when mounting a vehicle/animal.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> The standard Dua for travel and transportation.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-AHQAF -->
+        <div class="dua-card" id="s46" data-keywords="forty years gratitude parents offspring righteousness maturity">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Ahqaf 46:15</span>
+                <span class="topic-tag">Maturity (40 Years)</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ أَوْزِعْنِي أَنْ أَشْكُرَ نِعْمَتَكَ الَّتِي أَنْعَمْتَ عَلَيَّ وَعَلَى وَالِدَيَّ وَأَنْ أَعْمَلَ صَالِحًا تَرْضَاهُ وَأَصْلِحْ لِي فِي ذُرِّيَّتِي ۖ إِنِّي تُبْتُ إِلَيْكَ وَإِنِّي مِنَ الْمُسْلِمِينَ</div>
+                <div class="transliteration">Rabbi awzi'ni an ashkura ni'matakal-lati an'amta 'alayya wa 'ala walidayya wa an a'mala salihan tardahu wa aslih li fi dhurriyyati, inni tubtu ilayka wa inni minal-muslimin.</div>
+                <div class="translation">"My Lord! Arouse me that I may thank Thee for Thy favour wherewith Thou hast favoured me and my parents, and that I may do right acceptable unto Thee. And be gracious unto me in the matter of my seed. Lo! I have turned unto Thee repentant, and lo! I am of the Surrenderers."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> A prayer for a person who has reached full strength (40 years old).</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Gratitude for life, parents, and asking for righteousness in one's own children.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-QAMAR -->
+        <div class="dua-card" id="s54" data-keywords="overpowered defeated help nuh noah">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Qamar 54:10</span>
+                <span class="topic-tag">Total Desperation</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">أَنِّي مَغْلُوبٌ فَانتَصِرْ</div>
+                <div class="transliteration">Anni maghlubun fantasir.</div>
+                <div class="translation">"I am vanquished, so give help."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Nuh (AS) calling out after 950 years of rejection and abuse.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> When you feel completely defeated, bullied, or overpowered by circumstances.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-HASHR -->
+        <div class="dua-card" id="s59" data-keywords="brothers faith resentment rancor heart jealousy">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Hashr 59:10</span>
+                <span class="topic-tag">Clean Heart towards Believers</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا اغْفِرْ لَنَا وَلِإِخْوَانِنَا الَّذِينَ سَبَقُونَا بِالْإِيمَانِ وَلَا تَجْعَلْ فِي قُلُوبِنَا غِلًّا لِّلَّذِينَ آمَنُوا رَبَّنَا إِنَّكَ رَءُوفٌ رَّحِيمٌ</div>
+                <div class="transliteration">Rabbana-ghfir lana wa li-ikhwaninal-ladhina sabaquna bil-imani wa la taj'al fi qulubina ghillan lilladhina amanu Rabbana innaka ra'ufur-rahim.</div>
+                <div class="translation">"Our Lord! Forgive us and our brethren who were before us in the faith, and place not in our hearts any rancour toward those who believe. Our Lord! Thou art Full of Pity, Merciful."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of those who came after the Muhajirun and Ansar.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> To remove jealousy, hatred, or grudges against other Muslims.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AL-MUMTAHANAH -->
+        <div class="dua-card" id="s60" data-keywords="trust reliance trial disbelievers tawakkul">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Mumtahanah 60:4-5</span>
+                <span class="topic-tag">Reliance on Allah</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَّبَّنَا عَلَيْكَ تَوَكَّلْنَا وَإِلَيْكَ أَنَبْنَا وَإِلَيْكَ الْمَصِيرُ * رَبَّنَا لَا تَجْعَلْنَا فِتْنَةً لِّلَّذِينَ كَفَرُوا وَاغْفِرْ لَنَا رَبَّنَا ۖ إِنَّكَ أَنتَ الْعَزِيزُ الْحَكِيمُ</div>
+                <div class="transliteration">Rabbana 'alayka tawakkalna wa ilayka anabna wa ilaykal-masir. Rabbana la taj'alna fitnatan lilladhina kafaru waghfir lana Rabbana innaka antal-'azizul-hakim.</div>
+                <div class="translation">"Our Lord! In Thee we put our trust, and unto Thee we turn repentant, and unto Thee is the journeying. Our Lord! Make us not a prey for those who disbelieve, and forgive us, our Lord! Lo! Thou, only Thou, art the Mighty, the Wise."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Ibrahim (AS) and his followers disavowing their disbelieving people.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Declaring complete trust in Allah and asking not to be humiliated by disbelievers.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH AT-TAHRIM -->
+        <div class="dua-card" id="s66" data-keywords="light perfect forgiveness judgment day">
+            <div class="dua-header">
+                <span class="ref-tag">At-Tahrim 66:8</span>
+                <span class="topic-tag">Light on Judgment Day</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا أَتْمِمْ لَنَا نُورَنَا وَاغْفِرْ لَنَا ۖ إِنَّكَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ</div>
+                <div class="transliteration">Rabbana atmim lana nurana waghfir lana innaka 'ala kulli shay'in qadir.</div>
+                <div class="translation">"Our Lord! Perfect our light for us, and forgive us! Lo! Thou art Able to do all things."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of the believers on the Day of Judgment when the light of the hypocrites is extinguished.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Asking for guidance in this world and light on the Sirat (bridge) in the Hereafter.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dua-card" data-keywords="house paradise asiya pharaoh">
+            <div class="dua-header">
+                <span class="ref-tag">At-Tahrim 66:11</span>
+                <span class="topic-tag">House in Paradise</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ ابْنِ لِي عِندَكَ بَيْتًا فِي الْجَنَّةِ</div>
+                <div class="transliteration">Rabbib-ni li 'indaka baytan fil-jannah.</div>
+                <div class="translation">"My Lord! Build for me a home with thee in the Garden."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The prayer of Asiya (the wife of Pharaoh) while being tortured for her faith.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Seeking the highest company (Allah) and a home in Jannah, prioritizing the Hereafter over worldly suffering.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURAH NUH -->
+        <div class="dua-card" id="s71" data-keywords="parents believers house enter nuh noah">
+            <div class="dua-header">
+                <span class="ref-tag">Nuh 71:28</span>
+                <span class="topic-tag">Forgiveness for Believers</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ وَلِمَن دَخَلَ بَيْتِيَ مُؤْمِنًا وَلِلْمُؤْمِنِينَ وَالْمُؤْمِنَاتِ</div>
+                <div class="transliteration">Rabbi-ghfir li wa liwalidayya wa liman dakhala baytiya mu'minan wa lil-mu'minina wal-mu'minat.</div>
+                <div class="translation">"My Lord! Forgive me and my parents and him who entereth my house believing, and believing men and believing women."</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> Nuh (AS) praying for the small group of believers.</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Forgiveness for oneself, parents, guests, and the entire Ummah.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROTECTION SURAHS -->
+        <div class="dua-card" id="s113" data-keywords="falaq nas protection magic envy evil eye">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Falaq & An-Nas</span>
+                <span class="topic-tag">Ultimate Protection</span>
+            </div>
+            <div class="dua-body">
+                <div class="translation">"Say: I seek refuge in the Lord of the Daybreak..." (113) <br> "Say: I seek refuge in the Lord of Mankind..." (114)</div>
+                <div class="context-box">
+                    <div class="info-row"><span class="label">Context:</span> The Mu'awwidhatayn (The Two Protectors).</div>
+                    <div class="info-row"><span class="label">Relevance:</span> Protection against magic, envy (Hasad), evil eye, and the whispers of Shaytan.</div>
+                    <div class="info-row"><span class="label">Hadith:</span> The Prophet (ﷺ) said: "Recite Qul Huwa Allahu Ahad and the Mu'awwidhatayn three times in the evening and in the morning, it will suffice you for everything." (Tirmidhi)</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Simple Search Filter
+    const searchInput = document.getElementById('searchInput');
+    const cards = document.querySelectorAll('.dua-card');
+
+    searchInput.addEventListener('keyup', (e) => {
+        const term = e.target.value.toLowerCase();
+
+        cards.forEach(card => {
+            const text = card.innerText.toLowerCase();
+            const keywords = card.getAttribute('data-keywords') || '';
+            
+            if (text.includes(term) || keywords.includes(term)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

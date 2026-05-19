@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Dhikr - Single Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* PRINT SETTINGS FOR SINGLE PAGE */
+        @page {
+            size: A4;
+            margin: 0.5cm; /* Small margins to maximize space */
+        }
+        
+        :root {
+            --primary: #2c3e50;
+            --green: #27ae60;
+            --blue: #2980b9;
+            --bg: #ffffff;
+            --light-gray: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: white;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact; /* Forces colors to print */
+            print-color-adjust: exact;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 210mm; /* A4 Width */
+            margin: 0 auto;
+        }
+
+        /* HEADER SECTION */
+        header {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-box h1 {
+            margin: 0;
+            font-size: 18pt;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .title-box .subtitle {
+            font-size: 10pt;
+            color: #666;
+        }
+
+        .ref-box {
+            font-size: 8pt;
+            text-align: right;
+            color: #555;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 4px;
+            max-width: 40%;
+        }
+
+        /* CONTEXT SECTION */
+        .context {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffb74d;
+            padding: 8px 12px;
+            font-size: 9pt;
+            margin-bottom: 15px;
+            line-height: 1.3;
+            color: #444;
+        }
+
+        /* TWO COLUMN GRID */
+        .grid-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Split page in half */
+            gap: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .col-header {
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            font-size: 11pt;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: 5px;
+        }
+
+        .header-green { background-color: var(--green); }
+        .header-blue { background-color: var(--blue); }
+
+        /* PHRASE ROWS */
+        .row {
+            border-bottom: 1px solid #eee;
+            padding: 6px 0;
+            page-break-inside: avoid; /* Prevents cutting a phrase in half */
+        }
+
+        .row:last-child { border-bottom: none; }
+
+        .arabic {
+            font-family: 'Amiri', serif;
+            font-size: 16pt; /* Optimized for reading but fitting */
+            color: var(--primary);
+            direction: rtl;
+            text-align: right;
+            line-height: 1.4;
+            margin-bottom: 2px;
+        }
+
+        .translit {
+            font-size: 8.5pt;
+            font-style: italic;
+            color: #666;
+            line-height: 1.2;
+        }
+
+        .trans {
+            font-size: 9pt;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .t-green { color: var(--green); }
+        .t-blue { color: var(--blue); }
+
+        /* Helper for bolding specific words */
+        .highlight { text-decoration: underline; text-decoration-color: #ddd; }
+
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+
+    <!-- HEADER & REFERENCE -->
+    <header>
+        <div class="title-box">
+            <h1>The Comprehensive Dhikr</h1>
+            <div class="subtitle">Al-Jawami' al-Du'a (Hadith of Abu Umamah)</div>
+        </div>
+        <div class="ref-box">
+            <strong>Ref:</strong> <em>Al-Mu’jam Al-Kabir</em> (Tabarani), <em>Sahih Ibn Hibban</em> (830).<br>
+            <strong>Grade:</strong> Sahih (Authentic) by Al-Albani (Sahih Al-Jami’ 2615).
+        </div>
+    </header>
+
+    <!-- CONTEXT -->
+    <div class="context">
+        <strong>Context:</strong> The Prophet (ﷺ) saw Abu Umamah moving his lips and asked, "What are you saying?" He replied, "I am remembering Allah." The Prophet (ﷺ) said: <strong>"Shall I not indicate to you something better than your remembering Allah night and day?"</strong> He then taught him these words.
+    </div>
+
+    <!-- MAIN CONTENT GRID -->
+    <div class="grid-wrapper">
+        
+        <!-- LEFT COLUMN: TAHMID -->
+        <div class="column">
+            <div class="col-header header-green">PART 1: AL-HAMD (Praise)</div>
+
+            <!-- 1 -->
+            <div class="row">
+                <div class="arabic">الْحَمْدُ لِلَّهِ عَدَدَ مَا خَلَقَ</div>
+                <div class="translit">Al-ḥamdu lillāhi ʿadada mā khalaq</div>
+                <div class="trans t-green">Praise be to Allah, the number of what He created.</div>
+            </div>
+            <!-- 2 -->
+            <div class="row">
+                <div class="arabic">وَالْحَمْدُ لِلَّهِ مِلْءَ مَا خَلَقَ</div>
+                <div class="translit">Wal-ḥamdu lillāhi milʾa mā khalaq</div>
+                <div class="trans t-green">Praise be to Allah, filling what He created.</div>
+            </div>
+            <!-- 3 -->
+            <div class="row">
+                <div class="arabic">وَالْحَمْدُ لِلَّهِ عَدَدَ مَا فِي السَّمَاوَاتِ وَمَا فِي الأَرْضِ</div>
+                <div class="translit">Wal-ḥamdu lillāhi ʿadada mā fī al-samāwāti wa mā fī al-arḍ</div>
+                <div class="trans t-green">Praise be to Allah, the number of what is in heavens & earth.</div>
+            </div>
+            <!-- 4 -->
+            <div class="row">
+                <div class="arabic">وَالْحَمْدُ لِلَّهِ عَدَدَ مَا أَحْصَى كِتَابُهُ</div>
+                <div class="translit">Wal-ḥamdu lillāhi ʿadada mā aḥṣā kitābuh</div>
+                <div class="trans t-green">Praise be to Allah, the number of what His Book recorded.</div>
+            </div>
+            <!-- 5 -->
+            <div class="row">
+                <div class="arabic">وَالْحَمْدُ لِلَّهِ عَلَى مَا أَحْصَى كِتَابُهُ</div>
+                <div class="translit">Wal-ḥamdu lillāhi ʿalā mā aḥṣā kitābuh</div>
+                <div class="trans t-green">Praise be to Allah, for what His Book recorded.</div>
+            </div>
+            <!-- 6 -->
+            <div class="row">
+                <div class="arabic">وَالْحَمْدُ لِلَّهِ عَدَدَ كُلِّ شَيْءٍ</div>
+                <div class="translit">Wal-ḥamdu lillāhi ʿadada kulli shayʾ</div>
+                <div class="trans t-green">Praise be to Allah, the number of everything.</div>
+            </div>
+            <!-- 7 -->
+            <div class="row">
+                <div class="arabic">وَالْحَمْدُ لِلَّهِ مِلْءَ كُلِّ شَيْءٍ</div>
+                <div class="translit">Wal-ḥamdu lillāhi milʾa kulli shayʾ</div>
+                <div class="trans t-green">Praise be to Allah, filling everything.</div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: TASBIH -->
+        <div class="column">
+            <div class="col-header header-blue">PART 2: TASBIH (Glory)</div>
+
+            <!-- 1 -->
+            <div class="row">
+                <div class="arabic">سُبْحَانَ اللَّهِ عَدَدَ مَا خَلَقَ</div>
+                <div class="translit">Subḥān Allāhi ʿadada mā khalaq</div>
+                <div class="trans t-blue">Glory be to Allah, the number of what He created.</div>
+            </div>
+            <!-- 2 -->
+            <div class="row">
+                <div class="arabic">وَسُبْحَانَ اللَّهِ مِلْءَ مَا خَلَقَ</div>
+                <div class="translit">Wa Subḥān Allāhi milʾa mā khalaq</div>
+                <div class="trans t-blue">Glory be to Allah, filling what He created.</div>
+            </div>
+            <!-- 3 -->
+            <div class="row">
+                <div class="arabic">وَسُبْحَانَ اللَّهِ عَدَدَ مَا فِي السَّمَاوَاتِ وَمَا فِي الأَرْضِ</div>
+                <div class="translit">Wa Subḥān Allāhi ʿadada mā fī al-samāwāti wa mā fī al-arḍ</div>
+                <div class="trans t-blue">Glory be to Allah, the number of what is in heavens & earth.</div>
+            </div>
+            <!-- 4 -->
+            <div class="row">
+                <div class="arabic">وَسُبْحَانَ اللَّهِ عَدَدَ مَا أَحْصَى كِتَابُهُ</div>
+                <div class="translit">Wa Subḥān Allāhi ʿadada mā aḥṣā kitābuh</div>
+                <div class="trans t-blue">Glory be to Allah, the number of what His Book recorded.</div>
+            </div>
+            <!-- 5 -->
+            <div class="row">
+                <div class="arabic">وَسُبْحَانَ اللَّهِ عَلَى مَا أَحْصَى كِتَابُهُ</div>
+                <div class="translit">Wa Subḥān Allāhi ʿalā mā aḥṣā kitābuh</div>
+                <div class="trans t-blue">Glory be to Allah, for what His Book recorded.</div>
+            </div>
+            <!-- 6 -->
+            <div class="row">
+                <div class="arabic">وَسُبْحَانَ اللَّهِ عَدَدَ كُلِّ شَيْءٍ</div>
+                <div class="translit">Wa Subḥān Allāhi ʿadada kulli shayʾ</div>
+                <div class="trans t-blue">Glory be to Allah, the number of everything.</div>
+            </div>
+            <!-- 7 -->
+            <div class="row">
+                <div class="arabic">وَسُبْحَانَ اللَّهِ مِلْءَ كُلِّ شَيْءٍ</div>
+                <div class="translit">Wa Subḥān Allāhi milʾa kulli shayʾ</div>
+                <div class="trans t-blue">Glory be to Allah, filling everything.</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>
