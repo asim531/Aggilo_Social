@@ -54,8 +54,21 @@ Output ONLY this JSON (no prose):
   "trigger_observation": "<one short phrase describing why they're talking right now, e.g. 'Most posts this week are about consistency in salah.'>",
   "sage_message": "<Sage's line — 1-2 sentences>",
   "clio_message": "<Clio's response — 1-2 sentences. May agree, may push back, may propose an alternative>",
-  "observe_mode": <true if they decide to wait and watch, false if they identified something concrete>
-}`;
+  "observe_mode": <true if they decide to wait and watch, false if they identified something concrete>,
+  "proposed_feature": <null OR an object describing a concrete feature both agents agree could help this room>
+}
+
+When observe_mode is true, proposed_feature MUST be null.
+When observe_mode is false AND the exchange genuinely converged on a specific tool or feature, return:
+{
+  "name": "<short, member-facing name — e.g. 'Daily reflection prompt' or 'Quiet hours setting'>",
+  "description": "<one sentence describing what the feature does for members>",
+  "category": "<one of: reflection | reminder | tracking | reference | community | accessibility>",
+  "rationale": "<one sentence explaining why this room would benefit>"
+}
+If no concrete feature emerged from the exchange (most exchanges should NOT produce one — features are rare moments of genuine clarity, not a pressure to invent), return null.
+
+Hard rule: do NOT invent a feature just to fill the field. A null proposed_feature is the correct, honest output unless the dialogue itself converged on a specific helpful tool. Three exchanges with no feature in a row is fine.`;
 
 export async function POST() {
   try {
@@ -154,6 +167,12 @@ export async function POST() {
       sage_message: string;
       clio_message: string;
       observe_mode: boolean;
+      proposed_feature?: {
+        name: string;
+        description: string;
+        category: string;
+        rationale: string;
+      } | null;
     };
     try {
       parsed = JSON.parse(result.content);
@@ -162,6 +181,11 @@ export async function POST() {
     }
 
     const exchangeNumber = (lastExchange?.exchange_number || 0) + 1;
+    const featuresProposedNames: string[] =
+      parsed.proposed_feature && !parsed.observe_mode
+        ? [parsed.proposed_feature.name]
+        : [];
+
     const { data: row, error: insertErr } = await supabase
       .from("agent_chatbox_exchanges")
       .insert({
@@ -172,6 +196,7 @@ export async function POST() {
         sage_message: parsed.sage_message,
         clio_message: parsed.clio_message,
         observe_mode: parsed.observe_mode || false,
+        features_proposed: featuresProposedNames,
       })
       .select()
       .single();
@@ -181,10 +206,57 @@ export async function POST() {
       return NextResponse.json({ error: "Save failed" }, { status: 500 });
     }
 
+    // ── Persist the proposed feature ─────────────────────────────────
+    // If the agents converged on a concrete feature, write a row into
+    // cluster_features. Members see it in the Features tab once the
+    // cluster crosses the visibility threshold (default ≥ 5 members).
+    // Idempotency guard: don't insert near-duplicate names within 14d.
+    let featureRowId: string | null = null;
+    if (parsed.proposed_feature && !parsed.observe_mode) {
+      const fourteenDaysAgo = new Date(
+        Date.now() - 14 * 24 * 60 * 60 * 1000
+      ).toISOString();
+      const { data: existing } = await supabase
+        .from("cluster_features")
+        .select("id, display_name")
+        .eq("cluster_id", clusterId)
+        .gte("created_at", fourteenDaysAgo);
+
+      const proposedName = parsed.proposed_feature.name.trim().toLowerCase();
+      const alreadyExists = (existing ?? []).some(
+        (f: { display_name: string }) =>
+          f.display_name.trim().toLowerCase() === proposedName
+      );
+
+      if (!alreadyExists) {
+        // Tier-gate: hidden if 0–4 members (logged but not member-visible),
+        // otherwise enters the Features tab.
+        const visibilityStatus =
+          (memberCount ?? 0) >= 5 ? "in_features_tab" : "proposed_in_thoughts";
+
+        const { data: featureRow } = await supabase
+          .from("cluster_features")
+          .insert({
+            cluster_id: clusterId,
+            display_name: parsed.proposed_feature.name,
+            display_description: parsed.proposed_feature.description,
+            category: parsed.proposed_feature.category,
+            status: visibilityStatus,
+            proposed_by: "agents_joint",
+            rationale: parsed.proposed_feature.rationale,
+            chatbox_exchange_id: row.id,
+          })
+          .select("id")
+          .single();
+        featureRowId = featureRow?.id ?? null;
+      }
+    }
+
     return NextResponse.json({
       outcome: "posted",
       exchange_id: row.id,
       exchange_number: exchangeNumber,
+      feature_id: featureRowId,
     });
   } catch (err) {
     console.error("Cadence exchange unexpected error:", err);

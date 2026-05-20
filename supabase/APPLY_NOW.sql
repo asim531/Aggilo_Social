@@ -1194,3 +1194,41 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║  v1.6 — Feature upvote count trigger                            ║
+-- ║                                                                  ║
+-- ║  Keeps cluster_features.upvote_count in sync with the actual    ║
+-- ║  count of cluster_feature_upvotes rows. The denormalized counter║
+-- ║  lets the Features tab sort by popularity without a join.       ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+CREATE OR REPLACE FUNCTION public.refresh_feature_upvote_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.cluster_features
+       SET upvote_count = upvote_count + 1,
+           updated_at = NOW()
+     WHERE id = NEW.feature_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE public.cluster_features
+       SET upvote_count = GREATEST(0, upvote_count - 1),
+           updated_at = NOW()
+     WHERE id = OLD.feature_id;
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS feature_upvote_count_trigger
+  ON public.cluster_feature_upvotes;
+
+CREATE TRIGGER feature_upvote_count_trigger
+  AFTER INSERT OR DELETE ON public.cluster_feature_upvotes
+  FOR EACH ROW EXECUTE FUNCTION public.refresh_feature_upvote_count();
+
+NOTIFY pgrst, 'reload schema';
