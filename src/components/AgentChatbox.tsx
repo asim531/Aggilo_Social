@@ -76,11 +76,14 @@ export default function AgentChatbox({
   const [exchanges, setExchanges] = useState<AgentChatboxExchange[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  // Restore minimized state
+  // Restore minimized state — DEFAULT IS COLLAPSED for a calmer first impression.
+  // Members who want the dialogue can expand once and the choice persists.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const storedMin = localStorage.getItem(`${MINIMIZED_KEY}:${clusterId}`);
-    setMinimized(storedMin === "true");
+    // If never set, default to minimized (true). Only stay expanded if the
+    // user has explicitly expanded before (storedMin === "false").
+    setMinimized(storedMin === null ? true : storedMin === "true");
     const storedView = localStorage.getItem(`${LAST_VIEWED_KEY}:${clusterId}`);
     setLastViewed(storedView ? parseInt(storedView, 10) : 0);
   }, [clusterId]);

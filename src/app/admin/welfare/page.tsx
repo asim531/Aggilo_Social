@@ -25,9 +25,9 @@ export default async function WelfarePage() {
       <header>
         <h1 className="text-xl font-semibold text-gray-900">Welfare queue</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Posts where Sage detected a welfare signal. Each one needs a real
-          human response — not a formula. Mark resolved once you have followed
-          up with the member privately.
+          Posts where the platform flagged a welfare signal. Each one needs a
+          real human response — not a formula. Mark resolved once you have
+          followed up with the member privately.
         </p>
       </header>
 

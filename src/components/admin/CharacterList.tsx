@@ -20,12 +20,12 @@ interface CharacterRow {
 }
 
 const SIGNAL_LABELS: Record<string, string> = {
-  rejecting_monotheism: "Rejecting monotheism",
-  mocking_faith: "Mocking faith",
-  promoting_bad_character: "Promoting bad character",
-  coercion_against_practice: "Coercion against practice",
-  dismissing_dua: "Dismissing dua",
-  other: "Other",
+  rejecting_monotheism: "Care needed",
+  mocking_faith: "Care needed",
+  promoting_bad_character: "Care needed",
+  coercion_against_practice: "Care needed",
+  dismissing_dua: "Care needed",
+  other: "Care needed",
 };
 
 function formatRelative(iso: string): string {

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase-browser";
 import { PostWithAuthor } from "@/lib/types";
 import { pickClusterNudge, type ClusterNudge } from "@/lib/clio-nudges";
 import { track } from "@/lib/track";
+import { usePresence } from "@/lib/presence-context";
 
 interface PostComposerProps {
   userId: string;
@@ -29,6 +30,7 @@ export default function PostComposer({
   const [error, setError] = useState<string | null>(null);
   const [nudge, setNudge] = useState<ClusterNudge | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { emitTyping } = usePresence();
 
   // Pick today's nudge for this user — deterministic, rotates per-day.
   // Only render after mount so the daily index is computed client-side
@@ -164,6 +166,7 @@ export default function PostComposer({
               onChange={(e) => {
                 setContent(e.target.value);
                 handleInput();
+                if (e.target.value.length > 0) emitTyping();
               }}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}

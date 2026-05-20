@@ -23,17 +23,14 @@ export default async function CharacterPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold text-gray-900">Character concerns</h1>
+        <h1 className="text-xl font-semibold text-gray-900">Care queue</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Posts where Sage detected a pattern that goes against the room&apos;s
-          foundation — rejection of monotheism, mockery of practice, promotion
-          of harmful behaviour, or coercion against another member&apos;s practice.
+          Posts that the platform flagged as needing your judgment. Each entry
+          shows what the member wrote and the response that went into the room.
         </p>
         <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-          Sage already responded to the member with witness, not argument. Your
-          job is to decide whether further care is needed: a private message,
-          a one-on-one conversation, removal from the room, or simply marking
-          this resolved.
+          Decide whether further care is needed: a private message, a one-on-one
+          conversation, removal from the room, or simply marking this resolved.
         </p>
       </header>
 

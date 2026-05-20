@@ -3,15 +3,15 @@ import { createClient } from "@/lib/supabase-server";
 export const dynamic = "force-dynamic";
 
 const STEP_LABELS: Record<string, string> = {
-  welfare: "Welfare",
-  character: "Character",
-  citation: "Citation check",
-  authority_redirect: "Fiqh redirect",
-  reference_surface: "Reference surfaced",
+  welfare: "Welfare response",
+  character: "Care response",
+  citation: "Reference check",
+  authority_redirect: "Routed to humans",
+  reference_surface: "Reference shared",
   care_witness: "Care witness",
-  witness_participation: "Thread witness",
-  silent: "Silent",
-  unknown: "Unknown (no tag)",
+  witness_participation: "Joined a thread",
+  silent: "Stayed silent",
+  unknown: "Unclassified",
 };
 
 function fmtRelative(iso: string): string {
@@ -94,17 +94,17 @@ export default async function ThoughtsPage() {
       <header>
         <h1 className="text-xl font-semibold text-gray-900">Agent Thoughts</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Sage&apos;s framework decisions and the live Clio↔Sage exchanges. Every
-          step she took (or chose not to take) is queryable.
+          What the agents have been doing in this room — when they spoke, when
+          they stayed quiet, and what they discussed with each other.
         </p>
       </header>
 
       <section className="bg-white rounded-xl border border-gray-200 p-4">
         <h2 className="text-sm font-semibold text-gray-900 mb-3">
-          Sage decisions — last 7 days by step
+          Sage activity — last 7 days
         </h2>
         {Object.keys(counts).length === 0 ? (
-          <p className="text-xs text-gray-500">No decisions logged yet.</p>
+          <p className="text-xs text-gray-500">Quiet week so far.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {Object.entries(counts)
@@ -165,7 +165,7 @@ export default async function ThoughtsPage() {
 
       <section>
         <h2 className="text-sm font-semibold text-gray-900 mb-3">
-          Latest 50 Sage decisions
+          Recent Sage activity (last 50)
         </h2>
         <div className="space-y-2">
           {((decisions ?? []) as unknown as SageRow[]).length === 0 ? (
@@ -190,9 +190,6 @@ export default async function ThoughtsPage() {
                   {post?.nickname && (
                     <span className="text-gray-400"> — {post.nickname}</span>
                   )}
-                </p>
-                <p className="text-gray-500 italic line-clamp-1">
-                  rationale: {d.step_rationale}
                 </p>
                 {d.response_text && (
                   <p className="text-gray-700 line-clamp-1 mt-1">

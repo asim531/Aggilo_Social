@@ -51,10 +51,16 @@ export async function GET(request: Request) {
 
       return NextResponse.redirect(`${origin}/cluster`);
     } else {
-      // PKCE mismatch or expired code — redirect to the client-side callback
-      // page which shows a user-friendly message
+      // Redirect to landing page with a friendly error param. The
+      // AuthForm reads ?error=... and shows it. Common cause: the magic
+      // link was opened in a different browser than where it was
+      // requested (PKCE verifier missing). The friendly message tells
+      // the user to request a new link from the same browser.
+      const friendly = error.message.includes("code challenge")
+        ? "Please request a new sign-in link and open it in the same browser where you requested it."
+        : error.message;
       return NextResponse.redirect(
-        `${origin}/auth/callback?error_description=${encodeURIComponent(error.message)}`
+        `${origin}/?error=${encodeURIComponent(friendly)}`
       );
     }
   }
@@ -63,10 +69,9 @@ export async function GET(request: Request) {
   const error_description = searchParams.get("error_description");
   if (error_description) {
     return NextResponse.redirect(
-      `${origin}/auth/callback?error_description=${encodeURIComponent(error_description)}`
+      `${origin}/?error=${encodeURIComponent(error_description)}`
     );
   }
 
-  // No code and no error — let the client-side page handle it (hash fragment)
-  return NextResponse.redirect(`${origin}/auth/callback?error_description=No+code+provided`);
+  return NextResponse.redirect(`${origin}/?error=No+code+provided`);
 }

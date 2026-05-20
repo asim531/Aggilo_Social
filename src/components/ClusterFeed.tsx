@@ -7,6 +7,7 @@ import PostCard from "./PostCard";
 import PostComposer from "./PostComposer";
 import AgentChatbox from "./AgentChatbox";
 import PinnedAnchor from "./PinnedAnchor";
+import TypingIndicator from "./TypingIndicator";
 
 interface ClusterFeedProps {
   initialPosts: PostWithAuthor[];
@@ -205,6 +206,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
        * "type → send" flow.
        */}
       <div className="sticky bottom-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.05)]">
+        <TypingIndicator />
         <PostComposer
           userId={userId}
           replyTo={replyTo}

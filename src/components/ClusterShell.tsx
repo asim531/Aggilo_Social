@@ -88,6 +88,21 @@ export default function ClusterShell({
     return () => clearTimeout(trigger);
   }, [showWelcome]);
 
+  // ── Welcome new member acknowledgment ───────────────────────────────
+  // Fires once on cluster mount. Server-side endpoint is idempotent and
+  // checks whether the user is genuinely new (no posts yet), whether
+  // they've already been welcomed, and whether a recent welcome covers
+  // them. Restrained, non-performative, single short line.
+  useEffect(() => {
+    if (showWelcome) return; // wait until onboarding is done
+    const trigger = setTimeout(() => {
+      fetch("/api/agents/welcome-new-member", { method: "POST" }).catch(
+        () => {}
+      );
+    }, 8000);
+    return () => clearTimeout(trigger);
+  }, [showWelcome]);
+
   // ── Cadence agent exchange trigger ──────────────────────────────────
   // Fires the live Sage↔Clio dialogue on a 15-min floor (cold cluster).
   // Server enforces the floor; client-side cache prevents wasted LLM calls.

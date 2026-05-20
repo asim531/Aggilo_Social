@@ -100,9 +100,9 @@ export default async function AdminOverviewPage() {
       tone: welfareOpen.count ? "alert" : "success",
     },
     {
-      label: "Character — open",
+      label: "Care — open",
       value: characterOpen.count ?? 0,
-      hint: characterOpen.count ? "Sage flagged content" : "All clear",
+      hint: characterOpen.count ? "Needs your attention" : "All clear",
       href: "/admin/character",
       tone: characterOpen.count ? "alert" : "success",
     },
@@ -116,9 +116,9 @@ export default async function AdminOverviewPage() {
       value: posts24h.count ?? 0,
     },
     {
-      label: "Sage decisions (24h)",
+      label: "Sage activity (24h)",
       value: sageDecisions24h.count ?? 0,
-      hint: silenceRate !== null ? `${silenceRate}% silent` : "no decisions yet",
+      hint: silenceRate !== null ? `${silenceRate}% silent` : "no activity yet",
       href: "/admin/thoughts",
     },
     {
@@ -195,18 +195,18 @@ export default async function AdminOverviewPage() {
         <h2 className="text-sm font-semibold text-gray-900 mb-2">How this dashboard works</h2>
         <ul className="text-xs text-gray-600 space-y-1.5 leading-relaxed">
           <li>
-            <strong>Welfare and Character</strong> badges fire in realtime —
-            you see them tick up the moment Sage flags something. Both queues
-            need active human judgment; the AI never resolves them itself.
+            <strong>Welfare and Care</strong> badges fire in realtime — you see
+            them tick up the moment something needs your attention. Both queues
+            need active human judgment; the system never resolves them itself.
           </li>
           <li>
-            <strong>Agent Thoughts</strong> shows every Sage decision (which
-            framework step matched, what was said or stayed silent) and every
-            Clio↔Sage exchange. The full decision tree is queryable.
+            <strong>Agent Thoughts</strong> shows what the agents have been
+            doing in this room — Sage&apos;s posts and silences, plus the live
+            Clio↔Sage exchanges about how the room is doing.
           </li>
           <li>
             <strong>Vault</strong> is the source of truth for verified
-            references. Gaps Sage notices in real cluster activity surface
+            references. Gaps the agents notice in real cluster activity surface
             here as suggested additions.
           </li>
           <li>
@@ -216,8 +216,8 @@ export default async function AdminOverviewPage() {
             — when reached, agents step back gracefully.
           </li>
           <li>
-            <strong>Features</strong> shows what Sage and Clio have proposed
-            to make this room better, what members upvoted, what you approved
+            <strong>Features</strong> shows what the agents have proposed to
+            make this room better, what members upvoted, what you approved
             for development.
           </li>
         </ul>

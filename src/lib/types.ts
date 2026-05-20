@@ -18,7 +18,8 @@ export type PostSubtype =
   | "skill_dialogue"
   | "skill_dialogue_response"
   | "skill_activation"
-  | "dialogue_transition";
+  | "dialogue_transition"
+  | "welcome";
 
 export interface Post {
   id: string;

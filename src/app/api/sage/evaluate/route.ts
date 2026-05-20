@@ -4,6 +4,7 @@ import {
   buildSageMessages,
   detectCharacterConcern,
   extractSageDecision,
+  isSagePostRepetitive,
 } from "@/lib/sage-prompt";
 import { detectWelfareSignal } from "@/lib/clio-prompt";
 import {
@@ -98,6 +99,14 @@ export async function POST(request: Request) {
       .eq("verified_by_founder", true)
       .limit(10);
 
+    // Recent Sage posts — used for repetition guard
+    const { data: recentSagePosts } = await supabase
+      .from("posts")
+      .select("content, created_at")
+      .eq("is_sage", true)
+      .order("created_at", { ascending: false })
+      .limit(15);
+
     const messages = buildSageMessages(
       triggeringPost.content,
       (recentPosts as PostWithAuthor[]) || [],
@@ -106,6 +115,7 @@ export async function POST(request: Request) {
         mentionsSage,
         isWelfare,
         isCharacterConcern: characterConcern.matched,
+        recentSagePosts: (recentSagePosts || []).map((p) => p.content),
       }
     );
 
@@ -139,7 +149,17 @@ export async function POST(request: Request) {
 
     // ── Parse Sage's structured decision tag ─────────────────────────
     const { visible, decision } = extractSageDecision(result.content);
-    const isSilent = visible === "[SAGE_SILENT]" || visible.length === 0;
+    let isSilent = visible === "[SAGE_SILENT]" || visible.length === 0;
+
+    // ── Application-layer repetition guard ──────────────────────────
+    // Belt-and-braces with the prompt-level guard. If the model still
+    // produced a near-duplicate of a recent post, suppress it.
+    if (!isSilent) {
+      const priorContents = (recentSagePosts || []).map((p) => p.content);
+      if (isSagePostRepetitive(visible, priorContents)) {
+        isSilent = true;
+      }
+    }
 
     // Log Sage's decision regardless of silent or responded
     await supabase.from("sage_decision_logs").insert({
