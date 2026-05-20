@@ -321,6 +321,10 @@ export default function ClioFab({
   async function handleSend() {
     if (!input.trim() || thinking) return;
 
+    void import("@/lib/track").then(({ track }) =>
+      track("clio_message_sent", { tab, len: input.trim().length })
+    );
+
     const userMsg: ClioMessage = {
       role: "user",
       content: input.trim(),

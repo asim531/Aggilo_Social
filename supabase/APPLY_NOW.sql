@@ -629,3 +629,568 @@ BEGIN
 END $$;
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║  v1.5 — 7-Principles foundation                                 ║
+-- ║                                                                  ║
+-- ║  Closed loops, legible organization, software factories,        ║
+-- ║  token-max observability, monotheism guardrail. Every table     ║
+-- ║  here is the persistent memory the AI needs to self-improve.    ║
+-- ║                                                                  ║
+-- ║  Idempotent. Safe to re-run.                                    ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+-- ── 13) llm_response_logs ────────────────────────────────────────
+-- Every LLM call. Cost, tokens, latency, decision summary, fallback flag.
+-- Foundation for token-max measurement and closed-loop refinement.
+CREATE TABLE IF NOT EXISTS public.llm_response_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent VARCHAR(32) NOT NULL,                -- 'sage' | 'clio' | 'cadence' | 'sage_dua_select' | 'clio_dua_review' | 'link_alignment'
+  operation_key VARCHAR(64) NOT NULL,        -- 'sage_evaluate' | 'clio_chat' | 'clio_ephemeral' | 'sage_dua_select' | 'cadence_exchange' | etc.
+  model VARCHAR(128),                        -- model id actually used
+  base_url VARCHAR(256),                     -- to track primary vs fallback
+  fallback_used BOOLEAN DEFAULT FALSE,
+  prompt_tokens INT,
+  completion_tokens INT,
+  total_tokens INT,
+  latency_ms INT,
+  http_status INT,
+  decision_summary VARCHAR(64),              -- 'silent' | 'responded' | 'cadence_blocked' | 'daily_cap' | 'no_signal' | 'pointer' | 'rejected' | 'approved' | 'refined' | 'error'
+  error_message TEXT,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  related_post_id UUID REFERENCES public.posts(id) ON DELETE SET NULL,
+  cluster_id TEXT,
+  cost_estimate_usd NUMERIC(10, 6),          -- per-call estimate; reconciled monthly
+  prompt_hash VARCHAR(64),                   -- sha256 of system prompt — drift detection
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_llm_logs_recent
+  ON public.llm_response_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_llm_logs_agent_op
+  ON public.llm_response_logs(agent, operation_key, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_llm_logs_user
+  ON public.llm_response_logs(user_id, created_at DESC);
+
+ALTER TABLE public.llm_response_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can read llm logs" ON public.llm_response_logs;
+CREATE POLICY "Admins can read llm logs"
+  ON public.llm_response_logs FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+DROP POLICY IF EXISTS "System can insert llm logs" ON public.llm_response_logs;
+CREATE POLICY "System can insert llm logs"
+  ON public.llm_response_logs FOR INSERT
+  WITH CHECK (true);
+
+-- ── 14) sage_decision_logs ────────────────────────────────────────
+-- Sage's framework decision on each post: which step matched, what was
+-- considered, what was rejected. Closed loop on the message_review tree.
+CREATE TABLE IF NOT EXISTS public.sage_decision_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
+  llm_log_id UUID REFERENCES public.llm_response_logs(id) ON DELETE SET NULL,
+  step_matched VARCHAR(32),                  -- 'welfare' | 'character' | 'citation' | 'authority_redirect' | 'reference_surface' | 'care_witness' | 'witness_participation' | 'silent'
+  step_rationale TEXT,                       -- model's explanation
+  vault_id_considered UUID REFERENCES public.dua_vault(id) ON DELETE SET NULL,
+  vault_id_used UUID REFERENCES public.dua_vault(id) ON DELETE SET NULL,
+  response_text TEXT,                        -- null if SAGE_SILENT
+  signals_detected JSONB DEFAULT '{}',       -- {welfare: bool, mentions_sage: bool, character_concern: bool}
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sage_decisions_post
+  ON public.sage_decision_logs(post_id);
+CREATE INDEX IF NOT EXISTS idx_sage_decisions_step
+  ON public.sage_decision_logs(step_matched, created_at DESC);
+
+ALTER TABLE public.sage_decision_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can read sage decisions" ON public.sage_decision_logs;
+CREATE POLICY "Admins can read sage decisions"
+  ON public.sage_decision_logs FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+DROP POLICY IF EXISTS "System can insert sage decisions" ON public.sage_decision_logs;
+CREATE POLICY "System can insert sage decisions"
+  ON public.sage_decision_logs FOR INSERT
+  WITH CHECK (true);
+
+-- ── 15) agent_feedback ────────────────────────────────────────────
+-- 👍/👎 on Sage Timeline cards and Clio bubbles. Closes the loop on
+-- agent quality.
+CREATE TABLE IF NOT EXISTS public.agent_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  agent VARCHAR(16) NOT NULL,                -- 'sage' | 'clio'
+  related_post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
+  llm_log_id UUID REFERENCES public.llm_response_logs(id) ON DELETE SET NULL,
+  signal VARCHAR(16) NOT NULL,               -- 'helpful' | 'unhelpful' | 'inappropriate' | 'inaccurate'
+  note TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, related_post_id, signal)   -- one signal per user per post
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_feedback_recent
+  ON public.agent_feedback(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_agent_feedback_post
+  ON public.agent_feedback(related_post_id);
+
+ALTER TABLE public.agent_feedback ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own feedback" ON public.agent_feedback;
+CREATE POLICY "Users can read own feedback"
+  ON public.agent_feedback FOR SELECT
+  USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own feedback" ON public.agent_feedback;
+CREATE POLICY "Users can insert own feedback"
+  ON public.agent_feedback FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own feedback" ON public.agent_feedback;
+CREATE POLICY "Users can delete own feedback"
+  ON public.agent_feedback FOR DELETE
+  USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Admins can read all feedback" ON public.agent_feedback;
+CREATE POLICY "Admins can read all feedback"
+  ON public.agent_feedback FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+-- ── 16) behavioural_events ────────────────────────────────────────
+-- Every meaningful user action. Foundation for AGGIL segment intelligence
+-- (PRD 08) and Clio's prompt-improvisation loop. AGGIL-tagged at write time.
+CREATE TABLE IF NOT EXISTS public.behavioural_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  event_type VARCHAR(64) NOT NULL,
+    -- 'post_created' | 'post_replied' | 'post_liked' | 'reply_opened' |
+    -- 'clio_message_sent' | 'clio_tab_switched' | 'clio_panel_opened' | 'clio_panel_closed' |
+    -- 'dua_translation_revealed' | 'dua_pointer_followed' |
+    -- 'agent_thoughts_opened' | 'agent_thoughts_minimized' |
+    -- 'handoff_greeting_seen' | 'handoff_greeting_responded' | 'handoff_greeting_dismissed' |
+    -- 'link_card_opened' | 'feature_upvoted' | 'feature_commented' |
+    -- 'sage_feedback_given' | 'clio_feedback_given' |
+    -- 'cluster_landed' | 'session_started'
+  cluster_id TEXT,
+  event_data JSONB DEFAULT '{}',
+  -- AGGIL snapshot at event time (denormalized — segments shift over time)
+  country VARCHAR(64),
+  gender VARCHAR(16),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_behav_events_recent
+  ON public.behavioural_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_behav_events_user
+  ON public.behavioural_events(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_behav_events_type
+  ON public.behavioural_events(event_type, created_at DESC);
+
+ALTER TABLE public.behavioural_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can read behavioural events" ON public.behavioural_events;
+CREATE POLICY "Admins can read behavioural events"
+  ON public.behavioural_events FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+DROP POLICY IF EXISTS "System can insert behavioural events" ON public.behavioural_events;
+CREATE POLICY "System can insert behavioural events"
+  ON public.behavioural_events FOR INSERT
+  WITH CHECK (true);
+
+-- ── 17) character_concerns ────────────────────────────────────────
+-- Monotheism guardrail. When a message rejects God, mocks faith, promotes
+-- bad character, or coerces against practice — Sage logs here, admin sees
+-- in dashboard and can step in. Soul cross-cutting principle.
+CREATE TABLE IF NOT EXISTS public.character_concerns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  signal_type VARCHAR(48) NOT NULL,
+    -- 'rejecting_monotheism' | 'mocking_faith' | 'promoting_bad_character' |
+    -- 'coercion_against_practice' | 'dismissing_dua' | 'other'
+  signal_excerpt TEXT NOT NULL,              -- ≤500 chars from the post
+  agent_response_text TEXT,                  -- what Sage said
+  admin_notified_at TIMESTAMPTZ DEFAULT NOW(),
+  admin_response TEXT,
+  admin_responded_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  resolved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_character_concerns_unresolved
+  ON public.character_concerns(created_at DESC)
+  WHERE resolved_at IS NULL;
+
+ALTER TABLE public.character_concerns ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can read character concerns" ON public.character_concerns;
+CREATE POLICY "Admins can read character concerns"
+  ON public.character_concerns FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+DROP POLICY IF EXISTS "Admins can update character concerns" ON public.character_concerns;
+CREATE POLICY "Admins can update character concerns"
+  ON public.character_concerns FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+DROP POLICY IF EXISTS "System can insert character concerns" ON public.character_concerns;
+CREATE POLICY "System can insert character concerns"
+  ON public.character_concerns FOR INSERT
+  WITH CHECK (true);
+
+-- Realtime — admin dashboard surfaces these immediately
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'character_concerns'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.character_concerns;
+  END IF;
+END $$;
+ALTER TABLE public.character_concerns REPLICA IDENTITY FULL;
+
+-- Welfare notifications also need realtime for the admin nav badge
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'welfare_notifications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.welfare_notifications;
+  END IF;
+END $$;
+ALTER TABLE public.welfare_notifications REPLICA IDENTITY FULL;
+
+-- ── 18) vault_gap_requests ────────────────────────────────────────
+-- When Sage detects an incomplete dua but vault + Tier 1 lack a verified
+-- version, she flags a gap. Admin sees in vault curator and can add.
+-- "No human middleware" — Sage routes to admin without a polling step.
+CREATE TABLE IF NOT EXISTS public.vault_gap_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  related_post_id UUID REFERENCES public.posts(id) ON DELETE SET NULL,
+  member_text TEXT NOT NULL,                 -- excerpt that triggered the gap
+  sage_search_attempted TEXT,                -- what Sage looked for
+  suggested_thematic_tags TEXT[] DEFAULT '{}',
+  status VARCHAR(16) DEFAULT 'open',         -- 'open' | 'addressed' | 'dismissed'
+  resolved_vault_id UUID REFERENCES public.dua_vault(id) ON DELETE SET NULL,
+  resolved_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  resolved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_vault_gaps_open
+  ON public.vault_gap_requests(created_at DESC)
+  WHERE status = 'open';
+
+ALTER TABLE public.vault_gap_requests ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins manage vault gaps" ON public.vault_gap_requests;
+CREATE POLICY "Admins manage vault gaps"
+  ON public.vault_gap_requests FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+DROP POLICY IF EXISTS "System can insert vault gaps" ON public.vault_gap_requests;
+CREATE POLICY "System can insert vault gaps"
+  ON public.vault_gap_requests FOR INSERT
+  WITH CHECK (true);
+
+-- ── 19) vault_sources ─────────────────────────────────────────────
+-- Admin-managed list of trusted sources. For MVP these are stored but
+-- not yet auto-pulled. Sage/Clio can suggest "we should add this source"
+-- as feature proposals; admin approves and adds here.
+CREATE TABLE IF NOT EXISTS public.vault_sources (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_name VARCHAR(128) NOT NULL,         -- 'Sahih al-Bukhari' | 'Sunnah.com' | 'Quran.com'
+  source_type VARCHAR(32) NOT NULL,          -- 'api' | 'rss' | 'manual'
+  base_url TEXT,
+  api_key_env VARCHAR(64),                   -- name of env var holding the key (never the key itself)
+  notes TEXT,
+  active BOOLEAN DEFAULT TRUE,
+  added_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.vault_sources ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins manage vault sources" ON public.vault_sources;
+CREATE POLICY "Admins manage vault sources"
+  ON public.vault_sources FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+-- ── 20) cluster_features ──────────────────────────────────────────
+-- Features tab. Agents propose in Agent Thoughts; on Clio approval they
+-- surface here for member upvote/comment. MVP doesn't develop the tools,
+-- but the polling and feedback loop is real — "your feedback matters."
+CREATE TABLE IF NOT EXISTS public.cluster_features (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id TEXT NOT NULL,
+  display_name VARCHAR(128) NOT NULL,
+  display_description TEXT NOT NULL,
+  category VARCHAR(48),                      -- 'reflection' | 'reminder' | 'tracking' | 'reference' | 'community'
+  status VARCHAR(32) DEFAULT 'in_features_tab',
+    -- 'proposed_in_thoughts' | 'in_features_tab' | 'members_engaged' |
+    -- 'admin_approved' | 'in_development' | 'live' | 'deferred' | 'rejected'
+  proposed_by VARCHAR(16) NOT NULL,          -- 'sage' | 'clio' | 'agents_joint'
+  rationale TEXT,                            -- one-paragraph explanation
+  chatbox_exchange_id UUID REFERENCES public.agent_chatbox_exchanges(id) ON DELETE SET NULL,
+  upvote_count INT DEFAULT 0,                -- denormalized
+  comment_count INT DEFAULT 0,               -- denormalized
+  admin_decision_note TEXT,
+  admin_decision_at TIMESTAMPTZ,
+  admin_decision_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  scheduled_eta VARCHAR(48),                 -- 'Q3 2026' | 'next sprint' | etc.
+  activated_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cluster_features_visible
+  ON public.cluster_features(cluster_id, status, upvote_count DESC);
+
+ALTER TABLE public.cluster_features ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users read features" ON public.cluster_features;
+CREATE POLICY "Authenticated users read features"
+  ON public.cluster_features FOR SELECT
+  TO authenticated
+  USING (status NOT IN ('rejected', 'deferred', 'proposed_in_thoughts'));
+
+DROP POLICY IF EXISTS "Admins read all features" ON public.cluster_features;
+CREATE POLICY "Admins read all features"
+  ON public.cluster_features FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+DROP POLICY IF EXISTS "System can insert features" ON public.cluster_features;
+CREATE POLICY "System can insert features"
+  ON public.cluster_features FOR INSERT
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admins update features" ON public.cluster_features;
+CREATE POLICY "Admins update features"
+  ON public.cluster_features FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+-- ── 21) cluster_feature_upvotes ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.cluster_feature_upvotes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  feature_id UUID NOT NULL REFERENCES public.cluster_features(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(feature_id, user_id)
+);
+
+ALTER TABLE public.cluster_feature_upvotes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users read upvotes" ON public.cluster_feature_upvotes;
+CREATE POLICY "Authenticated users read upvotes"
+  ON public.cluster_feature_upvotes FOR SELECT
+  TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "Users manage own upvotes" ON public.cluster_feature_upvotes;
+CREATE POLICY "Users manage own upvotes"
+  ON public.cluster_feature_upvotes FOR ALL
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+-- ── 22) cluster_feature_comments ──────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.cluster_feature_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  feature_id UUID NOT NULL REFERENCES public.cluster_features(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  hidden BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_feature_comments_feature
+  ON public.cluster_feature_comments(feature_id, created_at DESC);
+
+ALTER TABLE public.cluster_feature_comments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users read comments" ON public.cluster_feature_comments;
+CREATE POLICY "Authenticated users read comments"
+  ON public.cluster_feature_comments FOR SELECT
+  TO authenticated
+  USING (NOT hidden);
+
+DROP POLICY IF EXISTS "Users insert own comments" ON public.cluster_feature_comments;
+CREATE POLICY "Users insert own comments"
+  ON public.cluster_feature_comments FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Admins moderate comments" ON public.cluster_feature_comments;
+CREATE POLICY "Admins moderate comments"
+  ON public.cluster_feature_comments FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+-- ── 23) agent_prompt_proposals ────────────────────────────────────
+-- Clio's prompt-improvisation loop. Clio reads logs/feedback/behaviour,
+-- drafts a refined prompt for Sage, writes here. Admin reviews, activates.
+-- "AI as OS": the AI improvises its own prompts based on observed reality.
+CREATE TABLE IF NOT EXISTS public.agent_prompt_proposals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  proposed_by VARCHAR(16) NOT NULL,          -- 'clio' | 'admin'
+  target_agent VARCHAR(16) NOT NULL,         -- 'sage' | 'clio'
+  base_prompt_hash VARCHAR(64),              -- the hash of the prompt this proposal is based on
+  proposed_prompt TEXT NOT NULL,
+  rationale TEXT NOT NULL,                   -- why — what Clio observed
+  evidence JSONB DEFAULT '{}',               -- counts, sample post ids, feedback summary
+  status VARCHAR(16) DEFAULT 'pending',      -- 'pending' | 'approved' | 'rejected' | 'superseded'
+  admin_decision_at TIMESTAMPTZ,
+  admin_decision_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  admin_decision_note TEXT,
+  activated_at TIMESTAMPTZ,
+  superseded_by UUID REFERENCES public.agent_prompt_proposals(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_prompt_proposals_pending
+  ON public.agent_prompt_proposals(target_agent, created_at DESC)
+  WHERE status = 'pending';
+
+ALTER TABLE public.agent_prompt_proposals ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins manage prompt proposals" ON public.agent_prompt_proposals;
+CREATE POLICY "Admins manage prompt proposals"
+  ON public.agent_prompt_proposals FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+DROP POLICY IF EXISTS "System can insert prompt proposals" ON public.agent_prompt_proposals;
+CREATE POLICY "System can insert prompt proposals"
+  ON public.agent_prompt_proposals FOR INSERT
+  WITH CHECK (true);
+
+-- ── 24) agent_chatbox_views ───────────────────────────────────────
+-- Per-user view tracking for Agent Thoughts. Server-side lets state
+-- persist across devices.
+CREATE TABLE IF NOT EXISTS public.agent_chatbox_views (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  cluster_id TEXT NOT NULL,
+  last_viewed_exchange INT DEFAULT 0,
+  minimized BOOLEAN DEFAULT FALSE,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, cluster_id)
+);
+
+ALTER TABLE public.agent_chatbox_views ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own chatbox views" ON public.agent_chatbox_views;
+CREATE POLICY "Users manage own chatbox views"
+  ON public.agent_chatbox_views FOR ALL
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+-- ── 25) Auto-elevate admin on first login ─────────────────────────
+-- The Edge of "no human middleware" + "DRI archetype": email allowlist
+-- (env-managed) auto-promotes profiles to 'founder' role on creation.
+-- We can't read env vars from inside Postgres, so we wire the allowlist
+-- check into the existing handle_new_user trigger via a settings table.
+CREATE TABLE IF NOT EXISTS public.platform_settings (
+  key VARCHAR(64) PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins manage platform settings" ON public.platform_settings;
+CREATE POLICY "Admins manage platform settings"
+  ON public.platform_settings FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('founder', 'manager')
+    )
+  );
+
+-- Updated trigger: auto-promote if email matches admin_emails setting
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+  admin_csv TEXT;
+  is_admin BOOLEAN := FALSE;
+BEGIN
+  SELECT value INTO admin_csv FROM public.platform_settings WHERE key = 'admin_emails';
+  IF admin_csv IS NOT NULL AND NEW.email IS NOT NULL THEN
+    is_admin := position(lower(NEW.email) in lower(admin_csv)) > 0;
+  END IF;
+
+  INSERT INTO public.profiles (id, nickname, role)
+  VALUES (
+    NEW.id,
+    COALESCE(split_part(NEW.email, '@', 1), 'Sister'),
+    CASE WHEN is_admin THEN 'founder' ELSE 'member' END
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+NOTIFY pgrst, 'reload schema';

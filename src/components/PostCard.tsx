@@ -6,6 +6,7 @@ import { PostWithAuthor } from "@/lib/types";
 import DuaReference from "./DuaReference";
 import DuaProgressiveReveal, { parseDuaPost } from "./DuaProgressiveReveal";
 import LinkPreviewCard, { extractUrls, renderTextWithLinks } from "./LinkPreviewCard";
+import SageFeedback from "./SageFeedback";
 import { SAGE_THINKING, currentPhrase } from "@/lib/thinking-messages";
 import { createClient } from "@/lib/supabase-browser";
 import { usePresence } from "@/lib/presence-context";
@@ -48,7 +49,7 @@ function RoleBadge({ role }: { role: string }) {
   if (role === "founder") {
     return (
       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">
-        Founder
+        Admin
       </span>
     );
   }
@@ -418,6 +419,11 @@ export default function PostCard({
           <SagePostContent content={post.content} postId={post.id} />
         ) : (
           <MemberPostContent content={post.content} />
+        )}
+
+        {/* Feedback signal — only for Sage-authored posts. Closed-loops principle. */}
+        {isSage && !post.id.startsWith("optimistic-") && (
+          <SageFeedback postId={post.id} agent="sage" />
         )}
 
         {!post.parent_id && onReply && (

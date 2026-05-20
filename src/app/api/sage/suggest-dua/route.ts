@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { ChatCompletionResponse, DuaVaultEntry, PostWithAuthor } from "@/lib/types";
+import { DuaVaultEntry, PostWithAuthor } from "@/lib/types";
 import { CLIO_DUA_REVIEW_PROMPT } from "@/lib/clio-prompt";
+import { llmCall } from "@/lib/llm-fetch";
 
 /**
  * POST /api/sage/suggest-dua
@@ -11,20 +12,15 @@ import { CLIO_DUA_REVIEW_PROMPT } from "@/lib/clio-prompt";
  * If approved, the dua is posted to the cluster Timeline as a Sage post
  * with the dua_vault_id encoded so the renderer can do progressive reveal.
  *
- * Spec: Wave E (V3 Phase 6 extension)
- *       Architecture: Part 4 §24 (chatbox feature activation authority,
- *       Clio reviews Sage proposals before posting).
+ * V3 7-principles update: both LLM calls (sage selection, clio review)
+ * routed through llmCall() — full observability, fallback, budget-aware.
  *
  * Trigger: Autonomous — fires on first cluster page load AFTER the 6h
- * cadence window opens. Architecture Part 5 §26.1 daily cap also enforced
- * (max 2 Sage host_content posts per cluster per 24h). Server-side guards
- * make this idempotent: concurrent calls from multiple tabs cannot
- * produce duplicate posts.
+ * cadence window opens. Daily cap of 2 also enforced. Server-side guards
+ * make this idempotent.
  */
 
-// Cadence floor: minimum hours between Sage dua posts in the same cluster
 const MIN_HOURS_BETWEEN_DUAS = 6;
-// Daily cap: max Sage dua posts per cluster per 24h (architecture Part 5 §26.1)
 const MAX_DUAS_PER_24H = 2;
 
 interface SageDuaProposal {
@@ -62,10 +58,10 @@ Hard rules:
 - The dua MUST come from the eligible pool provided below — never invent one
 - The context line MUST refer to something specific in the recent posts — never generic ("for difficult times")
 - Pick the dua whose themes most closely match what the room is actually talking about
-- Variety matters — don't pick the same kind of dua you'd pick generically. Look at the conversation; if it's about anxiety, pick an anxiety dua; if it's about gratitude, pick a gratitude dua
+- Variety matters — don't pick the same kind of dua you'd pick generically
 - If nothing in the room genuinely calls for a dua, output: {"vault_id": null, "context": "no clear signal in the room right now"}`;
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -73,10 +69,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // ── Cadence guard: refuse if a Sage dua post already exists in the
-    // last MIN_HOURS_BETWEEN_DUAS hours, OR if the daily cap is hit.
-    // This makes the endpoint idempotent — concurrent calls from multiple
-    // tabs opening the cluster simultaneously cannot produce duplicates.
     const sixHoursAgo = new Date(
       Date.now() - MIN_HOURS_BETWEEN_DUAS * 60 * 60 * 1000
     ).toISOString();
@@ -95,10 +87,7 @@ export async function POST(request: Request) {
       /\[DUA_VAULT_ID:[0-9a-f-]+\]/i.test(p.content)
     );
 
-    // Guard 1: anything in the last 6h
-    const tooSoon = recentDuaPosts.find(
-      (p) => p.created_at > sixHoursAgo
-    );
+    const tooSoon = recentDuaPosts.find((p) => p.created_at > sixHoursAgo);
     if (tooSoon) {
       return NextResponse.json({
         outcome: "cadence_blocked",
@@ -107,7 +96,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Guard 2: daily cap
     if (recentDuaPosts.length >= MAX_DUAS_PER_24H) {
       return NextResponse.json({
         outcome: "daily_cap",
@@ -115,14 +103,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // ── Variety guard: collect vault_ids already posted recently ────
-    // We don't want Sage to monotonously surface the same dua. We:
-    //   1. Pull all dua-tagged posts from the last 14 days
-    //   2. Extract their vault_ids from the [DUA_VAULT_ID:...] marker
-    //   3. Exclude those entries from Sage's selection pool
-    // If after exclusion the pool would be empty, we let Sage pick from
-    // the full pool but mark her response with `pointer_only` so she
-    // posts a short reference rather than republishing the dua.
     const fourteenDaysAgo = new Date(
       Date.now() - 14 * 24 * 60 * 60 * 1000
     ).toISOString();
@@ -139,7 +119,6 @@ export async function POST(request: Request) {
       const m = p.content.match(/\[DUA_VAULT_ID:([0-9a-f-]+)\]/i);
       if (m) {
         recentlyUsedVaultIds.add(m[1]);
-        // Track the most recent post per vault_id
         const existing = vaultIdToPostMap.get(m[1]);
         if (!existing || existing.created_at < p.created_at) {
           vaultIdToPostMap.set(m[1], { post_id: p.id, created_at: p.created_at });
@@ -147,7 +126,6 @@ export async function POST(request: Request) {
       }
     });
 
-    // Fetch recent posts and vault
     const [{ data: recentPosts }, { data: vaultEntries }] = await Promise.all([
       supabase
         .from("posts")
@@ -168,23 +146,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Build the eligible pool: vault entries NOT recently used.
-    // If exclusion empties the pool, fall back to the full pool but flag
-    // the response so Sage posts a pointer rather than a duplicate.
     const eligibleVaultEntries = (vaultEntries as DuaVaultEntry[]).filter(
       (e) => !recentlyUsedVaultIds.has(e.id)
     );
     const usePool =
       eligibleVaultEntries.length > 0 ? eligibleVaultEntries : (vaultEntries as DuaVaultEntry[]);
     const allEligibleExhausted = eligibleVaultEntries.length === 0;
-
-    const llmBaseUrl = process.env.LLM_BASE_URL;
-    const llmApiKey = process.env.LLM_API_KEY;
-    const llmModel = process.env.LLM_MODEL;
-
-    if (!llmBaseUrl || !llmApiKey || !llmModel) {
-      return NextResponse.json({ error: "LLM not configured" }, { status: 500 });
-    }
 
     // ── Step 1: Sage selects a dua ──────────────────────────────────────
     const recentSummary = ((recentPosts || []) as PostWithAuthor[])
@@ -206,14 +173,14 @@ export async function POST(request: Request) {
       )
       .join("\n");
 
-    const sageSelectRes = await fetch(`${llmBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${llmApiKey}`,
+    const sageResult = await llmCall(
+      {
+        agent: "sage_dua_select",
+        operationKey: "sage_dua_select",
+        userId: user.id,
+        clusterId: "the_single_source",
       },
-      body: JSON.stringify({
-        model: llmModel,
+      {
         messages: [
           { role: "system", content: SAGE_DUA_SELECTION_PROMPT },
           {
@@ -222,21 +189,22 @@ export async function POST(request: Request) {
           },
         ],
         temperature: 0.4,
-        max_tokens: 400,
-        response_format: { type: "json_object" },
-      }),
-    });
+        maxTokens: 400,
+        responseFormat: { type: "json_object" },
+      },
+      supabase
+    );
 
-    if (!sageSelectRes.ok) {
-      const errText = await sageSelectRes.text();
-      console.error("Sage selection LLM error:", sageSelectRes.status, errText);
+    if (sageResult.status === "budget_exceeded") {
+      return NextResponse.json({ outcome: "budget_exceeded" });
+    }
+    if (sageResult.status === "error" || !sageResult.content) {
       return NextResponse.json({ error: "Sage selection failed" }, { status: 502 });
     }
 
-    const sageData: ChatCompletionResponse = await sageSelectRes.json();
     let sageChoice: { vault_id: string | null; context: string; title: string };
     try {
-      sageChoice = JSON.parse(sageData.choices[0].message.content);
+      sageChoice = JSON.parse(sageResult.content);
     } catch {
       return NextResponse.json({ error: "Sage returned malformed JSON" }, { status: 502 });
     }
@@ -258,12 +226,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── Pointer-only path: Sage chose a dua already posted recently ──
-    // Two ways this can happen:
-    //   1. allEligibleExhausted (the entire eligible pool was excluded)
-    //   2. Sage ignored the eligible pool and picked a recent one anyway
-    // Either way, instead of republishing the dua, Sage posts a short
-    // pointer back to the existing post. The frontend can scroll to it.
+    // Pointer-only path
     const existingPost = vaultIdToPostMap.get(chosenEntry.id);
     if (existingPost) {
       const pointerContent = `${sageChoice.context}\n\n[POINTER_TO_POST:${existingPost.post_id}]\nAlready surfaced this dua recently — "${chosenEntry.title || "Untitled"}". Tap to scroll up to it.`;
@@ -317,33 +280,35 @@ export async function POST(request: Request) {
     };
 
     // ── Step 2: Clio reviews ─────────────────────────────────────────────
-    const clioReviewRes = await fetch(`${llmBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${llmApiKey}`,
+    const clioResult = await llmCall(
+      {
+        agent: "clio_dua_review",
+        operationKey: "clio_dua_review",
+        userId: user.id,
+        clusterId: "the_single_source",
       },
-      body: JSON.stringify({
-        model: llmModel,
+      {
         messages: [
           { role: "system", content: CLIO_DUA_REVIEW_PROMPT },
           { role: "user", content: JSON.stringify(proposal) },
         ],
         temperature: 0.4,
-        max_tokens: 300,
-        response_format: { type: "json_object" },
-      }),
-    });
+        maxTokens: 300,
+        responseFormat: { type: "json_object" },
+      },
+      supabase
+    );
 
-    if (!clioReviewRes.ok) {
-      console.error("Clio review LLM error:", clioReviewRes.status);
+    if (clioResult.status === "budget_exceeded") {
+      return NextResponse.json({ outcome: "budget_exceeded" });
+    }
+    if (clioResult.status === "error" || !clioResult.content) {
       return NextResponse.json({ error: "Clio review failed" }, { status: 502 });
     }
 
-    const clioData: ChatCompletionResponse = await clioReviewRes.json();
     let clioReview: ClioReview;
     try {
-      clioReview = JSON.parse(clioData.choices[0].message.content);
+      clioReview = JSON.parse(clioResult.content);
     } catch {
       return NextResponse.json({ error: "Clio returned malformed review JSON" }, { status: 502 });
     }
@@ -357,8 +322,6 @@ export async function POST(request: Request) {
     }
 
     // ── Step 3: Post to Timeline ─────────────────────────────────────────
-    // The post content is a structured block that PostCard will detect via
-    // the [DUA_VAULT_ID:...] marker and render with progressive reveal.
     const witness = clioReview.witness_line ? `\n\n${clioReview.witness_line}` : "";
     const finalContext = clioReview.refined_context || proposal.context;
 
@@ -395,11 +358,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── Log the Sage↔Clio collaboration to the live chatbox ─────────
-    // The chatbox shows real agent dialogue, not seeded text. This is
-    // the actual exchange that produced the post — Sage proposed the
-    // dua, Clio reviewed the citation, both agreed. Members can read
-    // this collaboration as it happens.
+    // Log the Sage↔Clio collaboration to the live chatbox
     try {
       const { count } = await supabase
         .from("agent_chatbox_exchanges")
@@ -428,7 +387,6 @@ export async function POST(request: Request) {
           related_post_id: post.id,
         });
     } catch (chatboxErr) {
-      // Non-fatal — chatbox table may not exist yet (pre-migration)
       console.warn("Chatbox exchange log failed (non-fatal):", chatboxErr);
     }
 

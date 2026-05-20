@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { adminClient } from "@/lib/supabase-admin";
+import { ensureAdminRoleForEmail } from "@/lib/admin-elevation";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -32,6 +34,18 @@ export async function GET(request: Request) {
             .from("profiles")
             .update(updates)
             .eq("id", user.id);
+        }
+
+        // Admin elevation — uses service role to update role if email is
+        // in the ADMIN_EMAILS allowlist. Idempotent: a regular member's
+        // role stays 'member'; an allowlisted email becomes 'founder'.
+        try {
+          if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            const admin = adminClient();
+            await ensureAdminRoleForEmail(admin, user.id, user.email);
+          }
+        } catch (err) {
+          console.warn("[auth/callback] admin elevation skipped:", (err as Error).message);
         }
       }
 

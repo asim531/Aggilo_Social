@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && request.nextUrl.pathname.startsWith("/cluster")) {
+  if (!user && (request.nextUrl.pathname.startsWith("/cluster") || request.nextUrl.pathname.startsWith("/admin"))) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -41,5 +41,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/cluster/:path*"],
+  matcher: ["/", "/cluster/:path*", "/admin/:path*"],
 };

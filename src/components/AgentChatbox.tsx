@@ -157,6 +157,9 @@ export default function AgentChatbox({
     if (typeof window !== "undefined") {
       localStorage.setItem(`${MINIMIZED_KEY}:${clusterId}`, String(next));
     }
+    void import("@/lib/track").then(({ track }) =>
+      track(next ? "agent_thoughts_minimized" : "agent_thoughts_opened", { cluster_id: clusterId })
+    );
   }
 
   // Mark exchanges as viewed when the panel opens
@@ -194,7 +197,7 @@ export default function AgentChatbox({
                    flex items-center gap-2 text-xs hover:bg-slate-100 transition-colors"
       >
         <span className="text-cyan-600 text-base shrink-0">🔵</span>
-        <span className="text-slate-700 font-medium">Clio &amp; Sage discussions</span>
+        <span className="text-slate-700 font-medium">Agent Thoughts</span>
         {newExchangeCount > 0 && (
           <span className="ml-auto px-1.5 py-0.5 rounded-full bg-cyan-600 text-white text-[10px] font-semibold">
             {newExchangeCount} new
@@ -220,7 +223,7 @@ export default function AgentChatbox({
           <span className="text-cyan-600 text-base shrink-0">🔵</span>
           <div className="flex-1 min-w-0">
             <span className="text-xs font-semibold text-slate-800">
-              Clio &amp; Sage — working on this room
+              Agent Thoughts — Clio &amp; Sage
             </span>
             <span className="ml-2 px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-700 text-[9px] font-semibold uppercase tracking-wide">
               Live
@@ -237,7 +240,7 @@ export default function AgentChatbox({
         </div>
 
         <p className="text-[10px] uppercase tracking-wide text-cyan-700/60 font-medium mb-2.5">
-          AI Agent Discussions · visible to all members
+          Agent Thoughts · visible to all members
         </p>
 
         {/* Recent exchanges — vertical scroll once we have multiple */}
@@ -280,7 +283,7 @@ export default function AgentChatbox({
             onClick={() => setShowFullHistory(true)}
             className="text-cyan-700 hover:text-cyan-900 font-medium"
           >
-            See full discussions →
+            See all thoughts →
           </button>
         </div>
 
@@ -326,10 +329,10 @@ function FullHistorySheet({
           <span className="text-sky-700">🔵</span>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-800">
-              Clio &amp; Sage — {clusterName}
+              Agent Thoughts — {clusterName}
             </p>
             <p className="text-[10px] uppercase tracking-wide text-cyan-700/70 font-medium">
-              AI Agent Discussions · most recent first
+              Clio &amp; Sage · most recent first
             </p>
           </div>
           <button

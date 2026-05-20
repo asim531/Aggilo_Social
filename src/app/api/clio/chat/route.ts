@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { ChatCompletionResponse, PostWithAuthor, DuaVaultEntry } from "@/lib/types";
+import { PostWithAuthor, DuaVaultEntry } from "@/lib/types";
 import { buildClioClusterMessages, detectWelfareSignal } from "@/lib/clio-prompt";
-import { llmFetch } from "@/lib/llm-fetch";
+import { llmCall } from "@/lib/llm-fetch";
 
 /**
  * POST /api/clio/chat
  *
  * Cluster-mode Clio. Persistent (in conversation, not yet in DB for MVP).
- * Refactored in V3 Phase 6 to use shared builder + welfare detection.
+ * V3 update: routed through llmCall() for full observability + fallback.
  */
 export async function POST(request: Request) {
   try {
@@ -30,7 +30,6 @@ export async function POST(request: Request) {
       .eq("id", user.id)
       .single();
 
-    // Belt-and-braces welfare check at the app layer
     const isWelfare = detectWelfareSignal(message);
     if (isWelfare) {
       try {
@@ -44,18 +43,16 @@ export async function POST(request: Request) {
             resolved: false,
           });
       } catch {
-        // Table may not exist (pre-migration) — fail silent
+        // pre-migration — fail silent
       }
     }
 
-    // Pull recent cluster posts for awareness (last 10)
     const { data: recentPosts } = await supabase
       .from("posts")
       .select("*, profiles(*)")
       .order("created_at", { ascending: false })
       .limit(10);
 
-    // Optional vault read-only context
     const { data: vaultEntries } = await supabase
       .from("dua_vault")
       .select("id, title, source_collection, hadith_grade")
@@ -70,41 +67,41 @@ export async function POST(request: Request) {
       memberNickname: profile?.nickname,
     });
 
-    const llmBaseUrl = process.env.LLM_BASE_URL;
-    const llmApiKey = process.env.LLM_API_KEY;
-    const llmModel = process.env.LLM_MODEL;
-
-    if (!llmBaseUrl || !llmApiKey || !llmModel) {
-      return NextResponse.json({
-        content: "I'm not fully set up yet. The community is working on it.",
-      });
-    }
-
-    const llmResponse = await llmFetch(`${llmBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${llmApiKey}`,
+    const result = await llmCall(
+      {
+        agent: "clio",
+        operationKey: "clio_chat",
+        userId: user.id,
+        clusterId: "the_single_source",
       },
-      body: JSON.stringify({
-        model: llmModel,
+      {
         messages,
         temperature: 0.6,
-        max_tokens: 400,
-      }),
-    });
+        maxTokens: 400,
+      },
+      supabase
+    );
 
-    if (!llmResponse.ok) {
-      console.error("Clio chat LLM error:", llmResponse.status);
+    if (result.status === "budget_exceeded") {
       return NextResponse.json({
-        content: "I'm having a moment. Try again shortly.",
+        content: result.content,
+        welfare_flagged: isWelfare,
+        budget_exceeded: true,
       });
     }
 
-    const data: ChatCompletionResponse = await llmResponse.json();
-    const content = data.choices?.[0]?.message?.content?.trim() || "I couldn't form a response. Try again.";
+    if (result.status === "error" || !result.content) {
+      return NextResponse.json({
+        content: "I'm having a moment. Try again shortly.",
+        welfare_flagged: isWelfare,
+      });
+    }
 
-    return NextResponse.json({ content, welfare_flagged: isWelfare });
+    return NextResponse.json({
+      content: result.content,
+      welfare_flagged: isWelfare,
+      llm_log_id: result.llmLogId,
+    });
   } catch (error) {
     console.error("Clio chat error:", error);
     return NextResponse.json({

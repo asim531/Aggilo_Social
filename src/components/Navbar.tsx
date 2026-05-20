@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-browser";
@@ -10,6 +11,31 @@ interface NavbarProps {
 
 export default function Navbar({ displayName }: NavbarProps) {
   const router = useRouter();
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  // Show "Admin" link only for founders/managers. Reads the profile once
+  // on mount and caches the answer for the session — RLS still enforces
+  // access on /admin pages, this is just nav UX.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (cancelled) return;
+      if (data && (data.role === "founder" || data.role === "manager")) {
+        setShowAdmin(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -34,6 +60,15 @@ export default function Navbar({ displayName }: NavbarProps) {
 
         <div className="flex items-center gap-4">
           <span className="text-sm text-white/70">{displayName}</span>
+          {showAdmin && (
+            <Link
+              href="/admin"
+              className="text-sm text-aggilo-accent hover:underline"
+              title="Admin dashboard"
+            >
+              Admin
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="text-sm text-white/50 hover:text-white transition-colors"

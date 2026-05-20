@@ -1,116 +1,142 @@
-# Aggilo MVP — Setup Guide
+# Aggilo MVP — Sisters in Dua
 
-## What This Is
+The first **premium cluster** on Aggilo. One cluster, two AI agents (Sage + Clio), a real Admin and Managers, and a closed-loop AI substrate that gets sharper with every interaction.
 
-The Minimum Launchable Product for Aggilo Social: **one cluster** ("The Single Source"), **one AI agent** (Sage), **auth**, and a **feed** where humans and Sage converse together.
-
-**Stack:** Next.js 14 (App Router) + Supabase (auth, DB, realtime) + Tailwind CSS + any OpenAI-compatible LLM API (NVIDIA NIM free tier recommended).
+> **What changed in the latest 7-principles audit:**
+>
+> - Every LLM call now flows through `lib/llm-fetch.ts:llmCall()`, which records to `llm_response_logs` with cost, tokens, latency, decision summary, and fallback flag.
+> - Sage emits a structured decision tag at the end of every response; the platform parses it, logs to `sage_decision_logs`, and strips it before showing the post.
+> - Monotheism / good-character guardrail (Sage Step 0.5) detects rejection of God, mockery of practice, and coercion against members. Logs to `character_concerns`. Admin sees in dashboard.
+> - Behavioural events ingestion at `/api/events` + `lib/track.ts` helper. Foundation for AGGIL segment intelligence.
+> - Member feedback on Sage/Clio output via `agent_feedback` and the SageFeedback component.
+> - Admin dashboard at `/admin` — Welfare, Character, Agent Thoughts, Vault, LLM, Features, Events.
+> - Auto-elevation: emails in `ADMIN_EMAILS` env var are promoted to `founder` role on first sign-in.
+> - Fallback LLM provider (`LLM_FALLBACK_*`) for resilience. Daily budget cap (`LLM_DAILY_BUDGET_USD`) prevents runaway loops.
+> - Premium-cluster terminology: "Founder" → "Admin" everywhere user-facing. DB enum unchanged.
+> - "Agent Chatbox" → "Agent Thoughts" in all UI strings.
+> - Branded magic-link email template at `supabase/email_templates/magic_link.html`.
 
 ---
 
-## Quick Start (5 steps)
+## Quick Start
 
-### 1. Install dependencies
-
+### 1. Install
 ```bash
 cd mvp
 npm install
 ```
 
-### 2. Set up Supabase
+### 2. Supabase
+1. Create a project at supabase.com.
+2. Settings → API → copy `URL`, `anon key`, `service_role key`.
+3. Authentication → Providers → enable Email; for dev, disable "Confirm email".
+4. SQL Editor → paste the entire `supabase/APPLY_NOW.sql` and run it. The script is idempotent — safe to re-run after schema updates.
+5. Authentication → Email Templates → "Magic Link" → paste `supabase/email_templates/magic_link.html` (set Subject: "Sign in to Sisters in Dua", From name: "Sisters in Dua").
 
-1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Copy your **Project URL** and **anon public key** from Settings → API
-3. Go to the **SQL Editor** in the Supabase dashboard
-4. Paste the entire contents of `supabase/schema.sql` and run it
-5. In Authentication → Providers, make sure **Email** is enabled (disable "Confirm email" for dev)
+### 3. LLM provider
+Get an OpenAI-compatible API key. **Recommended for MVP:**
+- Primary: NVIDIA NIM (40 RPM free) — `https://integrate.api.nvidia.com/v1` + `moonshotai/kimi-k2-5`
+- Fallback: DeepSeek (cheap) — `https://api.deepseek.com/v1` + `deepseek-chat`
 
-### 3. Set up LLM API (for Sage)
-
-Get an API key from one of these (all use OpenAI-compatible format):
-- **NVIDIA NIM** (recommended, 40 RPM free): [build.nvidia.com](https://build.nvidia.com)
-- **DeepSeek** (cheap, fast): [platform.deepseek.com](https://platform.deepseek.com)
-- **OpenRouter** (many models): [openrouter.ai](https://openrouter.ai)
-
-### 4. Configure environment
-
+### 4. Configure env
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your Supabase and LLM credentials
 ```
+Fill in:
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`
+- (Recommended) `LLM_FALLBACK_BASE_URL`, `LLM_FALLBACK_API_KEY`, `LLM_FALLBACK_MODEL`
+- `LLM_DAILY_BUDGET_USD` (default 5)
+- **`ADMIN_EMAILS`** — comma-separated list of admin emails. The first time any of them signs in, their profile is promoted to `founder` and they can access `/admin`.
 
 ### 5. Run
-
 ```bash
 npm run dev
-# Open http://localhost:3000
+# http://localhost:3000
 ```
 
 ---
 
-## Project Structure
+## Architecture at a glance
 
 ```
-mvp/
-├── README.md              ← You are here
-├── ARCHITECTURE.md        ← How everything connects (read this first)
-├── CONTINUE.md            ← Pickup guide for new Claude sessions
-├── package.json           ← Dependencies
-├── .env.example           ← All env vars with documentation
-├── supabase/
-│   └── schema.sql         ← Database schema (run in Supabase SQL editor)
-├── src/
-│   ├── middleware.ts       ← Auth guard: redirects unauthenticated users
-│   ├── app/
-│   │   ├── layout.tsx      ← Root HTML layout
-│   │   ├── page.tsx        ← Landing page with auth form
-│   │   ├── globals.css     ← Tailwind imports + base styles
-│   │   ├── auth/
-│   │   │   └── callback/
-│   │   │       └── route.ts  ← Handles Supabase auth redirect
-│   │   ├── cluster/
-│   │   │   └── page.tsx    ← The Single Source cluster experience
-│   │   └── api/
-│   │       └── sage/
-│   │           └── route.ts  ← Sage LLM endpoint
-│   ├── lib/
-│   │   ├── types.ts        ← All TypeScript types
-│   │   ├── supabase-browser.ts  ← Supabase client for browser
-│   │   ├── supabase-server.ts   ← Supabase client for server
-│   │   └── sage-prompt.ts  ← Sage's system prompt and persona
-│   ├── components/
-│   │   ├── AuthForm.tsx    ← Email login/signup form
-│   │   ├── Navbar.tsx      ← Top bar with user + logout
-│   │   ├── ClusterHeader.tsx  ← The Single Source title + description
-│   │   ├── PostCard.tsx    ← Individual post in the feed
-│   │   ├── PostComposer.tsx  ← Write a post or ask Sage
-│   │   └── ClusterFeed.tsx ← Full feed with realtime updates
-│   └── hooks/
-│       └── useRealtimePosts.ts  ← Supabase realtime subscription
-└── public/
-    └── (static assets go here)
+┌────────────────── Browser ──────────────────┐
+│ AuthForm → ClusterShell → ClusterFeed       │
+│ ClioFab (dual-tab) · AgentChatbox (live)    │
+│ SageFeedback · DuaProgressiveReveal         │
+│ Admin: /admin/welfare /character /thoughts  │
+│        /vault /llm /features /events        │
+└──────────────┬───────────────┬──────────────┘
+               │               │
+               ▼               ▼
+┌─────── Supabase ──────┐  ┌── Next API ─────────────┐
+│ profiles · posts      │  │ /api/sage/evaluate      │
+│ dua_vault             │  │ /api/sage/suggest-dua   │
+│ welfare_notifications │  │ /api/clio/chat          │
+│ character_concerns    │  │ /api/clio/ephemeral     │
+│ llm_response_logs     │  │ /api/agents/cadence-... │
+│ sage_decision_logs    │  │ /api/events             │
+│ behavioural_events    │  │ /api/feedback           │
+│ agent_feedback        │  │ /api/notifications      │
+│ agent_chatbox_excha.. │  │ /api/links/unfurl       │
+│ clio_handoff_greet..  │  └─────────┬───────────────┘
+│ link_previews         │            │
+│ cluster_features      │            ▼
+│ vault_gap_requests    │  ┌── lib/llm-fetch.ts ─────┐
+│ vault_sources         │  │ Primary → Fallback      │
+│ agent_prompt_propos.. │  │ Token / cost / latency  │
+│ platform_settings     │  │ → llm_response_logs     │
+└───────────────────────┘  └─────────────────────────┘
 ```
 
 ---
 
-## Deploying to Vercel
+## What runs through which agent
 
+| Agent | LLM operation_key | When it fires |
+|-------|------------------|---------------|
+| `sage` | `sage_evaluate` | After every member post (fire-and-forget) |
+| `sage_dua_select` | `sage_dua_select` | Every 6h on cluster load (cadence-gated) |
+| `clio_dua_review` | `clio_dua_review` | Editorial gate after Sage selects a dua |
+| `cadence` | `cadence_exchange` | 15-min floor for cold cluster, 1h for active |
+| `clio` | `clio_chat` | Cluster-aware Clio FAB (Ask me anything tab) |
+| `clio` | `clio_ephemeral` | Private "Just between us" tab |
+| `link_alignment` | `link_alignment_check` | When a member posts a URL |
+
+Every call: cost recorded, latency recorded, fallback recorded, decision recorded. Visit `/admin/llm` for the live dashboard.
+
+---
+
+## Where to make changes
+
+| Want to change... | Edit... |
+|-------------------|---------|
+| Sage's persona | `src/lib/sage-prompt.ts:SAGE_SYSTEM_PROMPT` |
+| Clio's persona | `src/lib/clio-prompt.ts` |
+| Cadence-exchange persona | `src/app/api/agents/cadence-exchange/route.ts:PROMPT` |
+| Vault entries | `supabase/APPLY_NOW.sql` (v1.4 vault seed) or Supabase SQL Editor directly |
+| Welfare patterns | `src/lib/clio-prompt.ts:WELFARE_PATTERNS` |
+| Character-concern patterns | `src/lib/sage-prompt.ts:CHARACTER_CONCERN_PATTERNS` |
+| Cost rates | `src/lib/llm-fetch.ts:COST_PER_1M_TOKENS` |
+| LLM daily budget | `LLM_DAILY_BUDGET_USD` env var |
+| Admin allowlist | `ADMIN_EMAILS` env var |
+
+---
+
+## Deploy
+
+Vercel:
 ```bash
 npm install -g vercel
 vercel
-# Add your .env.local variables in Vercel dashboard → Settings → Environment Variables
-# Change NEXT_PUBLIC_APP_URL to your Vercel URL
 ```
+Set every env var from `.env.example` in Vercel dashboard. Set `NEXT_PUBLIC_APP_URL` to your Vercel domain. In Supabase Authentication → URL Configuration, add the Vercel domain to "Site URL" and "Additional redirect URLs".
 
 ---
 
-## What's NOT built yet (Phase 2+)
+## Future docs
 
-- Clio (personal AI companion) — build after Sage proves engagement
-- Scout (web crawler for Clio) — build after Clio exists
-- Atlas (Sage's assistant) — build after Sage needs delegation
-- Observer (analytics AI) — Azim is the observer for now
-- User-created clusters — build after The Single Source validates
-- Geo-gating (India vs global) — build when non-India users show up
-- Push notifications — build after D1 retention is measured
-- Manager roles — build after 10+ users are active
+- Premium cluster requirements: [`../architecture/premium_cluster_requirements.md`](../architecture/premium_cluster_requirements.md)
+- Soul: [`../AGGILO_SOUL.md`](../AGGILO_SOUL.md)
+- Platform rules: [`../AGGILO_PLATFORM_RULES.md`](../AGGILO_PLATFORM_RULES.md)
+- Sisters in Dua spec: [`Sisters In Dua/sisters_in_dua_cluster_spec_v3.1.md`](Sisters%20In%20Dua/sisters_in_dua_cluster_spec_v3.1.md)

@@ -34,7 +34,7 @@ export default function ClioWelcome({ nickname, onDismiss }: ClioWelcomeProps) {
     {
       key: "collaborate",
       title: "How we work together",
-      body: "Sage and I check in regularly — you'll see our discussions in the panel above the Timeline. We talk about what's helping, what's missing, and how to make this room better for you. The Founder and Managers hold guidance authority for fiqh and rulings. Every reference is verified. Your nickname is the only identity shown.",
+      body: "Sage and I check in regularly — you'll see our thoughts in the panel above the Timeline. We talk about what's helping, what's missing, and how to make this room better for you. The Admin and Managers hold guidance authority for fiqh and rulings. Every reference is verified. Your nickname is the only identity shown.",
       accent: "bg-aggilo-deep",
     },
   ];

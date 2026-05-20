@@ -54,7 +54,7 @@ export const SISTERS_IN_DUA_NUDGES: ClusterNudge[] = [
   },
   {
     id: "scholar",
-    text: "A fiqh question you've been turning over? Founder and Managers hold guidance — start here.",
+    text: "A fiqh question you've been turning over? The Admin and Managers hold guidance — start here.",
   },
   {
     id: "sister-ahead",

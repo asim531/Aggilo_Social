@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { ChatCompletionResponse } from "@/lib/types";
 import { buildClioEphemeralMessages, detectWelfareSignal } from "@/lib/clio-prompt";
-import { llmFetch } from "@/lib/llm-fetch";
+import { llmCall } from "@/lib/llm-fetch";
 
 /**
  * POST /api/clio/ephemeral
@@ -11,7 +10,11 @@ import { llmFetch } from "@/lib/llm-fetch";
  * (the MVP keeps it in browser sessionStorage; the production architecture
  * uses Redis with 12h TTL — see clio_ephemeral_sessions table for metadata).
  *
- * Refactored in V3 Phase 6 to use shared builder + sharper welfare detection.
+ * V3 7-principles update: every LLM call now flows through llmCall(), so
+ * cost, latency, and decision summary are recorded to llm_response_logs.
+ * Even ephemeral sessions are observable at the metadata level. Content
+ * itself is NEVER written to llm_response_logs — only token counts and
+ * outcome.
  */
 export async function POST(request: Request) {
   try {
@@ -27,9 +30,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Welfare detection runs FIRST in ephemeral mode — the channel is private,
-    // signals carry more weight, and the platform must be able to flag the
-    // session even if the LLM misses the cue.
     const isWelfare = detectWelfareSignal(message);
     if (isWelfare) {
       try {
@@ -41,12 +41,9 @@ export async function POST(request: Request) {
           resolved: false,
         });
       } catch {
-        // Table may not exist (pre-migration) — fail silent. The LLM still
-        // handles welfare per its system prompt; this is the parallel
-        // platform escalation that needs the migration to land.
+        // Table may not exist (pre-migration) — fail silent.
       }
 
-      // Mark the active ephemeral session as welfare-flagged (metadata only)
       try {
         await supabase
           .from("clio_ephemeral_sessions")
@@ -59,7 +56,7 @@ export async function POST(request: Request) {
           .order("started_at", { ascending: false })
           .limit(1);
       } catch {
-        // Same as above — table may not exist
+        // Same as above
       }
     }
 
@@ -68,50 +65,48 @@ export async function POST(request: Request) {
       conversationHistory: conversationContext || [],
     });
 
-    const llmBaseUrl = process.env.LLM_BASE_URL;
-    const llmApiKey = process.env.LLM_API_KEY;
-    const llmModel = process.env.LLM_MODEL;
-
-    if (!llmBaseUrl || !llmApiKey || !llmModel) {
-      return NextResponse.json({
-        content: "I'm not fully set up yet. The community is working on it.",
-      });
-    }
-
-    const llmResponse = await llmFetch(`${llmBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${llmApiKey}`,
+    const result = await llmCall(
+      {
+        agent: "clio",
+        operationKey: "clio_ephemeral",
+        userId: user.id,
       },
-      body: JSON.stringify({
-        model: llmModel,
+      {
         messages,
         temperature: 0.6,
-        max_tokens: 400,
-      }),
-    }, 45000); // 45s timeout — NIM can be slow under load
+        maxTokens: 400,
+      },
+      supabase
+    );
 
-    if (!llmResponse.ok) {
-      const errBody = await llmResponse.text().catch(() => "");
-      console.error("Clio ephemeral LLM error:", llmResponse.status, errBody.substring(0, 300));
+    if (result.status === "budget_exceeded") {
       return NextResponse.json({
-        content: "I'm having a moment. Try again shortly.",
+        content: result.content,
+        welfare_flagged: isWelfare,
+        budget_exceeded: true,
       });
     }
 
-    const data: ChatCompletionResponse = await llmResponse.json();
-    const content = data.choices?.[0]?.message?.content?.trim() || "I couldn't form a response. Try again.";
+    if (result.status === "error" || !result.content) {
+      return NextResponse.json({
+        content: "I'm having a moment. Try again shortly.",
+        welfare_flagged: isWelfare,
+      });
+    }
 
     try {
       await supabase.rpc("increment_ephemeral_message_count", {
         p_user_id: user.id,
       });
-    } catch (e) {
-      // ignore
+    } catch {
+      // RPC may not exist yet — non-fatal
     }
 
-    return NextResponse.json({ content, welfare_flagged: isWelfare });
+    return NextResponse.json({
+      content: result.content,
+      welfare_flagged: isWelfare,
+      llm_log_id: result.llmLogId,
+    });
   } catch (error) {
     console.error("Clio ephemeral error:", error);
     return NextResponse.json({

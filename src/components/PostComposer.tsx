@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 
 import { createClient } from "@/lib/supabase-browser";
 import { PostWithAuthor } from "@/lib/types";
 import { pickClusterNudge, type ClusterNudge } from "@/lib/clio-nudges";
+import { track } from "@/lib/track";
 
 interface PostComposerProps {
   userId: string;
@@ -90,6 +91,13 @@ export default function PostComposer({
 
     // Replace optimistic entry with the confirmed post
     onReplaceOptimistic?.(tempId, newPost as PostWithAuthor);
+
+    // Closed-loop telemetry — fire-and-forget
+    track(replyTo ? "post_replied" : "post_created", {
+      post_id: newPost.id,
+      length: questionText.length,
+      mentions_sage: /@sage\b/i.test(questionText),
+    });
 
     // ── Priority 2: Sage evaluation — fires AFTER save, never blocks ─────
     fetch("/api/sage/evaluate", {

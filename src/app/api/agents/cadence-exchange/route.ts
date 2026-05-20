@@ -1,26 +1,25 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { ChatCompletionResponse, PostWithAuthor } from "@/lib/types";
+import { PostWithAuthor } from "@/lib/types";
+import { llmCall } from "@/lib/llm-fetch";
 
 /**
  * POST /api/agents/cadence-exchange
  *
  * Generates a fresh Sage ↔ Clio dialogue exchange about the current
  * state of the cluster — content and tone aware. The exchange is
- * persisted to `agent_chatbox_exchanges` and surfaces in the AI Agent
- * Discussions panel above the timeline.
+ * persisted to `agent_chatbox_exchanges` and surfaces in the Agent
+ * Thoughts panel above the timeline.
  *
  * Cadence (per docs/AGENT_COLLABORATION_CHATBOX.md §3.1, MVP-tuned):
  *   - Cold cluster (<10 members or <5 posts): every 2h
  *   - Active cluster: every 4h
  *
- * Server-side cadence guard: refuses if the most recent exchange is
- * within the floor. Triggered on cluster mount; harmless to call
- * frequently because of the floor.
+ * V3 7-principles update: routed through llmCall() for observability.
  */
 
-const COLD_CADENCE_MS = 15 * 60 * 1000;  // 15 min — early-stage testing
-const ACTIVE_CADENCE_MS = 60 * 60 * 1000; // 1h — active cluster
+const COLD_CADENCE_MS = 15 * 60 * 1000;
+const ACTIVE_CADENCE_MS = 60 * 60 * 1000;
 const COLD_THRESHOLD_POSTS = 20;
 const COLD_THRESHOLD_MEMBERS = 20;
 
@@ -47,7 +46,7 @@ Output ONLY this JSON (no prose):
   "observe_mode": <true if they're agreeing to wait, false if they decide on an action>
 }`;
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -55,9 +54,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const clusterId = "the_single_source"; // single cluster in MVP
+    const clusterId = "the_single_source";
 
-    // ── Determine cadence floor based on activity ─────────────────
     const [{ count: memberCount }, { count: postCount }] = await Promise.all([
       supabase.from("profiles").select("*", { count: "exact", head: true }),
       supabase.from("posts").select("*", { count: "exact", head: true }),
@@ -67,7 +65,6 @@ export async function POST(request: Request) {
       (postCount || 0) < COLD_THRESHOLD_POSTS;
     const cadenceFloor = isCold ? COLD_CADENCE_MS : ACTIVE_CADENCE_MS;
 
-    // ── Cadence guard ─────────────────────────────────────────────
     const { data: lastExchange } = await supabase
       .from("agent_chatbox_exchanges")
       .select("id, created_at, exchange_number")
@@ -89,7 +86,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── Pull recent context ───────────────────────────────────────
     const { data: recentPosts } = await supabase
       .from("posts")
       .select("*, profiles(*)")
@@ -107,14 +103,6 @@ export async function POST(request: Request) {
       (p) => p.is_sage
     ).length;
 
-    // ── LLM call ──────────────────────────────────────────────────
-    const llmBaseUrl = process.env.LLM_BASE_URL;
-    const llmApiKey = process.env.LLM_API_KEY;
-    const llmModel = process.env.LLM_MODEL;
-    if (!llmBaseUrl || !llmApiKey || !llmModel) {
-      return NextResponse.json({ error: "LLM not configured" }, { status: 500 });
-    }
-
     const userContext = [
       `Member count: ${memberCount || 0}`,
       `Total posts: ${postCount || 0}`,
@@ -123,30 +111,33 @@ export async function POST(request: Request) {
       recentSummary || "(empty room)",
     ].join("\n");
 
-    const llmRes = await fetch(`${llmBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${llmApiKey}`,
+    const result = await llmCall(
+      {
+        agent: "cadence",
+        operationKey: "cadence_exchange",
+        userId: user.id,
+        clusterId,
       },
-      body: JSON.stringify({
-        model: llmModel,
+      {
         messages: [
           { role: "system", content: PROMPT },
           { role: "user", content: userContext },
         ],
         temperature: 0.7,
-        max_tokens: 350,
-        response_format: { type: "json_object" },
-      }),
-    });
+        maxTokens: 350,
+        responseFormat: { type: "json_object" },
+      },
+      supabase
+    );
 
-    if (!llmRes.ok) {
-      console.error("Cadence exchange LLM error:", llmRes.status);
+    if (result.status === "budget_exceeded") {
+      return NextResponse.json({ outcome: "budget_exceeded" });
+    }
+
+    if (result.status === "error" || !result.content) {
       return NextResponse.json({ error: "LLM call failed" }, { status: 502 });
     }
 
-    const llmData: ChatCompletionResponse = await llmRes.json();
     let parsed: {
       trigger_observation: string;
       sage_message: string;
@@ -154,12 +145,11 @@ export async function POST(request: Request) {
       observe_mode: boolean;
     };
     try {
-      parsed = JSON.parse(llmData.choices[0].message.content);
+      parsed = JSON.parse(result.content);
     } catch {
       return NextResponse.json({ error: "Malformed exchange JSON" }, { status: 502 });
     }
 
-    // ── Persist ───────────────────────────────────────────────────
     const exchangeNumber = (lastExchange?.exchange_number || 0) + 1;
     const { data: row, error: insertErr } = await supabase
       .from("agent_chatbox_exchanges")

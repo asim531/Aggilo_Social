@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { buildSageMessages } from "@/lib/sage-prompt";
+import {
+  buildSageMessages,
+  detectCharacterConcern,
+  extractSageDecision,
+} from "@/lib/sage-prompt";
 import { detectWelfareSignal } from "@/lib/clio-prompt";
 import {
   selectGreetingTemplate,
   type HandoffReason,
 } from "@/lib/handoff-greetings";
 import { fetchLinkMeta, extractFirstUrl } from "@/lib/link-preview";
-import { PostWithAuthor, DuaVaultEntry, ChatCompletionResponse } from "@/lib/types";
+import { llmCall, updateLogDecision } from "@/lib/llm-fetch";
+import { PostWithAuthor, DuaVaultEntry } from "@/lib/types";
 
 /**
  * POST /api/sage/evaluate
@@ -15,14 +20,13 @@ import { PostWithAuthor, DuaVaultEntry, ChatCompletionResponse } from "@/lib/typ
  * Called AFTER a post is saved to Supabase — never blocks the user's post submission.
  * Evaluates the post through Sage's decision framework and optionally posts a response.
  *
- * Priority 2 (V3 Phase 6): Sage evaluation is fully separated from post submission.
- * The user's post appears immediately (optimistic). This route fires in the background.
- *
- * Senior UX additions:
- *  - @Sage mention forces a response (overrides default silence)
- *  - Welfare regex pre-filter runs BEFORE the LLM (belt-and-braces — symmetry with Clio)
- *  - When Sage decides silence is right but the post warrants private follow-up,
- *    a soft Clio handoff is queued (member chooses whether to engage)
+ * V3 7-principles update:
+ *  - All LLM calls go through llmCall(), which records to llm_response_logs
+ *    (Principle 2 — closed loops, Principle 7 — token-max measurement).
+ *  - Sage's structured decision tag is parsed and logged to
+ *    sage_decision_logs (Principle 3 — legible organization).
+ *  - Character concern (monotheism guardrail) is detected and logged to
+ *    character_concerns; admin sees in dashboard (Cross-cutting Soul rule).
  */
 export async function POST(request: Request) {
   try {
@@ -34,7 +38,6 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    // Fetch the triggering post
     const { data: triggeringPost, error: fetchError } = await supabase
       .from("posts")
       .select("*, profiles(*)")
@@ -45,17 +48,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ evaluated: false, error: "Post not found" }, { status: 404 });
     }
 
-    // Skip evaluation if this is already a Sage post
     if (triggeringPost.is_sage) {
       return NextResponse.json({ evaluated: true, skipped: "sage_post" });
     }
 
-    // ── Belt-and-braces signal detection (symmetry with Clio chat) ──────
+    // ── Belt-and-braces signal detection ────────────────────────────
     const mentionsSage = /@sage\b/i.test(triggeringPost.content);
     const isWelfare = detectWelfareSignal(triggeringPost.content);
+    const characterConcern = detectCharacterConcern(triggeringPost.content);
 
-    // If the platform detects a welfare signal, log it BEFORE the LLM call
-    // so the founder/manager queue captures it even if the LLM misses cues.
     if (isWelfare) {
       await supabase
         .from("welfare_notifications")
@@ -65,46 +66,22 @@ export async function POST(request: Request) {
           trigger_content: `[POST] ${triggeringPost.content.substring(0, 500)}`,
           sage_response: null,
           resolved: false,
-        })
-        .select()
-        .single()
-        
-        ;
+        });
 
-      // Mark the post thread state for the welfare card
       await supabase
         .from("posts")
         .update({ thread_state: "welfare_flagged" })
-        .eq("id", triggeringPost.id)
-        
-        ;
+        .eq("id", triggeringPost.id);
     }
 
-    // ── Link detection + metadata fetch ─────────────────────────────
-    // If the post contains a URL, fetch its metadata server-side and
-    // store it on the post. Then run a second LLM pass to evaluate
-    // whether the content aligns with the cluster's purpose.
-    // Both operations are fire-and-forget relative to the main Sage
-    // evaluation — they run in parallel and update the post via UPDATE.
+    // ── Link detection + metadata fetch (unchanged behaviour) ───────
     const linkUrl = extractFirstUrl(triggeringPost.content);
     if (linkUrl) {
-      // Mark as "evaluating" immediately so the UI can show a spinner
       await supabase
         .from("posts")
         .update({ link_url: linkUrl, link_alignment: "evaluating" })
-        .eq("id", triggeringPost.id)
-        
-        ;
-
-      // Fetch metadata + run alignment in parallel (non-blocking)
-      evaluateLinkAlignment(
-        supabase,
-        triggeringPost.id,
-        linkUrl,
-        process.env.LLM_BASE_URL,
-        process.env.LLM_API_KEY,
-        process.env.LLM_MODEL
-      );
+        .eq("id", triggeringPost.id);
+      evaluateLinkAlignment(supabase, triggeringPost.id, linkUrl);
     }
 
     // Fetch recent posts for conversational context (last 20)
@@ -125,49 +102,88 @@ export async function POST(request: Request) {
       triggeringPost.content,
       (recentPosts as PostWithAuthor[]) || [],
       (vaultEntries as DuaVaultEntry[]) || [],
-      { mentionsSage, isWelfare }
+      {
+        mentionsSage,
+        isWelfare,
+        isCharacterConcern: characterConcern.matched,
+      }
     );
 
-    const llmBaseUrl = process.env.LLM_BASE_URL;
-    const llmApiKey = process.env.LLM_API_KEY;
-    const llmModel = process.env.LLM_MODEL;
-
-    if (!llmBaseUrl || !llmApiKey || !llmModel) {
-      // LLM not configured — evaluation skipped silently
-      return NextResponse.json({ evaluated: false, skipped: "llm_not_configured" });
-    }
-
-    const llmResponse = await fetch(`${llmBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${llmApiKey}`,
+    const result = await llmCall(
+      {
+        agent: "sage",
+        operationKey: "sage_evaluate",
+        userId: triggeringPost.author_id,
+        relatedPostId: triggeringPost.id,
+        clusterId: "the_single_source",
       },
-      body: JSON.stringify({
-        model: llmModel,
+      {
         messages,
         temperature: 0.5,
-        max_tokens: 800,
-      }),
-    });
+        maxTokens: 800,
+      },
+      supabase
+    );
 
-    if (!llmResponse.ok) {
-      console.error("Sage evaluate: LLM error", llmResponse.status);
-      return NextResponse.json({ evaluated: false, error: "LLM unavailable" }, { status: 502 });
+    if (result.status === "budget_exceeded") {
+      // Sage steps back. No response posted, no decision logged.
+      return NextResponse.json({ evaluated: true, responded: false, reason: "budget_exceeded" });
     }
 
-    const llmData: ChatCompletionResponse = await llmResponse.json();
-    const sageContent = llmData.choices?.[0]?.message?.content?.trim();
+    if (result.status === "error" || !result.content) {
+      return NextResponse.json(
+        { evaluated: false, error: result.errorMessage ?? "LLM unavailable" },
+        { status: 502 }
+      );
+    }
 
-    // Sage chose silence — correct and expected
-    if (!sageContent || sageContent === "[SAGE_SILENT]") {
-      // Soft Clio handoff: when silence is right but a private follow-up
-      // would serve the member, queue a Clio greeting in their private tab.
-      // Triggers (narrow set for MVP):
-      //   - Welfare signal detected
-      //   - Sage was @-mentioned but chose silence (rare — usually forced response)
-      // The member chooses whether to engage. Cluster sees a small inline note
-      // under their post. This is a soft handoff — not a hard escalation.
+    // ── Parse Sage's structured decision tag ─────────────────────────
+    const { visible, decision } = extractSageDecision(result.content);
+    const isSilent = visible === "[SAGE_SILENT]" || visible.length === 0;
+
+    // Log Sage's decision regardless of silent or responded
+    await supabase.from("sage_decision_logs").insert({
+      post_id: triggeringPost.id,
+      llm_log_id: result.llmLogId,
+      step_matched: isSilent ? "silent" : decision.step,
+      step_rationale: decision.rationale,
+      vault_id_used: decision.vaultIdUsed,
+      response_text: isSilent ? null : visible,
+      signals_detected: {
+        welfare: isWelfare,
+        mentions_sage: mentionsSage,
+        character_concern: characterConcern.matched,
+        character_signal_type: characterConcern.signalType,
+      },
+    });
+
+    // ── Character concern logging (Cross-cutting Soul rule) ─────────
+    // Log when EITHER the regex matched OR Sage's framework chose 'character'.
+    // The two are independent signals; each may catch what the other misses.
+    const sageMarkedCharacter = decision.step === "character" && !isSilent;
+    if (characterConcern.matched || sageMarkedCharacter) {
+      await supabase.from("character_concerns").insert({
+        post_id: triggeringPost.id,
+        user_id: triggeringPost.author_id,
+        signal_type:
+          characterConcern.signalType ??
+          (sageMarkedCharacter ? "promoting_bad_character" : "other"),
+        signal_excerpt: characterConcern.excerpt || triggeringPost.content.substring(0, 500),
+        agent_response_text: isSilent ? null : visible,
+      });
+
+      // Update llm log decision for clarity
+      await updateLogDecision(supabase, result.llmLogId, "character_concern_responded");
+    } else {
+      await updateLogDecision(
+        supabase,
+        result.llmLogId,
+        isSilent ? "silent" : "responded"
+      );
+    }
+
+    // Sage chose silence
+    if (isSilent) {
       const shouldHandoff = isWelfare && triggeringPost.author_id;
 
       if (shouldHandoff) {
@@ -180,9 +196,7 @@ export async function POST(request: Request) {
             sage_handoff_to_clio_at: new Date().toISOString(),
             sage_handoff_reason: reason,
           })
-          .eq("id", triggeringPost.id)
-          
-          ;
+          .eq("id", triggeringPost.id);
 
         await supabase
           .from("clio_handoff_greetings")
@@ -191,14 +205,8 @@ export async function POST(request: Request) {
             user_id: triggeringPost.author_id,
             handoff_reason: reason,
             greeting_text: template.text,
-          })
-          
-          ;
+          });
 
-        // Log the silent collaboration to the live agent chatbox.
-        // The cluster sees an exchange acknowledging that Sage stepped
-        // back deliberately and Clio is following up privately. The
-        // member's content is never quoted.
         try {
           const { count } = await supabase
             .from("agent_chatbox_exchanges")
@@ -236,7 +244,7 @@ export async function POST(request: Request) {
       .insert({
         author_id: null,
         parent_id: post_id,
-        content: sageContent,
+        content: visible,
         is_sage: true,
         is_sage_question: false,
       })
@@ -248,7 +256,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ evaluated: false, error: "Failed to save Sage response" }, { status: 500 });
     }
 
-    return NextResponse.json({ evaluated: true, responded: true, reply_id: sagePost.id });
+    return NextResponse.json({
+      evaluated: true,
+      responded: true,
+      reply_id: sagePost.id,
+      decision: decision.step,
+    });
   } catch (error) {
     console.error("Sage evaluate: unexpected error", error);
     return NextResponse.json({ evaluated: false, error: "Unexpected error" }, { status: 500 });
@@ -256,18 +269,6 @@ export async function POST(request: Request) {
 }
 
 // ── Link alignment helper ────────────────────────────────────────────────
-//
-// Runs asynchronously after the main Sage evaluation. Fetches link metadata,
-// stores it on the post, then asks the LLM whether the content aligns with
-// the cluster's purpose. Updates posts.link_alignment and posts.link_meta.
-//
-// Alignment result:
-//   "aligned"    → a small ✓ badge appears on the link card in the UI
-//   "misaligned" → no badge, no public comment from Sage (no shaming)
-//   null         → fetch failed or LLM unavailable
-//
-// The cluster purpose is injected from the Sage system prompt so the
-// evaluation is cluster-aware, not generic.
 
 const LINK_ALIGNMENT_PROMPT = `You are Sage, the cluster Anchor for "Sisters in Dua" — a women-only community for Muslim women navigating faith in real life. Grounded in Quran and authentic Sunnah.
 
@@ -289,34 +290,15 @@ async function evaluateLinkAlignment(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   postId: string,
-  url: string,
-  llmBaseUrl: string | undefined,
-  llmApiKey: string | undefined,
-  llmModel: string | undefined
+  url: string
 ): Promise<void> {
-  // Step 1: fetch metadata
   const meta = await fetchLinkMeta(url);
 
-  // Store metadata regardless of LLM availability
   if (meta) {
     await supabase
       .from("posts")
       .update({ link_meta: meta })
-      .eq("id", postId)
-      
-      ;
-  }
-
-  // Step 2: LLM alignment check
-  if (!llmBaseUrl || !llmApiKey || !llmModel) {
-    // No LLM — mark as null (no badge, no error)
-    await supabase
-      .from("posts")
-      .update({ link_alignment: null })
-      .eq("id", postId)
-      
-      ;
-    return;
+      .eq("id", postId);
   }
 
   const contentSummary = [
@@ -329,45 +311,42 @@ async function evaluateLinkAlignment(
     .join("\n");
 
   try {
-    const res = await fetch(`${llmBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${llmApiKey}`,
+    const result = await llmCall(
+      {
+        agent: "link_alignment",
+        operationKey: "link_alignment_check",
+        relatedPostId: postId,
+        clusterId: "the_single_source",
       },
-      body: JSON.stringify({
-        model: llmModel,
+      {
         messages: [
           { role: "system", content: LINK_ALIGNMENT_PROMPT },
           { role: "user", content: contentSummary },
         ],
         temperature: 0.2,
-        max_tokens: 80,
-        response_format: { type: "json_object" },
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
+        maxTokens: 80,
+        responseFormat: { type: "json_object" },
+        timeoutMs: 15000,
+      },
+      supabase
+    );
 
-    if (!res.ok) throw new Error(`LLM ${res.status}`);
+    if (result.status !== "ok" || !result.content) {
+      await supabase.from("posts").update({ link_alignment: null }).eq("id", postId);
+      return;
+    }
 
-    const data: { choices: Array<{ message: { content: string } }> } = await res.json();
     const parsed: { alignment: "aligned" | "misaligned"; reason?: string } = JSON.parse(
-      data.choices[0].message.content
+      result.content
     );
 
     await supabase
       .from("posts")
       .update({ link_alignment: parsed.alignment })
-      .eq("id", postId)
-      
-      ;
+      .eq("id", postId);
+
+    await updateLogDecision(supabase, result.llmLogId, parsed.alignment);
   } catch {
-    // LLM failed — clear the "evaluating" state
-    await supabase
-      .from("posts")
-      .update({ link_alignment: null })
-      .eq("id", postId)
-      
-      ;
+    await supabase.from("posts").update({ link_alignment: null }).eq("id", postId);
   }
 }

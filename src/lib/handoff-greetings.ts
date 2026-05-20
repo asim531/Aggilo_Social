@@ -10,7 +10,7 @@
  *
  *   - welfare:           a genuine welfare signal — quiet, no rush
  *   - personal_disclosure: tender but private, not necessarily a welfare event
- *   - fiqh_with_distress:  the ruling went to the Founder, the feeling stayed
+ *   - fiqh_with_distress:  the ruling went to the Admin, the feeling stayed
  *
  * The greeting NEVER:
  *   - Quotes the original post
@@ -70,12 +70,12 @@ const TEMPLATES: Record<HandoffReason, GreetingTemplate[]> = {
   fiqh_with_distress: [
     {
       text:
-        "Sage pointed the question itself toward the Founder. I'm here if you want to talk through how it's sitting with you — privately.",
+        "Sage pointed the question itself toward the Admin. I'm here if you want to talk through how it's sitting with you — privately.",
       toneColor: "indigo",
     },
     {
       text:
-        "Sage left the ruling for the Founder, not the feeling. I'm here for the part the answer doesn't cover.",
+        "Sage left the ruling for the Admin, not the feeling. I'm here for the part the answer doesn't cover.",
       toneColor: "indigo",
     },
   ],

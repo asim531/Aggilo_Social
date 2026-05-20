@@ -35,7 +35,7 @@ export default function LandingPage() {
             Grounded in Quran and authentic Sunnah. Every cluster is actively hosted. Guided by practitioners and scholars.
           </p>
           <p className="text-xs text-gray-500 italic mb-3">
-            Your community host keeps discussions grounded in verified sources and holds the space. The Founder and Managers are who you go to for guidance.
+            Your community Anchor keeps the discussion grounded in verified sources and holds the space. The Admin and Managers are who you go to for guidance.
           </p>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
