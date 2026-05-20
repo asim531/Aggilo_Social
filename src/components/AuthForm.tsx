@@ -99,13 +99,19 @@ function AuthFormContent() {
       email: email.trim(),
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        // No `data` payload — returning users keep their existing profile
+        shouldCreateUser: false,
       },
     });
 
     if (error) {
-      setState("error");
-      setErrorMsg(error.message);
+      // If user doesn't exist yet, nudge them to sign up
+      if (error.message.includes("Signups not allowed") || error.message.includes("User not found")) {
+        setState("error");
+        setErrorMsg("No account with that email. Try Create account instead.");
+      } else {
+        setState("error");
+        setErrorMsg(error.message);
+      }
     } else {
       setState("success");
     }

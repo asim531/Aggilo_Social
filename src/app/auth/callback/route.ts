@@ -51,16 +51,22 @@ export async function GET(request: Request) {
 
       return NextResponse.redirect(`${origin}/cluster`);
     } else {
-      // Redirect to home with error
-      return NextResponse.redirect(`${origin}/?error=${encodeURIComponent(error.message)}`);
+      // PKCE mismatch or expired code — redirect to the client-side callback
+      // page which shows a user-friendly message
+      return NextResponse.redirect(
+        `${origin}/auth/callback?error_description=${encodeURIComponent(error.message)}`
+      );
     }
   }
 
   // If there's an error description in the URL
   const error_description = searchParams.get("error_description");
   if (error_description) {
-    return NextResponse.redirect(`${origin}/?error=${encodeURIComponent(error_description)}`);
+    return NextResponse.redirect(
+      `${origin}/auth/callback?error_description=${encodeURIComponent(error_description)}`
+    );
   }
 
-  return NextResponse.redirect(`${origin}/?error=No_code_provided_in_callback_URL`);
+  // No code and no error — let the client-side page handle it (hash fragment)
+  return NextResponse.redirect(`${origin}/auth/callback?error_description=No+code+provided`);
 }
