@@ -1012,32 +1012,42 @@ The cadence-exchange prompt focuses the dialogue on ONE of these themes per exch
 
 1. **Tool or feature ideation** — what would help the members? Be specific.
 2. **Room health observation** — what's the rhythm? Is it healthy or stuck?
-3. **Member need detection** — recurring themes in posts that suggest unaddressed needs.
-4. **No-action observation** — *"Nothing actionable from us right now — the room is finding its own voice."* Valid. Should appear regularly.
+3. **Member need detection** — recurring themes in posts that suggest unaddressed needs (framed as "the room could use a tool that…", never as observations of member behaviour per V3.4).
+4. **No-action observation** — *"Our current tools are doing their job — nothing new to ship right now."* Valid. Should appear regularly.
 
-The exchange ends in either `observe_mode = true` (wait and watch) or `observe_mode = false` (concrete signal identified). Concrete signals can spawn `cluster_features` rows at `status = 'proposed_in_thoughts'` for admin review.
+The exchange ends in either `observe_mode = true` (wait and watch) or `observe_mode = false` (concrete capability identified). Concrete signals spawn `cluster_features` rows. Per V3.4, every concrete capability is one of two `kind` values:
 
-### 33.7 Feature ideation lifecycle
+- `kind = 'agent_tool'` — agents run it; if `build_status = 'deployable_now'`, ships immediately. Admin can veto.
+- `kind = 'member_feature'` — members vote on it; admin approves development.
+
+### 33.7 Workshop capability lifecycle (V3.4)
 
 ```
-agents discuss in Agent Thoughts
+Sage and Clio discuss in the Room Workshop
     │
-    ▼
-feature row inserted at proposed_in_thoughts
+    ├─ kind = 'agent_tool'    ──┐
+    │                          │
+    │     deployable_now ──────┼──► tool runs immediately, logged to
+    │                          │    cluster_tool_invocations. Admin can veto.
+    │                          │
+    │     needs_building ──────┘──► proposal sits in Workshop ("We'll build this");
+    │                               admin builds → tool registered → agents invoke.
     │
-    ▼
-Clio approves for member visibility (or rejects with rationale)
-    │
-    ▼
-status: in_features_tab — visible to members IF cluster size ≥ 5
-    │
-    ▼
-members upvote / comment / Members can also propose features themselves (proposed_by='member')
-    │
-    ▼
-admin reviews in /admin/features → approves / defers / rejects
-    │
-    ▼
+    └─ kind = 'member_feature' ───► row inserted at proposed_in_thoughts
+            │
+            ▼
+        Clio approves for member visibility (or rejects with rationale)
+            │
+            ▼
+        status: in_features_tab — visible to members IF cluster size ≥ 5
+            │
+            ▼
+        members upvote / comment / can propose features themselves (proposed_by='member')
+            │
+            ▼
+        admin reviews in /admin/features → approves / defers / rejects
+            │
+            ▼
 status: admin_approved → in_development → live
 ```
 

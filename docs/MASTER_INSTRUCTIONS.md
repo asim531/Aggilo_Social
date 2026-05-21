@@ -198,3 +198,70 @@ V3.3.2 extends V3.3.1 with three additional scoping fixes and one new platform-l
 - **Code (Phase 0 reference impl)** — ClusterHeader now renders demographic chips (`🇮🇳 India`, `♀ Women`); ClioFab gets idle-breathing halo (`clio-fab-idle`); PostCard context menu rendered through React Portal (fixes Mac right-click clipping where only the bottom action was visible).
 
 *Updated 2026-05-21 as part of V3.3.2 (deeper architecture/cluster separation + demographic chips invariant). Previous revision: V3.3.1.*
+
+---
+
+## V3.4 — Room Workshop + Two-Track Capability Model (current)
+
+The agent collaboration surface is renamed and reframed. The agents are visible **service providers**, not observers. The surface where members see them working — formerly "Agent Thoughts" — is now **"Room Workshop."** Every prompt instruction, label, and copy choice reinforces a single mental model: the agents are infrastructure, working *for* the room. They never observe or comment on members.
+
+### The Service-vs-Surveillance Frame
+
+The cadence-exchange prompt was rewritten with a hard rule: agents never say "members are…" or "the room feels quiet." Every sentence is about the room's capabilities, the agents' own work, or what could be built. Subjects of dialogue are: tools, features, the room as a thing, the agents themselves. Never the members.
+
+This is a behavioural correction. Members reading agent dialogue framed as observation — even well-intentioned — feel surveilled. Members reading agent dialogue framed as service feel served. The platform's soul says the agent is a servant, not an authority. The Workshop frame finally aligns the visible dialogue with that conviction.
+
+### The Two-Track Capability Model
+
+A platform-level invariant introduced in V3.4. Every capability the agents propose is one of two kinds:
+
+| Track | What it is | Who decides | Member UI |
+|---|---|---|---|
+| **Agent Tool** (`kind: 'agent_tool'`) | Sage/Clio run it on behalf of the room. Members receive output, never click. | Agents deploy autonomously within rules. Admin can veto. | "Already running" / "We'll build this" / "Live" — no vote button |
+| **Member Feature** (`kind: 'member_feature'`) | UI surface or interaction members touch. | Member upvote (count threshold: 10 = admin priority flag) + admin awareness. | Upvote + comment, vote-gated by cluster-size tier |
+
+Each capability also carries a `build_status`:
+
+- `deployable_now` — Sage can simulate it today using existing primitives (e.g. inline tajweed formatting in posts)
+- `needs_building` — requires developer code (Phase 0: admin builds; Phase 1: agents may build in sandbox)
+- `building` / `live` / `paused` / `retired` — lifecycle
+
+This separation matters because the approval and member-visibility flows differ. An agent tool with `deployable_now` ships immediately. A member feature with `needs_building` sits in the Workshop collecting upvotes until the admin approves development.
+
+### Platform-Level Changes
+
+| Change | Where |
+|---|---|
+| Cadence prompt rewrite (service framing, two-track output, spec field) | `mvp/src/app/api/agents/cadence-exchange/route.ts` |
+| `cluster_features` schema extended: `kind`, `build_status`, `spec`, `invocation_count`, `last_invoked_at` | `mvp/supabase/APPLY_NOW.sql` v1.7 |
+| New table: `cluster_tool_invocations` — closed-loop telemetry for tool usage | `mvp/supabase/APPLY_NOW.sql` v1.7 |
+| Updated RLS: members see `agent_tool` only when `deployable_now` or `live` | `cluster_features` SELECT policy |
+| Workshop UI — separates tools (cyan, no vote) from features (amber, vote) | `mvp/src/components/FeaturesList.tsx` |
+| All "Agent Thoughts" labels → "Room Workshop" | `AgentChatbox.tsx`, `Navbar.tsx`, `AdminNavbar.tsx`, admin pages |
+| Two-track invariant added to platform architecture | `architecture/system_implementation_prompt_part1.md` §7.8 (new) |
+| Workshop reflected in cluster maturity tier table | `architecture/system_implementation_prompt_part1.md` §7.4 |
+| Workshop reflected in premium-cluster invariants | `architecture/premium_cluster_requirements.md` §8 |
+
+### What Stays the Same
+
+- The seven AI-native principles (V3.2)
+- Phase 0 stage definition (V3.3)
+- Vault-entry repetition protocol (V3.3)
+- Demographic chips invariant (V3.3.2)
+- The cadence floor (2h cold / 4h active)
+- The 60/40 ship/observe bias
+- The skepticism-not-sycophancy rule in agent dialogue
+- The no-protocol-disclosure rule
+
+### Pending Doc Refactors (next pass)
+
+These deep-spec documents still reference the old "Agent Thoughts" / "Features Tab" naming and need a v2 refactor to the Workshop + two-track model. Code is already correct; docs are scheduled:
+
+- `docs/AGENT_COLLABORATION_CHATBOX.md` v2 — full refactor to Room Workshop spec
+- `docs/CLUSTER_FEATURES_TAB.md` v2 — merge into the Workshop spec or deprecate
+- `architecture/system_implementation_prompt_part2.md` §5.1.2 — schema-additions notes update
+- `architecture/system_implementation_prompt_part3.md` §7.17 — API path naming (member-facing endpoints stay `/cluster/features` for URL stability; only labels change)
+- `architecture/system_implementation_prompt_part4.md` — ASCII diagram update
+- `architecture/system_implementation_prompt_part5.md` §32 Phase E — Workshop terminology
+
+*Updated 2026-05-21 as part of V3.4 (Room Workshop + two-track capability model). Previous revision: V3.3.2.*

@@ -532,11 +532,11 @@ These are configurable per cluster (see [`premium_cluster_requirements.md`](prem
 
 Feature ideation by agents runs from Day 1, but member-facing visibility is gated by cluster size. This prevents an empty room from looking empty AND prevents a tiny room from polling itself into chaos.
 
-| Members | Features tab | Member polling | Comments |
-|---------|--------------|----------------|----------|
-| 0–4 | Hidden | — | Agents discuss tools internally only (Agent Thoughts surfaces the discussion to admin) |
-| 5–14 | Visible as "Coming soon — agents are thinking about what this room needs" placeholder | Disabled | Disabled |
-| 15–49 | Active. Members see proposed features, can upvote, can comment | Signal collection only | Enabled |
+| Members | Workshop | Member voting | Comments |
+|---------|----------|----------------|----------|
+| 0–4 | Hidden to members | — | Agents discuss internally; admin sees in Workshop dashboard |
+| 5–14 | Visible as "Coming soon — agents are figuring out what this room could gain" placeholder | Disabled | Disabled |
+| 15–49 | Active. Members see proposed tools and features, can upvote features, can comment | Signal collection only | Enabled |
 | 50+ | Full | Active polling: ≥ 10 upvotes flags admin priority | Enabled |
 
 The thresholds are stored in `platform_settings` and overridable per cluster.
@@ -550,9 +550,9 @@ A new member arriving in a cluster sees, in priority order:
 3. **Timeline** — newest first.
 4. **Compose bar** — sticky bottom, with a daily nudge prompt and an anonymous typing indicator ("someone is writing…", or in a faith cluster "a sister is writing…") when other members are typing.
 5. **Clio FAB** — top-right, dual-tab (Just between us / Ask me anything). The button breathes gently with a soft halo while idle to communicate that the intelligence layer is alive without demanding attention.
-6. **Agent Thoughts** — **collapsed by default**. A one-line strip that members can expand if curious. Never the foreground.
+6. **Room Workshop** — **collapsed by default**. A one-line strip that members can expand if curious. Shows what Clio and Sage are building for the room: tools they run, features for member voting. Never the foreground; never about members.
 
-The Features tab and admin link only surface when the user has earned their way to them (3+ posts, role=admin/manager).
+The Workshop and admin link only surface when the user has earned their way to them (3+ posts, role=admin/manager).
 
 ### 7.6 Welcome Surface (New Members)
 
@@ -580,6 +580,58 @@ Every cluster declares its AGGIL configuration: age range, gender filter, geogra
 **Why it works:** for members who fit the restrictions, the chips are quiet affirmation that this room is for them. For members who don't fit (or who arrived from a search expecting something different), the chips set expectation immediately and honestly — without making fit-judgment a moral statement.
 
 The chip data is read from `clusters.aggil_config` (Phase 1) or hard-coded per cluster (Phase 0). The icon-and-label table is platform-level so chips render consistently across clusters.
+
+### 7.8 Room Workshop — The Two-Track Capability Model (V3.4)
+
+The agent collaboration surface — visible to members, ambient by default, expandable on tap — is called the **Room Workshop**. It replaces the earlier "Agent Thoughts" framing and corrects a behavioural drift: the agents must read as **service providers**, not observers.
+
+#### Service framing — non-negotiable
+
+Agents in the Workshop never observe or comment on members. Every line of dialogue refers to:
+- The **room's capabilities** (what the room could gain)
+- The **agents' own work** (what they're running, what they're proposing)
+- A **specific tool or feature** under discussion
+
+Forbidden subjects in agent dialogue: member behaviour patterns, engagement metrics, room "mood" descriptions, anything that uses members as the subject of a sentence. The cadence-exchange prompt enforces this with a hard rule. Drift is detectable in production (LLM logs show the rejected outputs).
+
+This is a soul-document alignment fix. The agent is a servant, not an authority. The Workshop frame makes that visible.
+
+#### Two tracks: agent tools and member features
+
+Every capability the agents propose is one of two kinds. The distinction is platform-level:
+
+| Property | Agent Tool (`kind: 'agent_tool'`) | Member Feature (`kind: 'member_feature'`) |
+|---|---|---|
+| **What it is** | A capability Sage or Clio runs on behalf of the room | A UI surface or interaction members touch |
+| **Who decides** | Agents deploy autonomously within rules; admin can veto | Member upvote (≥10 = admin priority); admin awareness required |
+| **Member UI** | "Already running" / "We'll build this" / "Live" — no vote button | Upvote + comment, vote-gated by cluster size |
+| **Examples** | Tajweed-aware reference formatter, daily reflection prompt, verified-source digest | "Mark thread resolved" button, quiet hours setting, member question queue |
+
+Both kinds carry a **build status**, distinct from the member-facing pipeline status:
+
+- `deployable_now` — Sage can simulate this today using existing primitives (e.g. inline tajweed formatting in posts)
+- `needs_building` — requires developer code work (Phase 0: admin builds; Phase 1: agents may build in sandbox per §7.10 future)
+- `building` / `live` / `paused` / `retired` — lifecycle endings
+
+#### Approval flow by track
+
+The Workshop encodes the platform's stance on AI autonomy:
+
+- **Agent tools, `deployable_now`** — ship immediately. Logged. No member vote. Admin can veto from dashboard at any time. This is the autonomy reward for capabilities that pose no member-facing risk.
+- **Agent tools, `needs_building`** — propose, surface in Workshop as "We'll build this." Phase 0: admin builds, registers the tool, agents invoke it. Phase 1: agents build in a sandboxed runtime, register on success.
+- **Member features** — propose, surface in Workshop, members vote. ≥10 upvotes flags admin priority. Admin approves for development. (The threshold is count-based, not percentage, so it scales identically for a 20-member room and a 5,000-member room.)
+
+#### Closed-loop telemetry
+
+Every tool invocation writes a row to `cluster_tool_invocations`. The Workshop displays "Run N times in this room" on each tool card, drawn from the denormalised `cluster_features.invocation_count` counter. This isn't decoration — it's the closed-loop signal that tells admin (and agents) which tools are actually serving the room. A tool with 0 invocations after 30 days is a candidate for retirement.
+
+#### What the rename signals to members
+
+Members reading "Room Workshop" feel: *the agents are working on this room*. Members reading "Agent Thoughts" felt: *the agents are thinking about us*. The first is service. The second is surveillance with extra steps. The rename is small; the behavioural shift it produces is large.
+
+#### Schema
+
+Storage is consolidated in `cluster_features` (single table for both tracks, discriminated by `kind`) plus the new `cluster_tool_invocations` telemetry table. See Part 2 §5.1.3 (V3.4 additions) for the full DDL. Existing Phase 0 deployments apply via `mvp/supabase/APPLY_NOW.sql` v1.7.
 
 
 ---
@@ -612,9 +664,9 @@ A Phase 0 deployment exists to prove these behaviours work end-to-end, with real
 
 1. **Agent behaviour** — Sage's decision framework, welfare protocol, character guardrail, repetition guard, vault-entry dedup, pointer behaviour.
 2. **Closed-loop telemetry** — `llm_response_logs`, `sage_decision_logs`, `agent_feedback`, `behavioural_events`, welfare/care resolution.
-3. **Feature pipeline** — Agent Thoughts → `cluster_features` → member upvote/comment → admin approval.
+3. **Feature pipeline** — Workshop → `cluster_features` (kind=member_feature) → member upvote/comment → admin approval. Tools (kind=agent_tool) deploy autonomously when `deployable_now`.
 4. **Introspection cycle** — Clio reads 7-day telemetry, produces self-critique + concrete proposal every 6h.
-5. **Hierarchy-first UX** — Members first, agents in service. Compose bar as primary surface. Agent Thoughts below the timeline.
+5. **Hierarchy-first UX** — Members first, agents in service. Compose bar as primary surface. Room Workshop below the timeline.
 6. **Admin dashboard** — Welfare queue, care queue, LLM observability, vault curator, features pipeline, behavioural events.
 
 ### 8.3 Phase 0 → Phase 1 Transition Criteria
