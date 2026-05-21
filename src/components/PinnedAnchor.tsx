@@ -1,19 +1,17 @@
 "use client";
 
 /**
- * PinnedAnchor — Sage's anchor / pinned reference, rendered above the
- * agent chatbox. Collapsible per-device.
+ * PinnedAnchor — Sage's founding statement for the room.
  *
- * Visual language:
- *   - Warm emerald palette — this is Sage's voice, room content, grounded
- *   - Solid 4px left border in emerald-500 (heavier than the chatbox's 2px)
- *   - Sage avatar visible even in collapsed state
- *   - Clearly labelled "Room anchor" so members understand its role
+ * Visual language (V3.2 — hierarchy-first):
+ *   - Ultra-minimal when collapsed: a thin line with "Room anchor · tap to read"
+ *     Takes almost no vertical space. Never competes with the timeline.
+ *   - Warm but quiet when expanded: soft emerald tint, lighter border,
+ *     smaller avatar. The content is what matters, not the chrome.
  *
- * Contrast with AgentChatbox:
- *   - Chatbox uses cool cyan/sky palette — meta-layer, agents working on the room
- *   - Chatbox has a 2px cyan border — lighter, more "system UI"
- *   - Chatbox header uses 🔵 icon — distinct from 📌 anchor
+ * Position: above the timeline (it's the room's identity, not an agent artefact).
+ * But its visual weight is deliberately lower than member posts — it's a
+ * founding statement, not a headline.
  */
 
 import Image from "next/image";
@@ -33,33 +31,20 @@ export default function PinnedAnchor({
 }: PinnedAnchorProps) {
   if (collapsed) {
     return (
-      // Collapsed: warm emerald strip with Sage avatar — clearly different
-      // from the cool-blue chatbox below it
-      <div className="border-b border-emerald-200 bg-emerald-50">
+      // Collapsed: ultra-minimal — just a thin line with the room's tagline.
+      // The founding statement is always accessible but never in the way.
+      <div className="border-b border-gray-100 bg-white">
         <button
           type="button"
           onClick={onToggle}
-          className="w-full max-w-4xl mx-auto px-4 py-2.5 flex items-center gap-2.5 hover:bg-emerald-100/60 transition-colors text-left"
+          className="w-full max-w-4xl mx-auto px-4 py-1.5 flex items-center gap-2 hover:bg-gray-50/60 transition-colors text-left"
         >
-          {/* 4px solid emerald left accent — heavier than chatbox */}
-          <div className="w-1 h-5 rounded-full bg-emerald-500 shrink-0" />
-          <Image
-            src="/characters/sage.png"
-            alt="Sage"
-            width={20}
-            height={20}
-            className="rounded-full object-cover shrink-0"
-          />
-          <div className="flex-1 min-w-0">
-            <span className="text-xs font-semibold text-emerald-900">
-              Room anchor
-            </span>
-            <span className="text-[11px] text-emerald-700/70 ml-2">
-              Sage · tap to read
-            </span>
-          </div>
+          <div className="w-0.5 h-3 rounded-full bg-emerald-400/60 shrink-0" />
+          <span className="text-[11px] text-gray-400 italic flex-1 truncate">
+            Room anchor · tap to read
+          </span>
           <svg
-            className="w-3.5 h-3.5 text-emerald-500 shrink-0"
+            className="w-3 h-3 text-gray-300 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -72,28 +57,27 @@ export default function PinnedAnchor({
   }
 
   return (
-    // Expanded: warm emerald card with 4px left border
-    // Visually heavier and warmer than the chatbox — this is content, not meta
-    <div className="border-b border-emerald-200 bg-emerald-50">
+    // Expanded: warm emerald card — this is content, the room's founding statement
+    <div className="border-b border-emerald-100 bg-emerald-50/40">
       <div className="max-w-4xl mx-auto">
         {/* Header row */}
         <div className="px-4 pt-3 pb-0 flex items-center gap-2.5">
-          <div className="w-1 self-stretch rounded-full bg-emerald-500 shrink-0" />
+          <div className="w-0.5 self-stretch rounded-full bg-emerald-400/60 shrink-0" />
           <Image
             src="/characters/sage.png"
             alt="Sage"
-            width={22}
-            height={22}
-            className="rounded-full object-cover shrink-0"
+            width={18}
+            height={18}
+            className="rounded-full object-cover shrink-0 opacity-80"
           />
           <div className="flex-1 min-w-0">
-            <span className="text-xs font-semibold text-emerald-900">Room anchor</span>
-            <span className="text-[10px] text-emerald-700/60 ml-2 uppercase tracking-wide">Sage</span>
+            <span className="text-[11px] font-medium text-emerald-800">Room anchor</span>
+            <span className="text-[10px] text-emerald-600/60 ml-2">Sage</span>
           </div>
           <button
             type="button"
             onClick={onToggle}
-            className="text-[11px] text-emerald-700 hover:text-emerald-900 font-medium flex items-center gap-1 shrink-0"
+            className="text-[11px] text-emerald-600/70 hover:text-emerald-800 font-medium flex items-center gap-1 shrink-0"
             aria-label="Collapse anchor"
           >
             Collapse

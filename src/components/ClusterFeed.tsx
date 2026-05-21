@@ -27,17 +27,10 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
     ),
   ];
 
-  // ── Scroll to top of feed after the user posts ─────────────────
-  // With reverse-chrono layout, the user's new post appears at the TOP
-  // of the feed (just below the agent chatbox). After submitting, we
-  // scroll the page to the top so they see their post land.
-  // We only do this on the user's own post (optimistic), not on every
-  // realtime arrival — a sudden jump while reading older content is jarring.
   const feedTopRef = useRef<HTMLDivElement>(null);
 
   const handleOptimisticPost = useCallback((post: PostWithAuthor) => {
     setOptimisticPosts((prev) => [...prev, post]);
-    // Scroll to top of feed after a short tick so the DOM has updated
     setTimeout(() => {
       feedTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
@@ -54,25 +47,29 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
   const [replyTo, setReplyTo] = useState<string | null>(null);
 
   /**
-   * Layout & ordering (V3.1 senior-UX correction)
+   * Layout hierarchy (V3.2 — hierarchy-first correction)
    *
-   * The cluster reads as a feed, not a synchronous chat. Members visit
-   * periodically and want to see what's NEW first, scroll for context.
+   * The correct hierarchy for this product:
+   *   1. The members and their conversation  ← the reason the room exists
+   *   2. The room's verified knowledge base  ← what grounds the conversation
+   *   3. The agents                          ← what serves the conversation
    *
-   * Top-level ordering rule:
-   *   - Pinned anchor (Sage's seed message): extracted from the feed,
-   *     shown collapsed above the agent chatbox. Default expanded on
-   *     first visit, collapsed thereafter (preference saved per device).
-   *   - Latest top-level post first (reverse-chronological)
-   *   - Older top-level posts on scroll
+   * Previous layout had Agent Thoughts ABOVE the timeline, which put the
+   * agents between the room's identity and the room's conversation. That
+   * communicates the wrong priority order and risks members adapting their
+   * behaviour to provoke agent dialogue rather than connecting with each other.
    *
-   * Replies inside a thread: oldest-first (a conversation reads
-   * top-to-bottom inside its container).
+   * New layout:
+   *   - Pinned anchor (Sage's seed) — room's founding statement, near the top
+   *   - Timeline — the conversation, immediately visible
+   *   - Agent Thoughts — below the timeline, accessible by scrolling
+   *
+   * Agent Thoughts is still always present and reachable. It's just no longer
+   * in the path between the member and the conversation.
    */
   const allTopLevel = posts.filter((p) => !p.parent_id);
   const allReplies = posts.filter((p) => p.parent_id);
 
-  // The pinned anchor is the FIRST sage post by created_at (the seed)
   const pinnedAnchor =
     allTopLevel
       .filter((p) => p.is_sage)
@@ -81,7 +78,6 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       )[0] || null;
 
-  // Top-level feed: NEWEST first, exclude the pinned anchor
   const topLevelFeed = allTopLevel
     .filter((p) => !pinnedAnchor || p.id !== pinnedAnchor.id)
     .sort(
@@ -89,7 +85,6 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-  // Replies grouped by parent, oldest first within each thread
   const replyMap = new Map<string, PostWithAuthor[]>();
   allReplies
     .sort(
@@ -107,12 +102,12 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
     replies: replyMap.get(post.id) || [],
   }));
 
-  // ── Pinned anchor collapsed state ───────────────────────────────
-  const [anchorCollapsed, setAnchorCollapsed] = useState(false);
+  const [anchorCollapsed, setAnchorCollapsed] = useState(true);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = localStorage.getItem(PINNED_COLLAPSED_KEY);
-    setAnchorCollapsed(saved === "1");
+    // Default collapsed unless user has explicitly expanded (saved === "0")
+    setAnchorCollapsed(saved !== "0");
   }, []);
 
   function toggleAnchor() {
@@ -125,14 +120,6 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
     });
   }
 
-  // ── Scroll anchor for newest post arrivals ──────────────────────
-  // With reverse-chrono, the newest top-level post appears at the TOP
-  // of the feed (just below the agent chatbox). We don't auto-scroll —
-  // a sudden viewport jump while the user is reading older content is
-  // jarring. Instead we rely on the realtime arrival being visually
-  // visible at the top after the chatbox.
-  const newPostAnchorRef = useRef<HTMLDivElement>(null);
-
   const handleReply = useCallback((postId: string) => {
     setReplyTo(postId);
   }, []);
@@ -144,9 +131,9 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
   return (
     <>
       {/*
-       * Pinned anchor (Sage's seed) — sits above the agent chatbox.
-       * Collapsed by default after first visit (preference per device).
-       * Tap to expand/collapse.
+       * Pinned anchor — the room's founding statement.
+       * Collapsed by default. Minimal strip when collapsed.
+       * Sits at the top because it's the room's identity, not an agent artefact.
        */}
       {pinnedAnchor && (
         <PinnedAnchor
@@ -156,30 +143,25 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
         />
       )}
 
-      {/*
-       * Agent Collaboration Chatbox — cool slate/cyan palette.
-       * Visually distinct from the warm emerald pinned anchor above it.
-       * Live exchanges from Supabase realtime; seed is fallback only.
-       */}
-      <div className="bg-slate-50 border-b border-slate-200">
-        <AgentChatbox clusterName="Sisters in Dua" clusterId="the_single_source" />
-      </div>
-
-      <div ref={newPostAnchorRef} />
-
-      {/* feedTopRef: scroll target after user posts — lands just above the newest post */}
+      {/* feedTopRef: scroll target after user posts */}
       <div ref={feedTopRef} />
 
+      {/*
+       * Timeline — the conversation. This is the room.
+       * Immediately visible after the pinned anchor.
+       * No agent surfaces between here and the compose bar.
+       */}
       <div className="bg-white">
         <div className="max-w-4xl mx-auto">
           {threads.length === 0 ? (
             <div className="text-center py-16 px-4">
               <p className="text-4xl mb-4">🤲</p>
-              <p className="text-gray-500 text-lg mb-2">
+              <p className="text-gray-600 text-lg mb-2 font-medium">
                 Assalamu Alaikum, sister.
               </p>
-              <p className="text-gray-400 text-sm">
-                Share what&apos;s on your heart. This room is yours.
+              <p className="text-gray-400 text-sm max-w-xs mx-auto leading-relaxed">
+                This room is yours. Share what&apos;s on your heart — a question,
+                a reflection, something you&apos;ve been sitting with.
               </p>
             </div>
           ) : (
@@ -200,12 +182,27 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
       </div>
 
       {/*
-       * Composer — sticky at the bottom of the viewport, always reachable.
-       * Reverse-chrono feed places new posts at the top; the composer
-       * stays at the bottom for thumb-zone reachability and natural
-       * "type → send" flow.
+       * Agent Thoughts — below the timeline.
+       *
+       * The agents are working on this room, but they are not the room.
+       * Placing them here communicates the correct hierarchy: members first,
+       * agents in service. Members who want to see what the agents are
+       * thinking can scroll down. Members who just want to talk don't have
+       * to pass through the agent layer to get to the conversation.
+       *
+       * The strip label makes the nature explicit: "working on this room"
+       * — not "the conversation" — so members understand what they're
+       * looking at if they do scroll down.
        */}
-      <div className="sticky bottom-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.05)]">
+      <div className="bg-slate-50 border-t border-slate-200 border-b border-b-slate-200">
+        <AgentChatbox clusterName="Sisters in Dua" clusterId="the_single_source" />
+      </div>
+
+      {/*
+       * Compose bar — sticky at the bottom, always reachable.
+       * The most important interactive surface in the room.
+       */}
+      <div className="sticky bottom-0 z-40">
         <TypingIndicator />
         <PostComposer
           userId={userId}

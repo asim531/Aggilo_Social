@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -382,12 +383,12 @@ export default function PostCard({
               <Image
                 src="/characters/sage.png"
                 alt="Sage"
-                width={24}
-                height={24}
-                className="rounded-full object-cover"
+                width={20}
+                height={20}
+                className="rounded-full object-cover opacity-90"
               />
-              <span className="font-semibold text-aggilo-sage text-sm">Sage</span>
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+              <span className="font-medium text-aggilo-sage text-sm">Sage</span>
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200/60">
                 Anchor
               </span>
             </span>

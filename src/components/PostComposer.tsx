@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { PostWithAuthor } from "@/lib/types";
-import { pickClusterNudge, type ClusterNudge } from "@/lib/clio-nudges";
+import { pickClusterNudge } from "@/lib/clio-nudges";
 import { track } from "@/lib/track";
 import { usePresence } from "@/lib/presence-context";
 
@@ -21,22 +21,25 @@ export default function PostComposer({
   userId,
   replyTo,
   onCancelReply,
-  placeholder = "Share what's on your heart, ask a question, or just talk...",
+  placeholder,
   onOptimisticPost,
   onReplaceOptimistic,
   onRemoveOptimistic,
 }: PostComposerProps) {
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [nudge, setNudge] = useState<ClusterNudge | null>(null);
+  const [nudgePlaceholder, setNudgePlaceholder] = useState(
+    "Share what's on your heart, ask a question, or just talk..."
+  );
+  const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { emitTyping } = usePresence();
 
-  // Pick today's nudge for this user — deterministic, rotates per-day.
-  // Only render after mount so the daily index is computed client-side
-  // (avoids SSR/CSR hydration mismatch around UTC day boundaries).
+  // Derive the placeholder from today's nudge — same nudge all day,
+  // different per user. Only computed client-side to avoid hydration mismatch.
   useEffect(() => {
-    setNudge(pickClusterNudge(userId));
+    const nudge = pickClusterNudge(userId);
+    setNudgePlaceholder(nudge.text);
   }, [userId]);
 
   async function handleSubmit(e: FormEvent) {
@@ -47,7 +50,6 @@ export default function PostComposer({
     const supabase = createClient();
     const questionText = content.trim();
 
-    // ── Priority 1: Optimistic post — appears immediately ────────────────
     const tempId = `optimistic-${crypto.randomUUID()}`;
     const optimisticPost: PostWithAuthor = {
       id: tempId,
@@ -71,7 +73,6 @@ export default function PostComposer({
     if (onCancelReply) onCancelReply();
     textareaRef.current?.focus();
 
-    // ── Save to Supabase async ────────────────────────────────────────────
     const { data: newPost, error: postError } = await supabase
       .from("posts")
       .insert({
@@ -91,24 +92,19 @@ export default function PostComposer({
       return;
     }
 
-    // Replace optimistic entry with the confirmed post
     onReplaceOptimistic?.(tempId, newPost as PostWithAuthor);
 
-    // Closed-loop telemetry — fire-and-forget
     track(replyTo ? "post_replied" : "post_created", {
       post_id: newPost.id,
       length: questionText.length,
       mentions_sage: /@sage\b/i.test(questionText),
     });
 
-    // ── Priority 2: Sage evaluation — fires AFTER save, never blocks ─────
     fetch("/api/sage/evaluate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ post_id: newPost.id, cluster_id: null }),
-    }).catch(() => {
-      // Sage evaluation failure is silent — never surfaces to user
-    });
+    }).catch(() => {});
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -126,22 +122,25 @@ export default function PostComposer({
     }
   }
 
-  return (
-    <div className="bg-white border-t border-gray-200 px-4 py-3">
-      <div className="max-w-4xl mx-auto">
-        {/* Daily nudge — passive motivation, not a script. Hidden when
-            the user is replying or is mid-compose so it doesn't crowd. */}
-        {nudge && !replyTo && !content && (
-          <div className="mb-2 px-3 py-1.5 rounded-lg bg-amber-50/60 border-l-2 border-amber-400/70">
-            <p className="text-[12px] text-gray-600 leading-snug italic">
-              <span className="text-amber-700/80 font-semibold not-italic mr-1.5">
-                Today
-              </span>
-              {nudge.text}
-            </p>
-          </div>
-        )}
+  const activePlaceholder = placeholder ?? nudgePlaceholder;
 
+  return (
+    /**
+     * Compose bar — the room's welcome surface.
+     *
+     * Visual intent: this should feel like the most inviting element in
+     * the room. Warmer background than the feed, slightly more padding,
+     * a nudge that names a real reason to speak rather than a generic
+     * "write something" prompt.
+     *
+     * The nudge IS the placeholder — it rotates daily per user so it
+     * doesn't feel scripted. When the user starts typing, it disappears
+     * naturally (placeholder behaviour). No separate nudge strip above
+     * the textarea — that was a second cognitive element competing with
+     * the input itself.
+     */
+    <div className="bg-[#faf9f6] border-t border-amber-100/80 px-4 py-4 shadow-[0_-2px_12px_-4px_rgba(0,0,0,0.06)]">
+      <div className="max-w-4xl mx-auto">
         {replyTo && (
           <div className="flex items-center gap-2 mb-2 text-sm text-gray-500">
             <span>Replying to a post</span>
@@ -168,14 +167,19 @@ export default function PostComposer({
                 handleInput();
                 if (e.target.value.length > 0) emitTyping();
               }}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
               onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              rows={1}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200
-                         focus:outline-none focus:ring-2 focus:ring-aggilo-deep/30 focus:border-aggilo-deep/50
-                         resize-none
-                         text-sm text-gray-800 placeholder:text-gray-400
-                         transition-all duration-200"
+              placeholder={activePlaceholder}
+              rows={focused || content.length > 0 ? 2 : 1}
+              className={`w-full px-4 py-3 rounded-2xl border
+                         focus:outline-none focus:ring-2 focus:ring-aggilo-deep/20 focus:border-aggilo-deep/40
+                         resize-none text-sm text-gray-800 placeholder:text-gray-400/80
+                         transition-all duration-200 leading-relaxed
+                         ${focused || content.length > 0
+                           ? "border-aggilo-deep/30 bg-white shadow-sm"
+                           : "border-amber-200/60 bg-white/70"
+                         }`}
             />
           </div>
 
@@ -183,12 +187,15 @@ export default function PostComposer({
             <button
               type="submit"
               disabled={!content.trim()}
-              className="p-2 rounded-lg bg-aggilo-deep text-white
+              aria-label="Send"
+              className="w-10 h-10 rounded-full bg-aggilo-deep text-white
+                         flex items-center justify-center
                          hover:bg-aggilo-mid disabled:opacity-30
-                         disabled:cursor-not-allowed transition-colors"
+                         disabled:cursor-not-allowed transition-all duration-200
+                         hover:scale-105 active:scale-95"
             >
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -204,9 +211,12 @@ export default function PostComposer({
           </div>
         </form>
 
-        <p className="text-xs text-gray-400 mt-1.5 ml-1">
-          Verified sources only. Quran and authentic Sunnah. Ctrl+Enter to send.
-        </p>
+        {/* Minimal footer — only visible when not composing */}
+        {!focused && !content && (
+          <p className="text-[11px] text-gray-400/70 mt-2 ml-1">
+            Verified sources only · Ctrl+Enter to send
+          </p>
+        )}
       </div>
     </div>
   );

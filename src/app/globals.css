@@ -41,8 +41,22 @@
 }
 
 @layer components {
+  /**
+   * sage-post — Sage's Timeline contributions.
+   *
+   * Visual intent: present but not dominant. Sage is a presence in the
+   * room, not a headline. Her posts should feel like a quiet contribution
+   * alongside member posts, not an announcement above them.
+   *
+   * Changes from V3.1:
+   *   - Removed the heavy emerald-50 background tint (was too prominent)
+   *   - Replaced with a very subtle left border only (2px, muted green)
+   *   - Slightly reduced font weight on Sage's name
+   *   - The dua reference card inside still has its own emerald tint —
+   *     that's content, not chrome, so it keeps its warmth
+   */
   .sage-post {
-    @apply border-l-4 border-aggilo-sage bg-emerald-50/50;
+    @apply border-l-2 border-emerald-300/60 bg-emerald-50/20;
   }
 
   .arabic-text {
