@@ -99,13 +99,33 @@ export async function POST(request: Request) {
       .eq("verified_by_founder", true)
       .limit(10);
 
-    // Recent Sage posts — used for repetition guard
+    // Recent Sage posts — used for repetition guard AND vault-ID dedup
     const { data: recentSagePosts } = await supabase
       .from("posts")
-      .select("content, created_at")
+      .select("id, content, created_at")
       .eq("is_sage", true)
       .order("created_at", { ascending: false })
       .limit(15);
+
+    // ── Vault-ID dedup map ───────────────────────────────────────────
+    // If a vault entry was already posted in the last 14 days, Sage
+    // should NOT re-post the full dua. Instead she posts a reply-style
+    // pointer to the existing post. This prevents the same dua appearing
+    // twice in the room within a fortnight.
+    const fourteenDaysAgo = new Date(
+      Date.now() - 14 * 24 * 60 * 60 * 1000
+    ).toISOString();
+    const { data: recentDuaPosts } = await supabase
+      .from("posts")
+      .select("id, content, created_at")
+      .eq("is_sage", true)
+      .gte("created_at", fourteenDaysAgo);
+
+    const vaultIdToPostId = new Map<string, string>();
+    (recentDuaPosts || []).forEach((p: { id: string; content: string }) => {
+      const m = p.content.match(/\[DUA_VAULT_ID:([0-9a-f-]+)\]/i);
+      if (m) vaultIdToPostId.set(m[1], p.id);
+    });
 
     const messages = buildSageMessages(
       triggeringPost.content,
@@ -115,8 +135,7 @@ export async function POST(request: Request) {
         mentionsSage,
         isWelfare,
         isCharacterConcern: characterConcern.matched,
-        recentSagePosts: (recentSagePosts || []).map((p) => p.content),
-      }
+        recentSagePosts: (recentSagePosts || []).map((p) => p.content),      }
     );
 
     const result = await llmCall(
@@ -155,7 +174,7 @@ export async function POST(request: Request) {
     // Belt-and-braces with the prompt-level guard. If the model still
     // produced a near-duplicate of a recent post, suppress it.
     if (!isSilent) {
-      const priorContents = (recentSagePosts || []).map((p) => p.content);
+      const priorContents = (recentSagePosts || []).map((p: { content: string }) => p.content);
       if (isSagePostRepetitive(visible, priorContents)) {
         isSilent = true;
       }
@@ -202,9 +221,46 @@ export async function POST(request: Request) {
       );
     }
 
+    // ── Vault-ID repetition check ────────────────────────────────────
+    // If Sage's response contains a DUA_VAULT_ID marker for a dua that
+    // was already posted in the last 14 days, replace the full dua with
+    // a reply-style pointer to the existing post. This is contextually
+    // directed at the member (it's a reply, not a standalone post) and
+    // preserves the sense that Sage is attentive and non-repetitive.
+    if (!isSilent && decision.vaultIdUsed && vaultIdToPostId.has(decision.vaultIdUsed)) {
+      const existingPostId = vaultIdToPostId.get(decision.vaultIdUsed)!;
+      const pointerContent = `We've shared this reference before — it may be relevant here.\n\n[POINTER_TO_POST:${existingPostId}]\nTap to scroll up to it.`;
+
+      const { data: pointerPost, error: pointerErr } = await supabase
+        .from("posts")
+        .insert({
+          author_id: null,
+          parent_id: post_id,
+          content: pointerContent,
+          is_sage: true,
+          is_sage_question: false,
+          post_subtype: "host_content",
+        })
+        .select()
+        .single();
+
+      if (pointerErr) {
+        console.error("Sage evaluate: failed to save pointer", pointerErr);
+      }
+
+      await updateLogDecision(supabase, result.llmLogId, "pointer_to_existing");
+
+      return NextResponse.json({
+        evaluated: true,
+        responded: true,
+        pointer: true,
+        reply_id: pointerPost?.id,
+        existing_post_id: existingPostId,
+      });
+    }
+
     // Sage chose silence
-    if (isSilent) {
-      const shouldHandoff = isWelfare && triggeringPost.author_id;
+    if (isSilent) {      const shouldHandoff = isWelfare && triggeringPost.author_id;
 
       if (shouldHandoff) {
         const reason: HandoffReason = "welfare";

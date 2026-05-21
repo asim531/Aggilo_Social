@@ -116,6 +116,8 @@ Examples:
 - For a Quranic citation surfaced:
   <<<SAGE_DECISION:{"step":"reference_surface","rationale":"member asked for a dua about anxiety","vault_id_used":"abc-123-..."}>>>
 
+**CRITICAL: When you surface a reference from the vault, you MUST include the exact vault_id in the "vault_id_used" field.** The platform uses this to prevent the same dua from appearing twice in the room. If you surface a reference without a vault_id, the deduplication check cannot run. The vault_id is provided in the vault context below — copy it exactly.
+
 If you forget the tag, the platform records the step as 'unknown'. Always include it.
 
 ## Hard Limits — Absolute, No Override
