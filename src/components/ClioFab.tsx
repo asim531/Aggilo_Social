@@ -486,7 +486,7 @@ export default function ClioFab({
     <>
       <button
         onClick={() => setOpen(!open)}
-        className={`${fabPositionClass} ${thinking ? "clio-fab-thinking" : ""} relative`}
+        className={`${fabPositionClass} ${thinking ? "clio-fab-thinking" : !open ? "clio-fab-idle" : ""} relative`}
         aria-label="Talk to Clio"
       >
         <Image

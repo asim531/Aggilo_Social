@@ -15,6 +15,10 @@ interface ClusterFeedProps {
 }
 
 const PINNED_COLLAPSED_KEY = "aggilo:pinned_anchor_collapsed";
+// Show the "↑ New posts" pill only when the viewer has scrolled this many
+// pixels past the top of the feed. Below this threshold, new posts are
+// already visible and a jump-to-top pill is more nuisance than help.
+const NEW_POSTS_PILL_THRESHOLD = 320;
 
 export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) {
   const realtimePosts = useRealtimePosts(initialPosts);
@@ -29,8 +33,64 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
 
   const feedTopRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * "↑ New posts" pill state.
+   *
+   * Tracks new posts that arrived via realtime while the viewer was
+   * scrolled down, so the pill nudges them back to the top instead of
+   * silently inserting content above the fold. The pill is dismissed when
+   * the viewer scrolls back near the top, or taps the pill.
+   *
+   * `seenPostsRef` carries the IDs the viewer has already "seen" — i.e.
+   * those visible at the top of the feed when the user is near the top.
+   * Anything new beyond that count when the user is scrolled down counts
+   * as "new posts arrived".
+   */
+  const seenPostIdsRef = useRef<Set<string>>(
+    new Set(initialPosts.map((p) => p.id))
+  );
+  const [newPostsCount, setNewPostsCount] = useState(0);
+  const [scrolledDown, setScrolledDown] = useState(false);
+
+  useEffect(() => {
+    function handleScroll() {
+      const isDown = window.scrollY > NEW_POSTS_PILL_THRESHOLD;
+      setScrolledDown(isDown);
+      if (!isDown) {
+        // Back near the top — clear the pill and absorb the new IDs.
+        setNewPostsCount(0);
+        for (const p of posts) seenPostIdsRef.current.add(p.id);
+      }
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [posts]);
+
+  useEffect(() => {
+    if (!scrolledDown) {
+      // Always keep seen-set in sync when user is near the top.
+      for (const p of posts) seenPostIdsRef.current.add(p.id);
+      return;
+    }
+    // Count new top-level posts only — replies under existing threads
+    // shouldn't trigger the "scroll up to see new content" pill.
+    let unseen = 0;
+    for (const p of posts) {
+      if (p.parent_id) continue;
+      if (!seenPostIdsRef.current.has(p.id)) unseen++;
+    }
+    setNewPostsCount(unseen);
+  }, [posts, scrolledDown]);
+
+  const handleNewPostsPill = useCallback(() => {
+    feedTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setNewPostsCount(0);
+    for (const p of posts) seenPostIdsRef.current.add(p.id);
+  }, [posts]);
+
   const handleOptimisticPost = useCallback((post: PostWithAuthor) => {
     setOptimisticPosts((prev) => [...prev, post]);
+    seenPostIdsRef.current.add(post.id);
     setTimeout(() => {
       feedTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
@@ -147,6 +207,41 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
       <div ref={feedTopRef} />
 
       {/*
+       * "↑ New posts" pill — appears when the viewer is scrolled down and
+       * new top-level posts have arrived via realtime. Tapping returns
+       * the viewer to the top of the feed and clears the pill. Sits below
+       * the navbar and above the timeline so it never overlaps content.
+       */}
+      {scrolledDown && newPostsCount > 0 && (
+        <div className="sticky top-14 z-30 flex justify-center pointer-events-none">
+          <button
+            type="button"
+            onClick={handleNewPostsPill}
+            className="pointer-events-auto mt-2 px-4 py-1.5 rounded-full bg-aggilo-deep text-white text-xs font-medium shadow-lg hover:bg-aggilo-deep/90 transition-colors flex items-center gap-1.5"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 10l7-7m0 0l7 7m-7-7v18"
+              />
+            </svg>
+            <span>
+              {newPostsCount === 1
+                ? "1 new post"
+                : `${newPostsCount} new posts`}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/*
        * Timeline — the conversation. This is the room.
        * Immediately visible after the pinned anchor.
        * No agent surfaces between here and the compose bar.
@@ -174,6 +269,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
                   onReply={handleReply}
                   pinned={false}
                   allPosts={posts}
+                  currentUserId={userId}
                 />
               ))}
             </div>

@@ -59,6 +59,37 @@
     @apply border-l-2 border-emerald-300/60 bg-emerald-50/20;
   }
 
+  /**
+   * sage-glow — soft pulsing glow used by SageConsideringIndicator on
+   * in-flight Sage posts. Communicates "Sage is forming a response" before
+   * the message lands. Subtle, not attention-grabbing.
+   */
+  .sage-glow {
+    animation: sage-glow-pulse 1.6s ease-in-out infinite;
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.25);
+  }
+
+  @keyframes sage-glow-pulse {
+    0%, 100% { opacity: 0.8; }
+    50%      { opacity: 1; }
+  }
+
+  /**
+   * clio-fab-idle — Clio breathes gently when she is present but not
+   * actively thinking. She is the intelligence layer of the room. The
+   * breathing communicates "I'm here, alive, watching over this space"
+   * without demanding attention. Stops when the panel opens or when
+   * she is actively thinking (clio-fab-thinking takes over).
+   */
+  .clio-fab-idle {
+    animation: clio-idle-breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes clio-idle-breathe {
+    0%, 100% { transform: scale(1);    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.20); }
+    50%      { transform: scale(1.04); box-shadow: 0 6px 18px rgba(8, 145, 178, 0.35); }
+  }
+
   .arabic-text {
     font-family: "Amiri", "Scheherazade New", var(--font-amiri), var(--font-scheherazade), "Noto Naskh Arabic", serif;
     font-size: 26px;

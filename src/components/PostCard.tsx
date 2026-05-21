@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PostWithAuthor } from "@/lib/types";
 import DuaReference from "./DuaReference";
 import DuaProgressiveReveal, { parseDuaPost } from "./DuaProgressiveReveal";
@@ -19,6 +19,8 @@ interface PostCardProps {
   pinned?: boolean;
   /** Pass the full posts list so we can detect if Sage has already replied */
   allPosts?: PostWithAuthor[];
+  /** Current viewer's user id — drives "own post" actions in the long-press menu */
+  currentUserId?: string;
 }
 
 // Arabic Unicode blocks: U+0600–U+06FF (Arabic), U+0750–U+077F (Arabic Sup),
@@ -342,6 +344,7 @@ export default function PostCard({
   onReply,
   pinned,
   allPosts = [],
+  currentUserId,
 }: PostCardProps) {
   const isSage = post.is_sage;
   const role = post.profiles?.role;
@@ -353,7 +356,16 @@ export default function PostCard({
     replies.some((r) => r.is_sage) ||
     allPosts.some((p) => p.parent_id === post.id && p.is_sage);
   const isOptimistic = post.id.startsWith("optimistic-");
-  const showSageConsidering = mentionsSage && !hasSageReply && isOptimistic;
+  // Glow/typing indicator before a Sage post lands.
+  // Fires on:
+  //   1. Member post that mentions @Sage and has no Sage reply yet (existing behaviour)
+  //   2. Any optimistic Sage post that's still in flight (extended behaviour —
+  //      gives members a beat to anticipate Sage's contribution before it lands)
+  const showSageConsidering =
+    (mentionsSage && !hasSageReply && isOptimistic) || (isSage && isOptimistic);
+
+  const isOwnPost = !!currentUserId && post.author_id === currentUserId;
+  const isMemberPost = !isSage && !!post.author_id;
 
   const containerClasses = [
     "px-4 py-3 transition-colors",
@@ -362,10 +374,60 @@ export default function PostCard({
     .filter(Boolean)
     .join(" ");
 
+  // Long-press context menu — touch + right-click parity.
+  // Disabled for optimistic / pinned posts (no actions apply yet).
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+
+  const canShowMenu = !isOptimistic && !pinned && (isOwnPost || isMemberPost || isSage);
+
+  function openMenu(x: number, y: number) {
+    setMenuPos({ x, y });
+    setMenuOpen(true);
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    if (!canShowMenu) return;
+    longPressFired.current = false;
+    const touch = e.touches[0];
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      openMenu(touch.clientX, touch.clientY);
+      // Light haptic feedback on supported devices
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try {
+          navigator.vibrate?.(8);
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 500);
+  }
+
+  function handleTouchEnd() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }
+
+  function handleContextMenu(e: React.MouseEvent) {
+    if (!canShowMenu) return;
+    e.preventDefault();
+    openMenu(e.clientX, e.clientY);
+  }
+
   return (
     <div
       id={`post-${post.id}`}
-      className="border-b border-gray-100 last:border-b-0 transition-shadow rounded-md"
+      className="border-b border-gray-100 last:border-b-0 transition-shadow rounded-md select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      onTouchMove={handleTouchEnd}
+      onContextMenu={handleContextMenu}
     >
       {pinned && (
         <div className="px-4 pt-2 flex items-center gap-1 text-xs text-gray-400">
@@ -446,21 +508,200 @@ export default function PostCard({
           </div>
         )}
 
-        {showSageConsidering && <SageConsideringIndicator />}
+        {showSageConsidering && <SageConsideringIndicator isSagePost={isSage} />}
       </div>
 
       {replies.length > 0 && (
         <div className="ml-6 border-l-2 border-gray-100">
           {replies.map((reply) => (
-            <PostCard key={reply.id} post={reply} />
+            <PostCard key={reply.id} post={reply} currentUserId={currentUserId} />
           ))}
         </div>
+      )}
+
+      {menuOpen && menuPos && (
+        <PostContextMenu
+          x={menuPos.x}
+          y={menuPos.y}
+          isOwnPost={isOwnPost}
+          isSagePost={isSage}
+          postId={post.id}
+          postContent={post.content}
+          onClose={() => setMenuOpen(false)}
+        />
       )}
     </div>
   );
 }
 
-function SageConsideringIndicator() {
+function PostContextMenu({
+  x,
+  y,
+  isOwnPost,
+  isSagePost,
+  postId,
+  postContent,
+  onClose,
+}: {
+  x: number;
+  y: number;
+  isOwnPost: boolean;
+  isSagePost: boolean;
+  postId: string;
+  postContent: string;
+  onClose: () => void;
+}) {
+  // Clamp the menu inside the viewport
+  const [pos, setPos] = useState<{ left: number; top: number }>({
+    left: x,
+    top: y,
+  });
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const menuW = 180;
+    const menuH = 160;
+    const left = Math.min(x, window.innerWidth - menuW - 8);
+    const top = Math.min(y, window.innerHeight - menuH - 8);
+    setPos({ left, top });
+  }, [x, y]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent | TouchEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [onClose]);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(postContent);
+    } catch {
+      /* clipboard blocked — fail quietly */
+    }
+    onClose();
+  }
+
+  async function handleShare() {
+    const shareUrl = `${window.location.origin}${window.location.pathname}#post-${postId}`;
+    if (typeof navigator !== "undefined" && (navigator as { share?: (data: ShareData) => Promise<void> }).share) {
+      try {
+        await (navigator as { share: (data: ShareData) => Promise<void> }).share({
+          text: postContent.slice(0, 200),
+          url: shareUrl,
+        });
+        onClose();
+        return;
+      } catch {
+        /* user cancelled — fall through to clipboard */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      /* ignore */
+    }
+    onClose();
+  }
+
+  async function handleDelete() {
+    if (!confirm("Delete this post? This cannot be undone.")) {
+      onClose();
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase.from("posts").delete().eq("id", postId);
+    if (error) {
+      alert("Could not delete this post. Try again?");
+    }
+    // Realtime will remove the card; no manual state update needed.
+    onClose();
+  }
+
+  function handleReport() {
+    // No reports table yet in Phase 0 — record as a behavioural event so
+    // admin can see in the Events feed and act manually.
+    fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event_type: "post_reported",
+        properties: { post_id: postId, sage_post: isSagePost },
+      }),
+    }).catch(() => {
+      /* fire-and-forget */
+    });
+    alert("Reported. The admin will review this post.");
+    onClose();
+  }
+
+  return (
+    <div
+      ref={menuRef}
+      role="menu"
+      style={{ left: pos.left, top: pos.top }}
+      className="fixed z-[60] min-w-[180px] bg-white rounded-lg shadow-xl border border-gray-200 py-1 text-sm"
+    >
+      <button
+        type="button"
+        role="menuitem"
+        onClick={handleCopy}
+        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        Copy text
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={handleShare}
+        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        Share
+      </button>
+      {isOwnPost && (
+        <>
+          <div className="border-t border-gray-100 my-1" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleDelete}
+            className="w-full px-4 py-2 text-left text-rose-600 hover:bg-rose-50 transition-colors"
+          >
+            Delete
+          </button>
+        </>
+      )}
+      {!isOwnPost && (
+        <>
+          <div className="border-t border-gray-100 my-1" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleReport}
+            className="w-full px-4 py-2 text-left text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Report to admin
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SageConsideringIndicator({ isSagePost = false }: { isSagePost?: boolean }) {
   const [phrase, setPhrase] = useState(SAGE_THINKING[0]);
 
   useEffect(() => {
@@ -473,8 +714,12 @@ function SageConsideringIndicator() {
     return () => clearInterval(interval);
   }, []);
 
+  // Subtle glow when this indicator is rendered on a Sage post that's still
+  // in flight — gives members a visual beat to anticipate Sage's contribution.
+  const glowClass = isSagePost ? "sage-glow" : "";
+
   return (
-    <div className="mt-2 flex items-center gap-2 text-xs text-emerald-600">
+    <div className={`mt-2 flex items-center gap-2 text-xs text-emerald-600 ${glowClass}`}>
       <span className="flex gap-0.5">
         {[0, 1, 2].map((i) => (
           <span
