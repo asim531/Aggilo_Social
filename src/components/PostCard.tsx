@@ -17,6 +17,8 @@ interface PostCardProps {
   post: PostWithAuthor;
   replies?: PostWithAuthor[];
   onReply?: (postId: string) => void;
+  /** Called after a post is successfully deleted — removes it from the feed */
+  onDelete?: (postId: string) => void;
   pinned?: boolean;
   /** Pass the full posts list so we can detect if Sage has already replied */
   allPosts?: PostWithAuthor[];
@@ -343,6 +345,7 @@ export default function PostCard({
   post,
   replies = [],
   onReply,
+  onDelete,
   pinned,
   allPosts = [],
   currentUserId,
@@ -515,7 +518,7 @@ export default function PostCard({
       {replies.length > 0 && (
         <div className="ml-6 border-l-2 border-gray-100">
           {replies.map((reply) => (
-            <PostCard key={reply.id} post={reply} currentUserId={currentUserId} />
+            <PostCard key={reply.id} post={reply} currentUserId={currentUserId} onDelete={onDelete} />
           ))}
         </div>
       )}
@@ -529,6 +532,7 @@ export default function PostCard({
           postId={post.id}
           postContent={post.content}
           onClose={() => setMenuOpen(false)}
+          onDeleted={() => onDelete?.(post.id)}
         />
       )}
     </div>
@@ -543,6 +547,7 @@ function PostContextMenu({
   postId,
   postContent,
   onClose,
+  onDeleted,
 }: {
   x: number;
   y: number;
@@ -551,6 +556,7 @@ function PostContextMenu({
   postId: string;
   postContent: string;
   onClose: () => void;
+  onDeleted: () => void;
 }) {
   // Clamp the menu inside the viewport
   const [pos, setPos] = useState<{ left: number; top: number }>({
@@ -627,8 +633,13 @@ function PostContextMenu({
     const { error } = await supabase.from("posts").delete().eq("id", postId);
     if (error) {
       alert("Could not delete this post. Try again?");
+      onClose();
+      return;
     }
-    // Realtime will remove the card; no manual state update needed.
+    // Notify parent to remove the card from state immediately.
+    // Realtime DELETE events are not guaranteed (require REPLICA IDENTITY FULL
+    // + DELETE in the publication), so we remove optimistically here.
+    onDeleted();
     onClose();
   }
 
@@ -651,10 +662,7 @@ function PostContextMenu({
 
   // Portal target. We render INTO document.body so no ancestor with
   // a CSS transform / contain / filter / will-change can create a new
-  // containing block and clip our fixed-position menu — that was the
-  // bug where only "Delete" was visible (the menu was being clipped
-  // by the post card border because position:fixed got re-anchored
-  // to the post's containing block).
+  // containing block and clip our fixed-position menu.
   const [portalReady, setPortalReady] = useState(false);
   useEffect(() => {
     setPortalReady(true);
@@ -667,46 +675,50 @@ function PostContextMenu({
       style={{ left: pos.left, top: pos.top }}
       className="fixed z-[100] min-w-[200px] bg-white rounded-lg shadow-2xl border border-gray-200 py-1 text-sm"
     >
-      <button
-        type="button"
-        role="menuitem"
-        onClick={handleCopy}
-        className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
-      >
-        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
-        Copy text
-      </button>
-      <button
-        type="button"
-        role="menuitem"
-        onClick={handleShare}
-        className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
-      >
-        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-        </svg>
-        Share link
-      </button>
-      {isOwnPost && (
+      {isOwnPost ? (
+        /*
+         * Own post: only Delete.
+         * Copy and Share are not useful for your own post — you already
+         * have the content. The only meaningful action is removal.
+         */
+        <button
+          type="button"
+          role="menuitem"
+          onClick={handleDelete}
+          className="w-full px-4 py-2.5 text-left text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Delete
+        </button>
+      ) : (
+        /*
+         * Others' posts (including Sage): Copy, Share, Report.
+         */
         <>
-          <div className="border-t border-gray-100 my-1" />
           <button
             type="button"
             role="menuitem"
-            onClick={handleDelete}
-            className="w-full px-4 py-2.5 text-left text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-2"
+            onClick={handleCopy}
+            className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            Delete
+            Copy text
           </button>
-        </>
-      )}
-      {!isOwnPost && (
-        <>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleShare}
+            className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            Share link
+          </button>
           <div className="border-t border-gray-100 my-1" />
           <button
             type="button"

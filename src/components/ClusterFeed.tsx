@@ -29,7 +29,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
     ...optimisticPosts.filter(
       (op) => !realtimePosts.some((rp) => rp.id === op.id)
     ),
-  ];
+  ].filter((p) => !deletedIds.has(p.id) && !deletedIds.has(p.parent_id ?? ""));
 
   const feedTopRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +102,19 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
 
   const handleRemoveOptimistic = useCallback((tempId: string) => {
     setOptimisticPosts((prev) => prev.filter((p) => p.id !== tempId));
+  }, []);
+
+  // Called by PostCard after a successful DB delete.
+  // Removes the post and any of its replies from the realtime posts list.
+  // We can't mutate realtimePosts directly (it's owned by useRealtimePosts),
+  // so we track deleted IDs in a ref and filter them out of the merged list.
+  const deletedIdsRef = useRef<Set<string>>(new Set());
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
+  const handleDeletePost = useCallback((postId: string) => {
+    deletedIdsRef.current.add(postId);
+    setDeletedIds(new Set(deletedIdsRef.current));
+    setOptimisticPosts((prev) => prev.filter((p) => p.id !== postId && p.parent_id !== postId));
   }, []);
 
   const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -267,6 +280,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
                   post={thread}
                   replies={thread.replies}
                   onReply={handleReply}
+                  onDelete={handleDeletePost}
                   pinned={false}
                   allPosts={posts}
                   currentUserId={userId}
