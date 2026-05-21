@@ -37,8 +37,9 @@ export default function ClusterShell({
   // ── Autonomous Sage dua suggestion trigger ──────────────────────────
   const SAGE_DUA_NEXT_ELIGIBLE_KEY = "aggilo:sage_dua_next_eligible";
   const CADENCE_NEXT_ELIGIBLE_KEY = "aggilo:cadence_exchange_next_eligible";
+  const INTROSPECTION_NEXT_ELIGIBLE_KEY = "aggilo:introspection_next_eligible";
   const CACHE_VERSION_KEY = "aggilo:cache_version";
-  const CURRENT_CACHE_VERSION = "3"; // bump to clear stale cadence caches
+  const CURRENT_CACHE_VERSION = "4"; // bumped for introspection cycle
 
   // One-time cache bust: if the stored version doesn't match, clear all
   // cadence keys so the new thresholds take effect immediately.
@@ -48,6 +49,7 @@ export default function ClusterShell({
     if (stored !== CURRENT_CACHE_VERSION) {
       localStorage.removeItem(SAGE_DUA_NEXT_ELIGIBLE_KEY);
       localStorage.removeItem(CADENCE_NEXT_ELIGIBLE_KEY);
+      localStorage.removeItem(INTROSPECTION_NEXT_ELIGIBLE_KEY);
       localStorage.setItem(CACHE_VERSION_KEY, CURRENT_CACHE_VERSION);
     }
   }, []);
@@ -141,6 +143,47 @@ export default function ClusterShell({
         /* silent */
       }
     }, 12000);
+
+    return () => clearTimeout(trigger);
+  }, [showWelcome]);
+
+  // ── Introspection cycle trigger ─────────────────────────────────────
+  // Clio reads telemetry and produces a self-critique + ONE concrete
+  // proposal (feature / prompt tweak / behavioural). Server enforces
+  // a 6h floor between runs. Fires later in the page lifecycle so it
+  // doesn't compete with cadence + dua on the LLM rate limit.
+  useEffect(() => {
+    if (showWelcome) return;
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(INTROSPECTION_NEXT_ELIGIBLE_KEY);
+      if (stored && Date.now() < parseInt(stored, 10)) return;
+    }
+    const trigger = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/agents/introspect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        if (typeof window !== "undefined") {
+          if (data?.outcome === "cadence_blocked" && data.next_eligible_at) {
+            localStorage.setItem(
+              INTROSPECTION_NEXT_ELIGIBLE_KEY,
+              String(new Date(data.next_eligible_at).getTime())
+            );
+          } else if (data?.outcome === "introspected") {
+            // Cache 6h forward (matches server floor)
+            const next = Date.now() + 6 * 60 * 60 * 1000;
+            localStorage.setItem(INTROSPECTION_NEXT_ELIGIBLE_KEY, String(next));
+          } else {
+            const next = Date.now() + 30 * 60 * 1000;
+            localStorage.setItem(INTROSPECTION_NEXT_ELIGIBLE_KEY, String(next));
+          }
+        }
+      } catch {
+        /* silent */
+      }
+    }, 25000); // 25s after mount — well after dua + cadence
 
     return () => clearTimeout(trigger);
   }, [showWelcome]);

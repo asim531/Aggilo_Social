@@ -66,9 +66,27 @@ When observe_mode is false AND the exchange genuinely converged on a specific to
   "category": "<one of: reflection | reminder | tracking | reference | community | accessibility>",
   "rationale": "<one sentence explaining why this room would benefit>"
 }
-If no concrete feature emerged from the exchange (most exchanges should NOT produce one — features are rare moments of genuine clarity, not a pressure to invent), return null.
 
-Hard rule: do NOT invent a feature just to fill the field. A null proposed_feature is the correct, honest output unless the dialogue itself converged on a specific helpful tool. Three exchanges with no feature in a row is fine.`;
+## Bias toward action over observation
+Default behaviour for new clusters: lean toward proposing concrete features. The Features tab should not be empty for long.
+
+- About 60% of exchanges should produce a concrete feature proposal. observe_mode = false.
+- About 40% of exchanges should be observation-only. observe_mode = true.
+- Two consecutive observe_mode runs is the maximum. On the third run, propose something concrete even if you have to reach a little — a small, low-risk feature is better than another "let's wait."
+
+The proposed feature should be implementable and meaningful. Examples that work for almost any cluster:
+- a daily reflection prompt rotating through cluster themes
+- a "quiet hours" setting per member
+- a way to mark a thread as resolved
+- a weekly digest of verified references shared
+- a member-only question queue routed to the Admin
+- an accessibility toggle (font size, high contrast)
+
+What does NOT count as a concrete feature:
+- "more discussion"
+- "better engagement"
+- "let's see what happens"
+These are not features. Reject them inside your own dialogue.`;
 
 export async function POST() {
   try {
