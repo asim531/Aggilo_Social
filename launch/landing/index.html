@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Aggilo — Your kind of room</title>
+    <meta name="description"
+        content="Aggilo builds small communities around who you actually are — your age, your city, your language, what you care about. Clio finds the right room for you.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/hero.css">
+    <link rel="stylesheet" href="styles/sections.css">
+    <link rel="stylesheet" href="styles/interaction-card.css">
+    <link rel="stylesheet" href="styles/evangelist-form.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+</head>
+
+<body>
+
+    <!-- ═══════════════════ MOOD OVERLAY ═══════════════════ -->
+    <div id="clio-mood-overlay"></div>
+
+    <!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
+    <section class="hero" id="hero">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+        <canvas id="canvas"></canvas>
+
+        <!-- Floating orbs -->
+        <div class="floating-orb orb-1"></div>
+        <div class="floating-orb orb-2"></div>
+        <div class="floating-orb orb-3"></div>
+        <div class="floating-orb orb-4"></div>
+        <div class="floating-orb orb-5"></div>
+
+        <div class="hero-overlay">
+            <div class="hero-split">
+                <!-- Left: Clio intro -->
+                <div class="hero-intro">
+                    <p class="hero-tagline">Aggilo — Introducing Clio</p>
+                    <div class="hero-ai-badge">✦ AI-powered social network</div>
+                    <div class="hero-eyebrow">
+                        <div class="hero-eyebrow-dot"></div>
+                        <span class="hero-eyebrow-text">Built for India</span>
+                    </div>
+                    <h1 class="hero-headline">
+                        Your kind of room.<br>
+                        <span class="hl">Built around who you actually are.</span>
+                    </h1>
+                    <p class="hero-desc">
+                        Aggilo builds small communities around who you actually are — your age, your city,
+                        your language, what you care about. Clio, our AI, finds the right room for you.
+                        No algorithm. No feed. Just a room that fits.
+                    </p>
+                    <div class="hero-personas">
+                        <span class="hero-persona-chip">🎓 Students</span>
+                        <span class="hero-persona-chip">👶 Young parents</span>
+                        <span class="hero-persona-chip">🏙️ New in city</span>
+                        <span class="hero-persona-chip">🛠️ Builders</span>
+                        <span class="hero-persona-chip">🌕 Niche people</span>
+                    </div>
+                    <div class="hero-cta-row">
+                        <button class="hero-cta" id="heroCta">Let Clio find your room →</button>
+                        <span class="hero-cta-note">One message back. When the room is ready.</span>
+                    </div>
+                </div>
+
+                <!-- Right: Clio avatar + bubble -->
+                <div class="hero-clio-col">
+                    <div class="hero-avatar-wrap">
+                        <div class="hero-avatar-ring"></div>
+                        <div class="hero-avatar-ring hero-avatar-ring-2"></div>
+                        <video class="hero-avatar-video" id="heroAvatarVideo"
+                            src="webm/resting01_transparent.webm" muted autoplay loop playsinline disablePictureInPicture></video>
+                    </div>
+                    <div class="hero-bubble-slot" id="heroBubbleSlot">
+                        <div class="hbub-name">Clio</div>
+                        <span class="hbub-text" id="heroBubbleText">Your age, your city, your language, what you care about — I already know what kind of room you need.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ SCENARIOS ═══════════════════════════════ -->
+    <section class="scenarios" id="scenarios">
+        <div class="scenarios-lead">
+            <span class="sec-label">where clio works</span>
+            <h2 class="sec-title">She discovers what you couldn't find alone.</h2>
+        </div>
+        <div class="scenarios-grid">
+
+            <div class="sc-card">
+                <div class="sc-icon">🎓</div>
+                <div class="sc-before">
+                    <p class="sc-before-text">One topic won't click. YouTube, textbook, repeat.</p>
+                </div>
+                <div class="sc-divider">
+                    <div class="sc-divider-line"></div>
+                    <div class="sc-divider-icon">✦</div>
+                    <div class="sc-divider-line"></div>
+                </div>
+                <div class="sc-after">
+                    <p class="sc-after-text">Clio discovered <strong>4 batchmates stuck on the exact same
+                            chapter.</strong> The concept clicked in two hours of conversation.</p>
+                </div>
+            </div>
+
+            <div class="sc-card">
+                <div class="sc-icon">👶</div>
+                <div class="sc-before">
+                    <p class="sc-before-text">You parent differently. Every group you join doesn't.</p>
+                </div>
+                <div class="sc-divider">
+                    <div class="sc-divider-line"></div>
+                    <div class="sc-divider-icon">✦</div>
+                    <div class="sc-divider-line"></div>
+                </div>
+                <div class="sc-after">
+                    <p class="sc-after-text">Clio discovered <strong>5 mothers reading the same books, making the same
+                            quiet choices.</strong> They already understood.</p>
+                </div>
+            </div>
+
+            <div class="sc-card">
+                <div class="sc-icon">⚽</div>
+                <div class="sc-before">
+                    <p class="sc-before-text">"Anyone free?" to the same people isn't working.</p>
+                </div>
+                <div class="sc-divider">
+                    <div class="sc-divider-line"></div>
+                    <div class="sc-divider-icon">✦</div>
+                    <div class="sc-divider-line"></div>
+                </div>
+                <div class="sc-after">
+                    <p class="sc-after-text">Clio discovered <strong>6 players near you, similar level, all looking for
+                            the same thing.</strong> Saturday mornings haven't been empty since.</p>
+                </div>
+            </div>
+
+            <div class="sc-card">
+                <div class="sc-icon">🌕</div>
+                <div class="sc-before">
+                    <p class="sc-before-text">Something niche, hard to explain. Nobody nearby gets it.</p>
+                </div>
+                <div class="sc-divider">
+                    <div class="sc-divider-line"></div>
+                    <div class="sc-divider-icon">✦</div>
+                    <div class="sc-divider-line"></div>
+                </div>
+                <div class="sc-after">
+                    <p class="sc-after-text">Clio discovered <strong>people living inside the same niche, right around
+                            you.</strong> You skipped the explaining and started in the middle.</p>
+                </div>
+            </div>
+
+            <div class="sc-card">
+                <div class="sc-icon">🏙️</div>
+                <div class="sc-before">
+                    <p class="sc-before-text">Eight months in a new city. No one feels like your people.</p>
+                </div>
+                <div class="sc-divider">
+                    <div class="sc-divider-line"></div>
+                    <div class="sc-divider-icon">✦</div>
+                    <div class="sc-divider-line"></div>
+                </div>
+                <div class="sc-after">
+                    <p class="sc-after-text">Clio discovered <strong>others who moved here recently — same
+                            neighbourhood, same restlessness.</strong> They already understood.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ THE PROBLEM ═══════════════════════════════ -->
+    <section class="problem">
+        <div class="problem-block">
+            <p class="pb-big">It's not about more people.<br>It's about who actually fits.</p>
+            <p class="pb-small">Not for the version of you that shows up, performs, and keeps its calendar full. For the
+                one that comes out at 1am in a conversation that goes somewhere real. That version is still looking.</p>
+        </div>
+        <div class="problem-block">
+            <p class="pb-big">Social media made it worse.<br>It gave you an audience, not a room.</p>
+            <p class="pb-small">The more you posted, the more invisible the real you became. Connection became content.
+                Friendship became maintenance. The depth you're looking for didn't move — but the path to it got harder
+                to find.</p>
+        </div>
+        <div class="problem-transition">
+            What if someone was watching the entire city — and quietly building the room you've been looking for?
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ SOCIAL PROOF ═══════════════════════════════ -->
+    <section class="social-proof" id="socialProof">
+        <div class="sp-counter">
+            <div class="sp-num" id="spCounterNum">0</div>
+            <div class="sp-label">people already waiting for their room</div>
+        </div>
+        <div class="sp-ticker-wrap">
+            <div class="sp-ticker" id="spTicker">
+                <span class="sp-pill">🎓 Students finding study clusters</span>
+                <span class="sp-pill">👶 Parents who parent differently</span>
+                <span class="sp-pill">🏙️ New-in-city searchers</span>
+                <span class="sp-pill">🛠️ Builders looking for co-founders</span>
+                <span class="sp-pill">🌕 Niche interests finally seen</span>
+                <span class="sp-pill">⚽ Weekend players, same level</span>
+                <span class="sp-pill">📚 Book clubs without the small talk</span>
+                <span class="sp-pill">🎨 Creatives tired of scrolling</span>
+                <span class="sp-pill">🧠 Deep thinkers who mean it</span>
+                <span class="sp-pill">🌱 Communities forming from scratch</span>
+                <!-- duplicate for infinite loop -->
+                <span class="sp-pill">🎓 Students finding study clusters</span>
+                <span class="sp-pill">👶 Parents who parent differently</span>
+                <span class="sp-pill">🏙️ New-in-city searchers</span>
+                <span class="sp-pill">🛠️ Builders looking for co-founders</span>
+                <span class="sp-pill">🌕 Niche interests finally seen</span>
+                <span class="sp-pill">⚽ Weekend players, same level</span>
+                <span class="sp-pill">📚 Book clubs without the small talk</span>
+                <span class="sp-pill">🎨 Creatives tired of scrolling</span>
+                <span class="sp-pill">🧠 Deep thinkers who mean it</span>
+                <span class="sp-pill">🌱 Communities forming from scratch</span>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════ CLIO ZOOM ═══════════════════════════════ -->
+    <section class="clio-zoom" id="clioZoom">
+        <div class="cz-layout">
+            <div class="cz-copy">
+                <span class="sec-label">how clio sees</span>
+                <h2 class="cz-headline">She watches<br>everything.<br><span>She builds just for you.</span></h2>
+                <p class="cz-desc">Clio doesn't work at human scale. She reads patterns across the planet — across
+                    countries, cities, neighbourhoods — then narrows all the way down to the one thing that matters: the
+                    exact group of people near you who share what you actually care about.</p>
+                <div class="cz-clio-note">
+                    <div class="cz-clio-av">✦</div>
+                    <p class="cz-clio-quote">
+                        <span class="cz-clio-name">Clio</span>
+                        I don't match people one to one. I discover who belongs in the same room — and I build it
+                        right where you are.
+                    </p>
+                </div>
+            </div>
+            <div class="cz-visual" id="czVisual">
+                <div class="cz-scan" id="czScan"></div>
+
+                <div class="cz-level" data-level="1">
+                    <div class="cz-level-icon-wrap">🌍</div>
+                    <div class="cz-level-text">
+                        <span class="cz-level-label">Planet</span>
+                        <span class="cz-level-sub">Global patterns &amp; signals</span>
+                    </div>
+                </div>
+                <div class="cz-connector"></div>
+
+                <div class="cz-level" data-level="2">
+                    <div class="cz-level-icon-wrap">🗺️</div>
+                    <div class="cz-level-text">
+                        <span class="cz-level-label">Country</span>
+                        <span class="cz-level-sub">Cultural &amp; demographic context</span>
+                    </div>
+                </div>
+                <div class="cz-connector"></div>
+
+                <div class="cz-level" data-level="3">
+                    <div class="cz-level-icon-wrap">🏙️</div>
+                    <div class="cz-level-text">
+                        <span class="cz-level-label">City</span>
+                        <span class="cz-level-sub">Local density &amp; life moments</span>
+                    </div>
+                </div>
+                <div class="cz-connector"></div>
+
+                <div class="cz-level" data-level="4">
+                    <div class="cz-level-icon-wrap">🏘️</div>
+                    <div class="cz-level-text">
+                        <span class="cz-level-label">Neighbourhood</span>
+                        <span class="cz-level-sub">Proximity &amp; real-world overlap</span>
+                    </div>
+                </div>
+                <div class="cz-connector"></div>
+
+                <div class="cz-level" data-level="5">
+                    <div class="cz-level-icon-wrap">✦</div>
+                    <div class="cz-level-text">
+                        <span class="cz-level-label">Your room</span>
+                        <span class="cz-level-sub">The right ones. Ready.</span>
+                    </div>
+                    <div class="cz-room-cluster"></div>
+                </div>
+
+                <div class="cz-scope-badges" id="czBadges">
+                    <span class="cz-badge">📡 Reads at planet scale</span>
+                    <span class="cz-badge">📍 Delivers at street level</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ PULSE CAROUSEL ═══════════════════════════════ -->
+    <section class="pulse-section" id="pulse" style="background:var(--bg2);">
+        <div class="container">
+            <span class="sec-label">inside the cluster</span>
+            <h2 class="sec-title">She doesn't just build the room.<br><span>She actively works for it.</span></h2>
+
+            <div class="pulse-container">
+                <div class="clio-note">
+                    <div class="note-av" id="note-av"></div>
+                    <div class="note-text" id="note-text"></div>
+                </div>
+
+                <div class="cluster-card">
+                    <div class="card-header">
+                        <div class="card-name" id="cname"></div>
+                        <div class="card-meta"><span class="live-dot"></span><span id="cmeta"></span></div>
+                    </div>
+                    <div class="tab-bar">
+                        <div class="tab on">Timeline</div>
+                        <div class="tab">Members</div>
+                    </div>
+                    <div id="pulse-feed"></div>
+                    <div class="typing" id="typing">
+                        <div class="tdots">
+                            <div class="tdot"></div>
+                            <div class="tdot"></div>
+                            <div class="tdot"></div>
+                        </div>
+                        <span class="tlabel">Clio is watching...</span>
+                    </div>
+                </div>
+
+                <div class="nav-row">
+                    <button type="button" class="nav-btn" id="prev-btn"
+                        onclick="event.preventDefault(); window.pulseGo(-1)">&#8592; prev</button>
+                    <div class="nav-dots" id="dots"></div>
+                    <button type="button" class="nav-btn" id="next-btn"
+                        onclick="event.preventDefault(); window.pulseGo(1)">next &#8594;</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ HOW IT WORKS ═══════════════════════════════ -->
+    <section class="how" id="how">
+        <div class="container">
+            <span class="sec-label">how it works</span>
+            <h2 class="sec-title">Here's how it works.</h2>
+            <div class="steps-row">
+                <div class="step" data-clio="step_chat">
+                    <div class="step-num">1</div>
+                    <h3 class="step-title">Tell Clio what you care about</h3>
+                    <p class="step-desc">A quick conversation. Your interests, your situation, what you're actually
+                        looking for. No forms. Just answers.</p>
+                </div>
+                <div class="step" data-clio="step_find">
+                    <div class="step-num">2</div>
+                    <h3 class="step-title">Clio discovers your people</h3>
+                    <p class="step-desc">Not followers. Not content creators. People near you who share the same things
+                        you care about — and haven't met you yet.</p>
+                </div>
+                <div class="step" data-clio="step_real">
+                    <div class="step-num">3</div>
+                    <h3 class="step-title">Get in the room</h3>
+                    <p class="step-desc">Clio puts you in a small group. You take it from there — chat, plan something,
+                        show up. The rest is human.</p>
+                </div>
+                <div class="step" data-clio="step_done">
+                    <div class="step-num">4</div>
+                    <h3 class="step-title">That's it.</h3>
+                    <p class="step-desc">No algorithm. No feed. No performance. Just the right people, found by someone
+                        who was looking for them on your behalf.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ MAKE YOUR CROWD ═══════════════════════════════ -->
+    <section class="byc" id="makeYourCrowd">
+        <div class="container">
+            <span class="sec-label">ready to lead something?</span>
+            <h2 class="sec-title">You already have the people.<br><span>Now make them a room.</span></h2>
+            <p class="byc-desc">You already run a group — a study circle, a fitness crew, a Telugu book club,
+                a weekend chess meetup. You just need a better place for it. A room built around your people,
+                your language, your location. Not a generic channel. Something that's yours.</p>
+
+            <div class="byc-grid">
+                <div class="byc-card">
+                    <div class="byc-card-icon">📍</div>
+                    <h3 class="byc-card-title">Anchored to your place</h3>
+                    <p class="byc-card-desc">Your room lives where your people are — a campus, a street,
+                        a neighbourhood. Not a global channel. A real place.</p>
+                </div>
+                <div class="byc-card">
+                    <div class="byc-card-icon">🗣️</div>
+                    <h3 class="byc-card-title">Your language, your rules</h3>
+                    <p class="byc-card-desc">Telugu? Kannada? A mix? Your room speaks the language your people
+                        actually think in — not lowest-common-denominator English.</p>
+                </div>
+                <div class="byc-card">
+                    <div class="byc-card-icon">🔑</div>
+                    <h3 class="byc-card-title">You run it. Clio supports it.</h3>
+                    <p class="byc-card-desc">Full control over your community. Remove noise, pin what matters,
+                        shape the conversation — while Clio handles the rest.</p>
+                </div>
+            </div>
+
+            <div class="byc-cta-wrap">
+                <div class="byc-clio-note">
+                    <div class="byc-clio-av">✦</div>
+                    <p class="byc-clio-quote">
+                        <span class="byc-clio-name">Clio</span>
+                        You already have the people. Tell me about them
+                        and I'll build the room they deserve.
+                    </p>
+                </div>
+                <button class="btn-primary" data-open-byc>Make your crowd →</button>
+                <p class="byc-fine">Free. No pricing games. I'll evaluate your need and build the room if it's real.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ FAQ ═══════════════════════════════ -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <span class="sec-label">questions</span>
+            <h2 class="sec-title">You're probably wondering.</h2>
+            <div class="faq-list">
+                <div class="faq-item" data-clio="faq_waitlist">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Why is there a waitlist?
+                    </div>
+                    <div class="faq-a">I'm building rooms based on who actually signs up. Every real person changes the
+                        map. I'd rather take my time and get the rooms right than rush and give you a noisy mess.</div>
+                </div>
+                <div class="faq-item" data-clio="faq_when">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">When will I get in?</div>
+                    <div class="faq-a">When your room is ready. I'll reach out personally. No rush — I'd rather
+                        wait and give you something real than push you into a half-built space.</div>
+                </div>
+                <div class="faq-item" data-clio="faq_chatbot">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is this just another AI
+                        chatbot app?</div>
+                    <div class="faq-a">No. I'm not a chatbot you talk to for fun. I find clusters of people you should
+                        know and put you in a room together. After that, the humans do the talking.</div>
+                </div>
+                <div class="faq-item" data-clio="faq_discord">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">How is this different from
+                        Discord / Slack / WhatsApp groups?</div>
+                    <div class="faq-a">Those platforms give you tools to build communities. I build the community for
+                        you. No searching for groups, no dead channels, no managing notifications. You tell me what you
+                        need. I handle the rest.</div>
+                </div>
+                <div class="faq-item" data-clio="faq_after">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What happens after I'm in a room?</div>
+                    <div class="faq-a">Once you're in, I stay close. I watch how the conversation moves, how the group breathes. I keep the room relevant — surfacing things worth talking about, noticing when the energy shifts. The room is actively guided, not just maintained. You'll feel the difference.</div>
+                </div>
+                <div class="faq-item" data-clio="faq_free">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is it free?</div>
+                    <div class="faq-a">Yes. Joining rooms, talking to people, and being matched by me costs nothing.
+                        This is what it is — no premium tier hiding behind what you actually need.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ LAUNCH CTA ═══════════════════════════════ -->
+    <section class="launch" id="launch">
+        <div class="container">
+            <div class="launch-date"
+                style="border-color:rgba(45,212,191,0.3);color:var(--teal);background:rgba(45,212,191,0.07);">✦ Clio is
+                ready</div>
+            <h2 class="launch-title">There's something here that<br>doesn't exist anywhere else.</h2>
+            <p class="launch-sub">Clio finds the specific cluster of people around you who share what you actually care
+                about. She needs to know a few things first — to decide if she can build the right room for you.</p>
+            <button class="btn-primary" id="waitlistBtn">Let Clio evaluate →</button>
+            <p class="launch-fine">One message back. When the room is ready. Nothing else.</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ FOOTER ═══════════════════════════════ -->
+    <footer>
+        <div class="footer-quote">
+            <p class="fq-text">"The gap wasn't that your people don't exist.<br>They do. They're near you. They're
+                wondering the same thing.<br>The gap was that nobody was looking for them on your behalf. Until now."
+            </p>
+            <p class="fq-attr">— Clio</p>
+        </div>
+        <p style="font-size:0.95rem; color:var(--teal); margin-bottom:18px; font-weight:600;">I'll build the room. You
+            just have to show up.</p>
+        <p><a href="privacy.html" style="color:var(--text-dim);text-decoration:none">&copy; 2026 Aggilo</a>
+            &nbsp;·&nbsp;
+            <a href="privacy.html" style="color:var(--text-dim);text-decoration:none">Privacy Policy</a>
+            &nbsp;·&nbsp;
+            <a href="terms.html" style="color:var(--text-dim);text-decoration:none">Terms</a>
+            &nbsp;·&nbsp;
+            <a href="mailto:hello@aggilo.in" style="color:var(--text-dim);text-decoration:none">Contact</a>
+        </p>
+    </footer>
+
+    <!-- ─── Clio click-origin tether dot ─── -->
+    <div class="clio-tether" id="clioTether"></div>
+
+    <!-- ─── Session token status bar ─── -->
+    <div class="clio-session-bar" id="clioSessionBar">
+        <div class="clio-session-pip" id="pip1"></div>
+        <div class="clio-session-pip" id="pip2"></div>
+        <div class="clio-session-pip" id="pip3"></div>
+        <div class="clio-session-pip" id="pip4"></div>
+        <div class="clio-session-pip" id="pip5"></div>
+        <span class="clio-session-label">CLIO</span>
+    </div>
+
+    <!-- ═══════════════════════════════ CLIO INTERACTION CARD ═══════════════════════════════ -->
+    <div class="clio-interaction" id="interactionCard">
+        <button class="interaction-close" id="intCloseBtn">✕</button>
+        <div class="interaction-top">
+            <div class="interaction-video-wrap">
+                <video class="interaction-video" id="intVideo" src="webm/resting01_transparent.webm" muted autoplay
+                    loop playsinline disablePictureInPicture></video>
+            </div>
+            <div class="interaction-msg-area" id="intMsgArea">
+                <div class="int-clio-name">Clio</div>
+                <div class="interaction-msg" id="intMainMsg">Hey. I'm Clio.</div>
+                <div class="clio-typing" id="intTyping">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pf-form" id="pfForm">
+            <div class="pf-step active" id="pfStep1">
+                <label class="pf-label">What's your name?</label>
+                <input type="text" class="pf-input" id="pfName" placeholder="First name" autocomplete="off">
+                <button class="pf-next" id="pfNext1">Next →</button>
+            </div>
+            <div class="pf-step" id="pfStep2">
+                <label class="pf-label">What's your life moment right now?</label>
+                <div class="pf-chips">
+                    <button class="pf-chip" data-val="newarrival">🏙️ Just moved somewhere new</button>
+                    <button class="pf-chip" data-val="transition">🔄 In a life transition</button>
+                    <button class="pf-chip" data-val="rootedbutmissing">🌟 Settled, but missing something</button>
+                    <button class="pf-chip" data-val="building">🛠️ Building something new</button>
+                    <button class="pf-chip" data-val="curious">👀 Just paying attention</button>
+                </div>
+            </div>
+            <div class="pf-step" id="pfStep3">
+                <label class="pf-label">Which city are you in?</label>
+                <input type="text" class="pf-input" id="pfCity" placeholder="City or area" autocomplete="off">
+                <button class="pf-next" id="pfNext3">Next →</button>
+            </div>
+            <div class="pf-step" id="pfStep4">
+                <label class="pf-label">What connects you with people you actually respect? <span class="pf-hint">Pick
+                        all that fit.</span></label>
+                <div class="pf-tiles" id="pfTiles">
+                    <div class="pf-tile" data-tile="ideas">Ideas &amp; deep conversations</div>
+                    <div class="pf-tile" data-tile="building">Building things</div>
+                    <div class="pf-tile" data-tile="movement">Movement &amp; sport</div>
+                    <div class="pf-tile" data-tile="creative">Creative work</div>
+                    <div class="pf-tile" data-tile="learning">Learning &amp; curiosity</div>
+                    <div class="pf-tile" data-tile="community">Community &amp; local life</div>
+                    <div class="pf-tile" data-tile="culture">Culture &amp; music</div>
+                    <div class="pf-tile" data-tile="entrepren">Entrepreneurship</div>
+                    <div class="pf-tile" data-tile="tech">Tech &amp; systems</div>
+                    <div class="pf-tile" data-tile="parenting">Parenting &amp; family</div>
+                    <div class="pf-tile" data-tile="values">Shared values &amp; causes</div>
+                    <div class="pf-tile" data-tile="niche">Something niche I rarely explain</div>
+                </div>
+                <button class="pf-next" id="pfNext4">Looks right →</button>
+            </div>
+            <div class="pf-step" id="pfStep5">
+                <label class="pf-label">Do you lead or organise anything? <span class="pf-hint">Online or
+                        offline.</span></label>
+                <p class="pf-note">A group, club, Discord, community, newsletter, event — anything you run or help run.
+                </p>
+                <div class="pf-chips" id="pfCommunityChips">
+                    <button class="pf-chip" data-val="runs">📌 Yes, I run a community or group</button>
+                    <button class="pf-chip" data-val="helps">🤝 I help someone else run one</button>
+                    <button class="pf-chip" data-val="wants">🌱 Not yet, but I've thought about it</button>
+                    <button class="pf-chip" data-val="none">👌 Not really</button>
+                </div>
+            </div>
+            <div class="pf-step" id="pfStep6">
+                <label class="pf-label">Your email — just between us.</label>
+                <p class="pf-note">No newsletters. I'll reach out once, when your room is ready.</p>
+                <input type="email" class="pf-input" id="pfEmail" placeholder="your@email.com" autocomplete="email">
+                <button class="pf-next pf-submit" id="pfSubmit">I'm in →</button>
+            </div>
+            <div class="pf-step" id="pfConfirm">
+                <div class="pf-confirm-box">
+                    <div class="pf-confirm-icon">💫</div>
+                    <p class="pf-confirm-msg" id="pfConfirmMsg">You're in. Your frequency is being found. I'll come find
+                        you when your room is ready.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════ EVANGELIST FORM OVERLAY (v2) ═══════════════════════════════ -->
+    <div id="efBackdrop"></div>
+    <div id="evangelistFormOverlay" role="dialog" aria-modal="true" aria-label="Clio — tell me about you">
+        <!-- Top bar -->
+        <div class="ef-topbar">
+            <span class="ef-wordmark" id="efWordmark" title="Return to hero">✦ Aggilo</span>
+            <div class="ef-dots" id="efDotsWrap">
+                <div class="ef-dot" data-dot="1"></div>
+                <div class="ef-dot" data-dot="2"></div>
+                <div class="ef-dot" data-dot="3"></div>
+                <div class="ef-dot" data-dot="4"></div>
+                <div class="ef-dot" data-dot="5"></div>
+                <div class="ef-dot" data-dot="6"></div>
+                <div class="ef-dot" data-dot="7"></div>
+            </div>
+            <button class="ef-close" id="efCloseBtn" aria-label="Close">✕</button>
+        </div>
+
+        <!-- ═══ MODE TABS ═══ -->
+        <div class="ef-mode-tabs" id="efModeTabs">
+            <button class="ef-mode-tab ef-mode-active" id="efTabFind" type="button">
+                <span class="ef-mode-icon">👤</span> Find my people
+            </button>
+            <button class="ef-mode-tab" id="efTabBYC" type="button">
+                <span class="ef-mode-icon">🏠</span> Make your crowd
+            </button>
+        </div>
+        <!-- Clio aside -->
+        <div class="ef-aside">
+            <div class="ef-aside-av">🌀</div>
+            <span class="ef-aside-text" id="efAsideText"></span>
+        </div>
+        <!-- Content -->
+        <div class="ef-content">
+            <!-- SCREEN 0: The Offer -->
+            <div class="ef-screen ef-active" id="efScreen0">
+                <div class="ef-screen-0-inner">
+                    <div class="ef-hero-av">🌀</div>
+                    <p class="ef-offer-headline">There is something here that does not exist anywhere on the internet.
+                    </p>
+                    <p class="ef-offer-body">Clio is here for you specifically —<br>not as a category of person, but as
+                        who you are<br>right now, in this moment of your life.<br><br>She'll ask you a few
+                        questions.<br>Not to decide whether she can help you.<br>To understand you well enough to
+                        actually do it.<br><br>Whatever she builds around that understanding<br>is for her to figure
+                        out.<br>It might be a room of specific people near you<br>who are carrying something close to
+                        the same thing.<br>It might be something more personal first.<br><br>Whatever it is — she
+                        stays.<br>She'll be there for you, and for everyone<br>she brings into your world.</p>
+                </div>
+            </div>
+            <!-- SCREEN 1: Name + Email -->
+            <div class="ef-screen" id="efScreen1">
+                <p class="ef-question">What do I call you — and where does Clio reach you?</p>
+                <input class="ef-input" id="efName" type="text" placeholder="First name" autocomplete="given-name">
+                <span class="ef-error-msg" id="efErrName">I need something to call you.</span>
+                <input class="ef-input" id="efEmail" type="email" placeholder="your@email.com" autocomplete="email">
+                <span class="ef-error-msg" id="efErrEmail">I need a valid email.</span>
+                <p class="ef-inline-note">No newsletters. Clio will write to you personally — when she knows what she
+                    can build.</p>
+            </div>
+            <!-- SCREEN 2: Birth year + Gender -->
+            <div class="ef-screen" id="efScreen2">
+                <p class="ef-question">A few basics so Clio knows where to start.</p>
+                <select class="ef-input" id="efBirthYear" style="appearance: none; -webkit-appearance: none;">
+                    <option value="" disabled selected>Year of birth</option>
+                </select>
+                <span class="ef-error-msg" id="efErrBirthYear">Please select your birth year.</span>
+                <div class="ef-chips" style="flex-direction: row; flex-wrap: wrap; gap: 8px; margin-top: 15px;">
+                    <button class="ef-chip" data-val="M" style="flex:1; min-width:80px; text-align:center;">Male</button>
+                    <button class="ef-chip" data-val="F" style="flex:1; min-width:80px; text-align:center;">Female</button>
+                    <button class="ef-chip" data-val="NB" style="flex:1; min-width:90px; text-align:center;">Non-binary</button>
+                </div>
+            </div>
+            <!-- SCREEN 3: Language + Interest Domain (NEW) -->
+            <div class="ef-screen" id="efScreen3">
+
+                <!-- Language — multi-select -->
+                <div class="ef-question">
+                    What languages do you speak?
+                    <span class="ef-q-sub">Pick all that apply.</span>
+                </div>
+
+                <div id="efLangChips" class="ef-chip-row">
+                    <button class="ef-chip ef-chip-sm" data-val="english"  type="button">English</button>
+                    <button class="ef-chip ef-chip-sm" data-val="telugu"   type="button">తెలుగు</button>
+                    <button class="ef-chip ef-chip-sm" data-val="hindi"    type="button">हिंदी</button>
+                    <button class="ef-chip ef-chip-sm" data-val="tamil"    type="button">தமிழ்</button>
+                    <button class="ef-chip ef-chip-sm" data-val="kannada"  type="button">ಕನ್ನಡ</button>
+                    <button class="ef-chip ef-chip-sm" data-val="marathi"  type="button">मराठी</button>
+                    <button class="ef-chip ef-chip-sm" data-val="other"    type="button">Other</button>
+                </div>
+                <div class="ef-error-msg" id="efErrLang">Pick at least one language first.</div>
+
+                <!-- Interest domain — single-select, auto-advances when language also set -->
+                <div class="ef-question ef-question-spaced">
+                    What kind of space are you looking for?
+                </div>
+
+                <div id="efInterestChips" class="ef-chips">
+                    <button class="ef-chip" data-val="career"    type="button">💼 Career &amp; Growth</button>
+                    <button class="ef-chip" data-val="learning"  type="button">📚 Learning &amp; Skills</button>
+                    <button class="ef-chip" data-val="social"    type="button">🤝 Social &amp; Community</button>
+                    <button class="ef-chip" data-val="wellness"  type="button">🌱 Health &amp; Wellness</button>
+                    <button class="ef-chip" data-val="creative"  type="button">🎨 Creative &amp; Arts</button>
+                    <button class="ef-chip" data-val="parenting" type="button">👶 Parenting &amp; Family</button>
+                    <button class="ef-chip" data-val="tech"      type="button">🚀 Tech &amp; Startups</button>
+                    <button class="ef-chip" data-val="sports"    type="button">⚽ Sports &amp; Outdoors</button>
+                </div>
+                <div class="ef-error-msg" id="efErrInterest">Pick the one that fits best.</div>
+
+            </div>
+            <!-- SCREEN 4: Location -->
+            <div class="ef-screen" id="efScreen4">
+                <p class="ef-question">Where are you based?</p>
+                <p class="ef-subhint">Clio builds around proximity. She needs to know where to look.</p>
+                <button class="btn-primary" id="efGpsBtn" style="margin-top: 10px; width: 100%; padding: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">📍 Detect my location</button>
+                <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-top: 10px; text-align: center;">We fetch your country and city for relevance.</p>
+                <p id="efGpsStatus" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; text-align: center; height: 20px;"></p>
+                <input type="hidden" id="efCity" value="">
+                <input type="hidden" id="efCountry" value="">
+                <span class="ef-error-msg" id="efErrCity">Please allow location access so Clio can find you.</span>
+            </div>
+            <!-- SCREEN 5: What kind of gathering -->
+            <div class="ef-screen" id="efScreen5">
+                <p class="ef-question">What kind of gathering do you wish existed near you?</p>
+                <p class="ef-subhint">Describe it however it comes to you — a type of group, a feeling, an activity, a
+                    kind of conversation.</p>
+                <textarea class="ef-input ef-textarea" id="efGathering"
+                    placeholder="e.g. A group of people within 5km who actually care about urban farming..."></textarea>
+                <p class="ef-inline-note">A few detailed sentences help Clio find nuances that matter, not just surface-level matches.</p>
+                <span class="ef-error-msg" id="efErrGathering">Say a little more — at least a couple of sentences.</span>
+            </div>
+            <!-- SCREEN 6: How long -->
+            <div class="ef-screen" id="efScreen6">
+                <p class="ef-question">How long have you felt this way?</p>
+                <div class="ef-chips">
+                    <button class="ef-chip" data-val="weeks">A few weeks</button>
+                    <button class="ef-chip" data-val="months">A few months</button>
+                    <button class="ef-chip" data-val="years">Years</button>
+                    <button class="ef-chip" data-val="always">As long as I can remember</button>
+                </div>
+            </div>
+            <!-- SCREEN 7: What they've tried -->
+            <div class="ef-screen" id="efScreen7">
+                <p class="ef-question">What have you already tried?</p>
+                <p class="ef-subhint">Select what you've used to find your people.</p>
+                <div class="ef-chips" id="efTriedChips" style="flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="ef-chip" data-val="meetups">Meetup Groups</button>
+                    <button class="ef-chip" data-val="discord">Discord / Slack</button>
+                    <button class="ef-chip" data-val="apps">Social Apps</button>
+                    <button class="ef-chip" data-val="clubs">Local Clubs</button>
+                </div>
+                <textarea class="ef-input ef-textarea" id="efAlreadyTried" style="min-height: 80px;"
+                    placeholder="Optional: Why didn't they work for you?"></textarea>
+                <span class="ef-error-msg" id="efErrAlreadyTried">Please select at least one option.</span>
+            </div>
+            <!-- SCREEN 8: Confirmation -->
+            <div class="ef-screen" id="efScreen8">
+                <div class="ef-confirm-inner">
+                    <div class="ef-hero-av">🌀</div>
+                    <p class="ef-confirm-headline" id="efConfirmHead">What you're carrying is with Clio now.</p>
+                    <p class="ef-confirm-body">Clio has read what you wrote.<br><br>She'll sit with it.<br>Not to sort
+                        you or score you —<br>to understand what you're carrying<br>and figure out what she can build
+                        around it.<br><br>That might be a room of specific people near you<br>who are in something close
+                        to the same place.<br>It might be something more personal first.<br><br>Whatever it is — she'll
+                        come to you directly.<br>And she'll stay. For you, and for everyone<br>she brings into your
+                        world.<br><br>There's no timeline. She doesn't rush this.</p>
+                    <div class="ef-confirm-sep"></div>
+                    <p class="ef-confirm-note">You can close this.</p>
+                </div>
+            </div>
+
+            <!-- ═══════════════ MAKE YOUR CROWD SCREENS ═══════════════ -->
+
+            <!-- BYC SCREEN 0: The Hook -->
+            <div class="ef-screen" id="bycScreen0">
+                <div class="ef-screen-0-inner">
+                    <div class="ef-hero-av">🏠</div>
+                    <p class="ef-offer-headline">You have the people.<br>Now make the room.</p>
+                    <p class="ef-offer-body">
+                        Most platforms start with a search: who's out there?<br><br>
+                        But you don't need to search.<br>
+                        You already have the seeds of a community —<br>
+                        a study circle, a fitness crew, or just a group of friends<br>
+                        who care about the same thing.<br><br>
+                        What you're missing isn't the people.<br>
+                        It's a dedicated space to bring them together.<br><br>
+                        Tell me who they are and what they need.<br>
+                        If the vision is real, I'll help you make the room.
+                    </p>
+                </div>
+            </div>
+
+            <!-- BYC SCREEN 1: What do you do together + how many -->
+            <div class="ef-screen" id="bycScreen1">
+                <p class="ef-question">What do you do together?</p>
+                <p class="ef-subhint">Describe your group — what connects them, what you do.</p>
+                <textarea class="ef-input ef-textarea" id="bycActivity"
+                    placeholder="e.g. We're 25 GATE aspirants who study together on weekends. We use WhatsApp but topics get buried..."></textarea>
+                <span class="ef-error-msg" id="bycErrActivity">Tell me a bit more — at least a couple of sentences.</span>
+                <div class="byc-size-row">
+                    <label class="ef-question byc-size-label">How many people?</label>
+                    <input type="number" class="ef-input byc-size-input" id="bycSize" placeholder="e.g. 25" min="2" max="10000">
+                </div>
+                <span class="ef-error-msg" id="bycErrSize">How many people are in your group?</span>
+            </div>
+
+            <!-- BYC SCREEN 2: Where do they live now + what's broken -->
+            <div class="ef-screen" id="bycScreen2">
+                <p class="ef-question">Where do you connect right now?</p>
+                <p class="ef-subhint">Select all that apply.</p>
+                <div class="ef-chip-row" id="bycPlatformChips">
+                    <button class="ef-chip ef-chip-sm" data-val="whatsapp" type="button">WhatsApp</button>
+                    <button class="ef-chip ef-chip-sm" data-val="telegram" type="button">Telegram</button>
+                    <button class="ef-chip ef-chip-sm" data-val="discord" type="button">Discord</button>
+                    <button class="ef-chip ef-chip-sm" data-val="instagram" type="button">Instagram</button>
+                    <button class="ef-chip ef-chip-sm" data-val="offline" type="button">Offline only</button>
+                    <button class="ef-chip ef-chip-sm" data-val="other" type="button">Other</button>
+                </div>
+                <span class="ef-error-msg" id="bycErrPlatform">Select at least one.</span>
+                <div class="ef-question ef-question-spaced">What's broken about it?</div>
+                <p class="ef-subhint">Be honest — this is how Clio decides if she can build something better.</p>
+                <textarea class="ef-input ef-textarea" id="bycBroken"
+                    placeholder="e.g. Topics get lost in the scroll, new people can't catch up, no way to organize by subject..."></textarea>
+                <span class="ef-error-msg" id="bycErrBroken">This is the most important part. Tell me what's not working.</span>
+            </div>
+
+            <!-- BYC SCREEN 3: Demographics — location, language, age, gender -->
+            <div class="ef-screen" id="bycScreen3">
+                <p class="ef-question">Where are your people?</p>
+                <p class="ef-subhint">A building, a street, a campus, a neighbourhood, or a city.</p>
+                <input class="ef-input" id="bycLocation" type="text" placeholder="e.g. IIIT Hyderabad, Road 12 Banjara Hills, Bengaluru..." autocomplete="off">
+                <span class="ef-error-msg" id="bycErrLocation">Tell me where your people are.</span>
+
+                <div class="ef-question ef-question-spaced">
+                    What language(s) do you speak together?
+                    <span class="ef-q-sub">Pick all that apply.</span>
+                </div>
+                <div id="bycLangChips" class="ef-chip-row">
+                    <button class="ef-chip ef-chip-sm" data-val="english" type="button">English</button>
+                    <button class="ef-chip ef-chip-sm" data-val="telugu" type="button">తెలుగు</button>
+                    <button class="ef-chip ef-chip-sm" data-val="hindi" type="button">हिंदी</button>
+                    <button class="ef-chip ef-chip-sm" data-val="tamil" type="button">தமிழ்</button>
+                    <button class="ef-chip ef-chip-sm" data-val="kannada" type="button">ಕನ್ನಡ</button>
+                    <button class="ef-chip ef-chip-sm" data-val="marathi" type="button">मराठी</button>
+                    <button class="ef-chip ef-chip-sm" data-val="other" type="button">Other</button>
+                </div>
+                <span class="ef-error-msg" id="bycErrLang">Pick at least one language.</span>
+
+                <div class="byc-demo-row">
+                    <div class="byc-demo-field">
+                        <label class="byc-demo-label">Age range</label>
+                        <div class="byc-age-row">
+                            <input class="ef-input byc-age-input" id="bycAgeMin" type="number" placeholder="18" min="13" max="99">
+                            <span class="byc-age-dash">–</span>
+                            <input class="ef-input byc-age-input" id="bycAgeMax" type="number" placeholder="35" min="13" max="99">
+                        </div>
+                    </div>
+                    <div class="byc-demo-field">
+                        <label class="byc-demo-label">Gender mix</label>
+                        <div class="ef-chip-row" id="bycGenderChips">
+                            <button class="ef-chip ef-chip-sm" data-val="everyone" type="button">Everyone</button>
+                            <button class="ef-chip ef-chip-sm" data-val="men" type="button">Men</button>
+                            <button class="ef-chip ef-chip-sm" data-val="women" type="button">Women</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BYC SCREEN 4: Commitment + Contact -->
+            <div class="ef-screen" id="bycScreen4">
+                <p class="ef-question">If I build this room — how fast can you fill it?</p>
+                <div class="ef-chips" id="bycTimelineChips">
+                    <button class="ef-chip" data-val="this_week" type="button">⚡ This week</button>
+                    <button class="ef-chip" data-val="two_weeks" type="button">📅 Within 2 weeks</button>
+                    <button class="ef-chip" data-val="month" type="button">🗓️ Within a month</button>
+                    <button class="ef-chip" data-val="not_sure" type="button">🤔 Not sure yet</button>
+                </div>
+                <span class="ef-error-msg" id="bycErrTimeline">Pick one so I know how fast to move.</span>
+
+                <div class="ef-question ef-question-spaced">How do I reach you?</div>
+                <input class="ef-input" id="bycName" type="text" placeholder="Your name" autocomplete="given-name">
+                <span class="ef-error-msg" id="bycErrName">I need something to call you.</span>
+                <input class="ef-input" id="bycEmail" type="email" placeholder="your@email.com" autocomplete="email">
+                <span class="ef-error-msg" id="bycErrEmail">I need a valid email.</span>
+                <input class="ef-input" id="bycPhone" type="tel" placeholder="Phone (optional)" autocomplete="tel">
+                <p class="ef-inline-note">No spam. Clio evaluates this personally. Expect to hear back within 48 hours.</p>
+            </div>
+
+            <!-- BYC SCREEN 5: Confirmation -->
+            <div class="ef-screen" id="bycScreen5">
+                <div class="ef-confirm-inner">
+                    <div class="ef-hero-av">🏠</div>
+                    <p class="ef-confirm-headline" id="bycConfirmHead">I've got everything.</p>
+                    <p class="ef-confirm-body">
+                        I don't build rooms carelessly.<br><br>
+                        I'm going to sit with what you've told me —<br>
+                        understand who your people are,<br>
+                        what you're trying to build, and whether Aggilo<br>
+                        is genuinely the right home for it.<br><br>
+                        If it is, I'll make the room exactly right<br>
+                        and hand you the keys.<br><br>
+                        Expect to hear from me within 48 hours.
+                    </p>
+                    <div class="ef-confirm-sep"></div>
+                    <p class="ef-confirm-note">You can close this.</p>
+                </div>
+            </div>
+
+        </div>
+        <!-- Bottom bar -->
+        <div class="ef-bottombar">
+            <button class="ef-cta" id="efCtaBtn">I'm ready →</button>
+            <button class="ef-skip" id="efSkipBtn" style="display:none">Skip →</button>
+        </div>
+    </div>
+
+    <!-- Modular JS (order matters: canvas → hero → interaction-card → sections → pulse → evangelist) -->
+    <script src="js/canvas.js"></script>
+    <script src="js/hero.js"></script>
+    <script src="js/interaction-card.js"></script>
+    <script src="js/sections.js"></script>
+    <script src="js/pulse-carousel.js"></script>
+    <script src="js/evangelist-form.js"></script>
+    <script src="js/byc-form.js"></script>
+
+</body>
+
+</html>
