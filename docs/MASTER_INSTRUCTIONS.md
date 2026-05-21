@@ -187,4 +187,14 @@ The pointer behaviour is intentional: it says "I noticed we already covered this
 
 V3.3.1 corrects a documentation slip in the original V3.3 publication, where MVP-specific terms (e.g. `dua_vault`, "Sisters in Dua", India-only) had leaked into the architecture documents that are meant to describe the generic platform. The architecture documents (`system_implementation_prompt_part1.md`, `system_implementation_prompt_part5.md`) and this `MASTER_INSTRUCTIONS.md` are now cluster-agnostic. Cluster-specific configuration lives in `premium_cluster_requirements.md` and the cluster's own spec.
 
-*Updated 2026-05-21 as part of V3.3.1 (architecture-vs-cluster-specific separation). Original V3.3 published 2026-05-21. Previous revision: 2026-05-21 (V3.2).*
+### V3.3.2 — Further architecture-cluster separation + demographic chips invariant
+
+V3.3.2 extends V3.3.1 with three additional scoping fixes and one new platform-level UX invariant:
+
+- **part1.md §7.5/§7.6** — replaced cluster-specific noun "sisters" with generic "members"; clarified that cluster-specific noun is plugged in from cluster vocabulary config. Updated the welcome-line example. Added Clio FAB idle-breathing note.
+- **part1.md §7.7 (new)** — **Demographic Restriction Chips** invariant. Every cluster header shows only its active AGGIL restrictions as small muted pill chips. No restriction on a dimension means silence on that dimension. All dimensions open earns a single `🌐 Global` chip. Pattern is platform-level so chips render consistently across all clusters.
+- **part4.md §13** — three paragraphs (Clio nudges, Cadence exchanges, Pinned reference variety, Typography, Time display) reframed to lead with the generic principle and treat the live faith cluster as a Phase 0 example, not the canonical case.
+- **part5.md §32** — renamed "Phase F — MVP Alignment (Sisters in Dua)" to "Phase F — Phase 0 Cluster Alignment". Made the body cluster-agnostic.
+- **Code (Phase 0 reference impl)** — ClusterHeader now renders demographic chips (`🇮🇳 India`, `♀ Women`); ClioFab gets idle-breathing halo (`clio-fab-idle`); PostCard context menu rendered through React Portal (fixes Mac right-click clipping where only the bottom action was visible).
+
+*Updated 2026-05-21 as part of V3.3.2 (deeper architecture/cluster separation + demographic chips invariant). Previous revision: V3.3.1.*

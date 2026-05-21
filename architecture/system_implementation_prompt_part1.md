@@ -522,9 +522,9 @@ These do not vary by cluster type, persona, or admin preference:
 These are configurable per cluster (see [`premium_cluster_requirements.md`](premium_cluster_requirements.md) for premium specifics):
 
 - Sage's register, formality, and interjection frequency (`sage_personas`)
-- Reference vocabulary (dua/ayah/hadith for Sisters in Dua; case/passage/precedent for a legal cluster; etc.)
+- Reference vocabulary (e.g. `dua / ayah / hadith` for a faith cluster, `case / passage / precedent` for a legal cluster, etc.)
 - Vault grading rules
-- Authority redirect language ("the Admin or a scholar you trust")
+- Authority redirect language (e.g. "the Admin or the right specialist")
 - Geographic gate
 - Feature pipeline thresholds (regular vs. premium)
 
@@ -545,11 +545,11 @@ The thresholds are stored in `platform_settings` and overridable per cluster.
 
 A new member arriving in a cluster sees, in priority order:
 
-1. **Cluster header** — name, tagline, **prominent live-presence indicator** (sisters online now, total, joined this week). Social proof first.
+1. **Cluster header** — name, tagline, **demographic restriction chips** (only the active restrictions; if none, a single "Global" chip), **prominent live-presence indicator** (members online now, total, joined this week). Social proof first. Cluster-specific noun ("sisters", "members", "founders", etc.) is plugged in from the cluster's vocabulary config.
 2. **Pinned anchor** — Sage's seed post, expanded on first visit, collapsed thereafter. Per-device preference.
 3. **Timeline** — newest first.
-4. **Compose bar** — sticky bottom, with a daily nudge prompt and an anonymous "a sister is writing…" indicator when other members are typing.
-5. **Clio FAB** — top-right, dual-tab (Just between us / Ask me anything).
+4. **Compose bar** — sticky bottom, with a daily nudge prompt and an anonymous typing indicator ("someone is writing…", or in a faith cluster "a sister is writing…") when other members are typing.
+5. **Clio FAB** — top-right, dual-tab (Just between us / Ask me anything). The button breathes gently with a soft halo while idle to communicate that the intelligence layer is alive without demanding attention.
 6. **Agent Thoughts** — **collapsed by default**. A one-line strip that members can expand if curious. Never the foreground.
 
 The Features tab and admin link only surface when the user has earned their way to them (3+ posts, role=admin/manager).
@@ -561,9 +561,25 @@ When a new profile is created (via auth callback), the platform fires `POST /api
 - Returns early if the user already has a `session_started` event with `welcome_posted=true`
 - Returns early if the user has any post (they're not new enough)
 - Batches with any Sage welcome posted in the last 30 minutes (don't pile up multiple welcomes)
-- Otherwise posts one short, restrained line ("A new sister joined this room") and records a behavioural event
+- Otherwise posts one short, restrained line ("A new member joined this room" — exact wording is cluster-specific) and records a behavioural event
 
 The wording is intentionally non-performative. No exclamation marks. No "welcome!". Sage's voice. The point is social proof for the rest of the room — "people are arriving" — not making the new member feel scripted at.
+
+### 7.7 Demographic Restriction Chips (Cluster Header)
+
+Every cluster declares its AGGIL configuration: age range, gender filter, geography, languages, interest tags. The header surface treats these as **expectation-setting**, not warnings. The rule:
+
+- **Show only what's restricted.** If a cluster has no age restriction, no age chip. If it has no gender restriction, no gender chip. Silence on a dimension means "open to all on this dimension".
+- **All dimensions open → single `🌐 Global` chip.** A cluster open to everyone earns one chip that confirms the openness rather than leaving the header empty on this dimension.
+- **Visual register: muted, pill-shaped, bordered, ~11px font.** Sits below the cluster tagline, above the description. Not a badge, not a warning, not a notification. Quiet context.
+- **Examples:**
+  - A clinical-aid cluster gated to verified medical professionals: `🩺 Medical professionals` (one chip)
+  - A Phase 0 faith cluster gated to women in India: `🇮🇳 India · ♀ Women` (two chips)
+  - A founders peer support cluster open globally: `🌐 Global` (one chip)
+
+**Why it works:** for members who fit the restrictions, the chips are quiet affirmation that this room is for them. For members who don't fit (or who arrived from a search expecting something different), the chips set expectation immediately and honestly — without making fit-judgment a moral statement.
+
+The chip data is read from `clusters.aggil_config` (Phase 1) or hard-coded per cluster (Phase 0). The icon-and-label table is platform-level so chips render consistently across clusters.
 
 
 ---

@@ -410,7 +410,7 @@ Sage is implemented in **Phase 6** of the build (after Timeline & Content in Pha
 
 ## 32. Implementation Phases — New Agent Architecture Layer (Session 2026-05)
 
-These phases extend the existing Phase 1–11 build order (Part 3 §9). They are executed **after Phase 11** for the main platform, or in parallel with Phase 6 (MVP) for the Sisters in Dua build.
+These phases extend the existing Phase 1–11 build order (Part 3 §9). They are executed **after Phase 11** for the main platform, or in parallel with the Phase 0 validation cluster build.
 
 ### Phase A — Document Migration (No Code)
 
@@ -460,9 +460,9 @@ Implement in this priority order:
 
 **Verify:** Open a cluster → chatbox panel visible between compose bar and Timeline. Minimize → state persists on reload. Features tab shows empty state. Type `@Sage` → autocomplete fires. Clio FAB is top-right 40px inside cluster, bottom-right 48px on Explore.
 
-### Phase F — MVP Alignment (Sisters in Dua)
+### Phase F — Phase 0 Cluster Alignment
 
-Per V3 Phase 6 Priorities 1–5:
+Per V3 Phase 6 Priorities 1–5 (applied to whichever Phase 0 cluster is live):
 1. Optimistic post submission (PostComposer.tsx)
 2. Sage evaluation separation (`/api/sage/evaluate` route)
 3. "Sage is considering this" typing indicator
