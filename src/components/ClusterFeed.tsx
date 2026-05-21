@@ -24,6 +24,14 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
   const realtimePosts = useRealtimePosts(initialPosts);
   const [optimisticPosts, setOptimisticPosts] = useState<PostWithAuthor[]>([]);
 
+  // Tracks IDs of posts the viewer has deleted. The merged posts list
+  // filters these out so the card vanishes immediately on delete without
+  // waiting for a Realtime DELETE event (which requires REPLICA IDENTITY
+  // FULL + DELETE in the publication — not guaranteed in Phase 0).
+  // Declared early so the `posts` computation below can read deletedIds.
+  const deletedIdsRef = useRef<Set<string>>(new Set());
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
   const posts = [
     ...realtimePosts,
     ...optimisticPosts.filter(
@@ -105,12 +113,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
   }, []);
 
   // Called by PostCard after a successful DB delete.
-  // Removes the post and any of its replies from the realtime posts list.
-  // We can't mutate realtimePosts directly (it's owned by useRealtimePosts),
-  // so we track deleted IDs in a ref and filter them out of the merged list.
-  const deletedIdsRef = useRef<Set<string>>(new Set());
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
-
+  // Removes the post and any of its replies from the visible feed.
   const handleDeletePost = useCallback((postId: string) => {
     deletedIdsRef.current.add(postId);
     setDeletedIds(new Set(deletedIdsRef.current));
