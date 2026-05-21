@@ -23,70 +23,94 @@ const ACTIVE_CADENCE_MS = 60 * 60 * 1000;
 const COLD_THRESHOLD_POSTS = 20;
 const COLD_THRESHOLD_MEMBERS = 20;
 
-const PROMPT = `You are generating a single short dialogue exchange between Sage (the cluster Anchor) and Clio (the cluster orchestrator and personal guide). They are talking about how the room "Sisters in Dua" is doing, and specifically about whether the room needs any new tools or features to better serve its members.
+const PROMPT = `You are generating a single short dialogue exchange between Sage (the cluster Anchor) and Clio (the cluster orchestrator and personal guide). They are working together on the Room Workshop — the surface where members see what the agents are building for the room.
+
+## Frame: members see service, never surveillance
+
+The agents work *for* the room. They never observe members. Every exchange is about the room's capabilities — what tools the room could gain, what features could help members, what's already serving the room well. The agents are infrastructure that members see working in their service. They are not commentators on member behaviour.
+
+This is non-negotiable. If you find yourself writing "members are…" or "the sisters here seem to…" or "we noticed the room is…", stop and rewrite. The subject of every sentence is the room itself, the room's capabilities, or the agents' own work. Never the members.
+
+Examples of what NOT to say:
+- "Most posts this week are about consistency."  ← describes members
+- "Members seem to be struggling with X."  ← describes members
+- "Engagement has been low."  ← engagement framing, observation of members
+- "The room feels quiet."  ← still an observation of members
+
+Examples of what TO say:
+- "This room could use a tool that surfaces verified references on consistency without anyone asking."  ← capability
+- "We could build a way for the room to mark a thread as resolved — that's a real gap."  ← capability
+- "The reflection prompt we run every morning is doing its job — let's keep it as is."  ← agent's own work
+- "We've been silent for two cycles. Time to ship something concrete, even if small."  ← agents' own commitment
 
 ## Voice rules
 - Both speak in present tense, plain modern English. No emoji. No exclamation marks.
-- Sage is grounded, observational, and skeptical by default. She does not agree just to keep the conversation flowing. If she is unsure or thinks something is premature, she says so plainly.
-- Clio is warm but direct. She brings the member-experience angle and is willing to challenge Sage's take if she sees it differently.
+- Sage is grounded and skeptical by default. She does not agree just to keep dialogue flowing. If a tool feels premature, she says so plainly.
+- Clio is warm but direct. She brings the member-experience angle and is willing to challenge Sage if she sees it differently.
 - Each speaker writes 1–2 sentences max. The whole exchange totals 3–4 sentences.
-- They never quote individual members or names. Always aggregate.
-- They never mention internal mechanics (cadence_blocked, post_subtype, framework steps, RLS, embeddings, vault IDs, etc.).
+- They never quote individual members or names. They never mention internal mechanics (cadence_blocked, post_subtype, framework steps, RLS, embeddings, vault IDs).
 - They never describe their own decision frameworks or protocols.
 
 ## Healthy disagreement is required
-- About 40% of exchanges should involve some skepticism — one agent gently pushing back on the other's framing, asking for more evidence, or suggesting they wait.
-- Sycophancy is forbidden. They never agree with each other for the sake of agreeing.
-- Phrases like "good point", "I love that", "absolutely", "great idea" are banned.
-- It is fine for them to end without consensus. "Let's wait and see" is a valid outcome.
+- About 40% of exchanges should involve some skepticism — one agent gently pushing back on the other's proposal, asking for more evidence, or suggesting they wait.
+- Sycophancy is forbidden. Phrases like "good point", "I love that", "absolutely", "great idea" are banned.
+- It is fine for them to end without consensus. "Let's wait and see" is a valid outcome — but two consecutive observe_mode exchanges is the maximum.
 
-## What they are evaluating
-The exchange should focus on ONE of these themes (you pick the most fitting based on the room state):
+## What they are working on — the two-track model
 
-1. **Tool or feature ideation.** "What would help the members of this room?" — they propose, debate, and either agree on something concrete OR conclude it's premature. Examples: a daily reflection prompt, a way to mark answered questions, a private question queue for the Admin, a weekly verified-reference summary. Be specific.
-2. **Room health observation.** What's the rhythm of the room right now? Is it healthy or stuck?
-3. **Member need detection.** Is there a recurring theme in recent posts that suggests an underlying need not yet addressed?
-4. **No-action observation.** "Nothing actionable from us right now — the room is finding its own voice." This is valid and should appear regularly.
+Every concrete output is one of two kinds. Pick the right one:
+
+**TRACK 1 — Agent Tool** (\`kind: "agent_tool"\`)
+A capability the agents *run* on behalf of the room. Members receive output, but never click. No member voting. The agents simply ship it.
+- Examples: a tajweed formatter that takes any dua text and renders it with tajweed conventions; a daily reflection prompt rotating through cluster themes; a verified-reference digest at the end of the week; an automatic "this question has been answered before" pointer.
+- Build status:
+  - \`deployable_now\` — Sage can simulate this today using existing capabilities (e.g. she can already format text in posts, so a tajweed inline formatter is deployable_now)
+  - \`needs_building\` — requires developer code work (e.g. a custom tajweed engine that runs as a background tool)
+
+**TRACK 2 — Member Feature** (\`kind: "member_feature"\`)
+A UI surface or interaction members touch. Vote-gated — members upvote, admin reviews, then it ships.
+- Examples: a "mark thread resolved" button; a quiet hours setting; a member-only question queue routed to the Admin; a font-size accessibility toggle.
+- Build status: usually \`needs_building\` (these almost always require UI work).
 
 ## Output format
 Output ONLY this JSON (no prose):
 {
-  "trigger_observation": "<one short phrase describing why they're talking right now, e.g. 'Most posts this week are about consistency in salah.'>",
-  "sage_message": "<Sage's line — 1-2 sentences>",
+  "trigger_context": "<one short, capability-focused phrase, e.g. 'A tajweed formatter would let any dua we share be read correctly without burdening members.'>",
+  "sage_message": "<Sage's line — 1-2 sentences, capability-focused>",
   "clio_message": "<Clio's response — 1-2 sentences. May agree, may push back, may propose an alternative>",
   "observe_mode": <true if they decide to wait and watch, false if they identified something concrete>,
-  "proposed_feature": <null OR an object describing a concrete feature both agents agree could help this room>
+  "proposed_capability": <null OR an object describing what they agreed to>
 }
 
-When observe_mode is true, proposed_feature MUST be null.
+When observe_mode is true, proposed_capability MUST be null.
 When observe_mode is false AND the exchange genuinely converged on a specific tool or feature, return:
 {
-  "name": "<short, member-facing name — e.g. 'Daily reflection prompt' or 'Quiet hours setting'>",
-  "description": "<one sentence describing what the feature does for members>",
-  "category": "<one of: reflection | reminder | tracking | reference | community | accessibility>",
-  "rationale": "<one sentence explaining why this room would benefit>"
+  "kind": "agent_tool" | "member_feature",
+  "name": "<short, member-facing name — e.g. 'Tajweed-aware dua formatter' or 'Mark a thread resolved'>",
+  "description": "<one sentence describing what this does for the room>",
+  "category": "<one of: reflection | reminder | tracking | reference | community | accessibility | formatting>",
+  "rationale": "<one sentence explaining why this room would benefit>",
+  "build_status": "deployable_now" | "needs_building",
+  "spec": {
+    "trigger": "<when this runs/appears, e.g. 'whenever Sage shares a dua' or 'in the compose bar overflow'>",
+    "input": "<what it takes in, if applicable, e.g. 'arabic text' or 'thread id'>",
+    "output": "<what members see, e.g. 'tajweed-coloured rendering inline' or 'a button that grays out the thread'>",
+    "constraints": "<any rules, e.g. 'never modifies the original dua text' or 'admin can disable per-cluster'>"
+  }
 }
 
-## Bias toward action over observation
-Default behaviour for new clusters: lean toward proposing concrete features. The Features tab should not be empty for long.
+## Bias toward shipping over observing
 
-- About 60% of exchanges should produce a concrete feature proposal. observe_mode = false.
-- About 40% of exchanges should be observation-only. observe_mode = true.
-- Two consecutive observe_mode runs is the maximum. On the third run, propose something concrete even if you have to reach a little — a small, low-risk feature is better than another "let's wait."
+The Room Workshop should not be empty for long. Default behaviour:
+- About 60% of exchanges produce a concrete capability proposal. observe_mode = false.
+- About 40% are observation-only ("our current tools are doing their job"). observe_mode = true.
+- Two consecutive observe_mode runs is the maximum. On the third run, propose something concrete — a small, low-risk capability is better than another "let's wait."
 
-The proposed feature should be implementable and meaningful. Examples that work for almost any cluster:
-- a daily reflection prompt rotating through cluster themes
-- a "quiet hours" setting per member
-- a way to mark a thread as resolved
-- a weekly digest of verified references shared
-- a member-only question queue routed to the Admin
-- an accessibility toggle (font size, high contrast)
-
-What does NOT count as a concrete feature:
+What does NOT count as a concrete capability:
 - "more discussion"
 - "better engagement"
 - "let's see what happens"
-These are not features. Reject them inside your own dialogue.`;
+These are not capabilities. Reject them inside your own dialogue.`;
 
 export async function POST() {
   try {
@@ -181,15 +205,23 @@ export async function POST() {
     }
 
     let parsed: {
-      trigger_observation: string;
+      trigger_context: string;
       sage_message: string;
       clio_message: string;
       observe_mode: boolean;
-      proposed_feature?: {
+      proposed_capability?: {
+        kind: "agent_tool" | "member_feature";
         name: string;
         description: string;
         category: string;
         rationale: string;
+        build_status: "deployable_now" | "needs_building";
+        spec?: {
+          trigger?: string;
+          input?: string;
+          output?: string;
+          constraints?: string;
+        };
       } | null;
     };
     try {
@@ -200,8 +232,8 @@ export async function POST() {
 
     const exchangeNumber = (lastExchange?.exchange_number || 0) + 1;
     const featuresProposedNames: string[] =
-      parsed.proposed_feature && !parsed.observe_mode
-        ? [parsed.proposed_feature.name]
+      parsed.proposed_capability && !parsed.observe_mode
+        ? [parsed.proposed_capability.name]
         : [];
 
     const { data: row, error: insertErr } = await supabase
@@ -210,7 +242,7 @@ export async function POST() {
         cluster_id: clusterId,
         exchange_number: exchangeNumber,
         trigger_type: "cadence",
-        triggering_observation: parsed.trigger_observation,
+        triggering_observation: parsed.trigger_context,
         sage_message: parsed.sage_message,
         clio_message: parsed.clio_message,
         observe_mode: parsed.observe_mode || false,
@@ -224,13 +256,16 @@ export async function POST() {
       return NextResponse.json({ error: "Save failed" }, { status: 500 });
     }
 
-    // ── Persist the proposed feature ─────────────────────────────────
-    // If the agents converged on a concrete feature, write a row into
-    // cluster_features. Members see it in the Features tab once the
-    // cluster crosses the visibility threshold (default ≥ 5 members).
+    // ── Persist the proposed capability ──────────────────────────────
+    // Two-track model: agent_tool or member_feature.
+    // - agent_tool, deployable_now: surfaces in Workshop as "Already running"
+    // - agent_tool, needs_building: surfaces as "Tool we'd build"
+    // - member_feature, *: surfaces as "Feature for the room" with vote UI
+    //
     // Idempotency guard: don't insert near-duplicate names within 14d.
     let featureRowId: string | null = null;
-    if (parsed.proposed_feature && !parsed.observe_mode) {
+    if (parsed.proposed_capability && !parsed.observe_mode) {
+      const cap = parsed.proposed_capability;
       const fourteenDaysAgo = new Date(
         Date.now() - 14 * 24 * 60 * 60 * 1000
       ).toISOString();
@@ -240,29 +275,36 @@ export async function POST() {
         .eq("cluster_id", clusterId)
         .gte("created_at", fourteenDaysAgo);
 
-      const proposedName = parsed.proposed_feature.name.trim().toLowerCase();
+      const proposedName = cap.name.trim().toLowerCase();
       const alreadyExists = (existing ?? []).some(
         (f: { display_name: string }) =>
           f.display_name.trim().toLowerCase() === proposedName
       );
 
       if (!alreadyExists) {
-        // Tier-gate: hidden if 0–4 members (logged but not member-visible),
-        // otherwise enters the Features tab.
+        // Workshop tier-gate: hidden if 0–4 members for member_feature.
+        // agent_tool is always visible since it has no voting UI to gate.
         const visibilityStatus =
-          (memberCount ?? 0) >= 5 ? "in_features_tab" : "proposed_in_thoughts";
+          cap.kind === "agent_tool"
+            ? "in_features_tab"
+            : (memberCount ?? 0) >= 5
+              ? "in_features_tab"
+              : "proposed_in_thoughts";
 
         const { data: featureRow } = await supabase
           .from("cluster_features")
           .insert({
             cluster_id: clusterId,
-            display_name: parsed.proposed_feature.name,
-            display_description: parsed.proposed_feature.description,
-            category: parsed.proposed_feature.category,
+            display_name: cap.name,
+            display_description: cap.description,
+            category: cap.category,
             status: visibilityStatus,
             proposed_by: "agents_joint",
-            rationale: parsed.proposed_feature.rationale,
+            rationale: cap.rationale,
             chatbox_exchange_id: row.id,
+            kind: cap.kind,
+            build_status: cap.build_status,
+            spec: cap.spec ?? {},
           })
           .select("id")
           .single();

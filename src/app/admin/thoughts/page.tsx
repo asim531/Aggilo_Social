@@ -92,10 +92,10 @@ export default async function ThoughtsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold text-gray-900">Agent Thoughts</h1>
+        <h1 className="text-xl font-semibold text-gray-900">Workshop</h1>
         <p className="text-sm text-gray-500 mt-1">
-          What the agents have been doing in this room — when they spoke, when
-          they stayed quiet, and what they discussed with each other.
+          What the agents have been building for this room — tools they run,
+          features proposed for member voting, and the dialogue between Clio and Sage that produced them.
         </p>
       </header>
 

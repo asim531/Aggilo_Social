@@ -47,7 +47,7 @@ export default async function ClusterFeaturesPage() {
               Back to room
             </Link>
           </div>
-          <h1 className="text-base font-semibold text-aggilo-deep">Features</h1>
+          <h1 className="text-base font-semibold text-aggilo-deep">Workshop</h1>
           <div className="w-20" /> {/* spacer */}
         </div>
       </header>
@@ -55,12 +55,11 @@ export default async function ClusterFeaturesPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            What might help this room
+            What we&apos;re building for this room
           </h2>
           <p className="text-sm text-gray-600 leading-relaxed">
-            The agents are quietly thinking about what tools or features could
-            genuinely serve sisters here. When they agree on something concrete,
-            it shows up below. Your upvotes and comments shape what gets built.
+            Tools the agents run for the room run automatically. Features that change how members
+            interact need your votes. Both surface here as Clio and Sage figure out what would genuinely help.
           </p>
         </div>
 
@@ -70,8 +69,8 @@ export default async function ClusterFeaturesPage() {
               Coming soon
             </p>
             <p className="text-xs text-gray-500">
-              The room is still finding its rhythm. Once a few more sisters are
-              here, you&apos;ll see proposed features show up to vote on.
+              The room is still finding its rhythm. Once a few more members are
+              here, you&apos;ll see what the agents are building.
             </p>
           </div>
         )}
@@ -79,12 +78,12 @@ export default async function ClusterFeaturesPage() {
         {tier === "placeholder" && (features ?? []).length === 0 && (
           <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
             <p className="text-sm text-gray-700 font-medium mb-1">
-              The agents are listening
+              The agents are working
             </p>
             <p className="text-xs text-gray-500">
-              Nothing has converged yet. Sage and Clio meet periodically to
-              talk about what this room needs. When they agree on something
-              specific, you&apos;ll see it here first.
+              Nothing has shipped yet. Sage and Clio meet periodically to figure out
+              what tools to run and what features to propose. When something is ready,
+              you&apos;ll see it here first.
             </p>
           </div>
         )}

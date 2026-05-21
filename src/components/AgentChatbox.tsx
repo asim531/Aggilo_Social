@@ -199,8 +199,8 @@ export default function AgentChatbox({
         className="w-full max-w-4xl mx-auto px-4 py-2.5 bg-slate-50
                    flex items-center gap-2 text-xs hover:bg-slate-100 transition-colors"
       >
-        <span className="text-cyan-600 text-base shrink-0">🔵</span>
-        <span className="text-slate-600 text-[11px]">Agent Thoughts — Clio &amp; Sage working on this room</span>
+        <span className="text-cyan-600 text-base shrink-0">🛠️</span>
+        <span className="text-slate-600 text-[11px]">Room Workshop — what we&apos;re building for this room</span>
         {newExchangeCount > 0 && (
           <span className="ml-auto px-1.5 py-0.5 rounded-full bg-cyan-600 text-white text-[10px] font-semibold">
             {newExchangeCount} new
@@ -219,14 +219,14 @@ export default function AgentChatbox({
       <div
         className="w-full max-w-4xl mx-auto bg-slate-50 border-b border-slate-200 px-4 py-3"
         role="region"
-        aria-label="Clio and Sage collaboration"
+        aria-label="Room Workshop — Clio and Sage building for the room"
       >
-        {/* Header — cool slate/cyan palette, clearly different from emerald anchor */}
+        {/* Header — service framing, not surveillance */}
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-cyan-600 text-base shrink-0">🔵</span>
+          <span className="text-cyan-600 text-base shrink-0">🛠️</span>
           <div className="flex-1 min-w-0">
             <span className="text-xs font-semibold text-slate-800">
-              Agent Thoughts — Clio &amp; Sage
+              Room Workshop
             </span>
             <span className="ml-2 px-1.5 py-0.5 rounded bg-cyan-100 text-cyan-700 text-[9px] font-semibold uppercase tracking-wide">
               Live
@@ -235,16 +235,16 @@ export default function AgentChatbox({
           <button
             onClick={handleToggleMinimize}
             className="text-slate-400 hover:text-slate-600 text-base leading-none shrink-0"
-            aria-label="Minimize chatbox"
+            aria-label="Minimize Room Workshop"
             title="Minimize"
           >
             —
           </button>
         </div>
 
-        {/* Subtitle — explicit hierarchy signal */}
+        {/* Subtitle — tells members what they're looking at, in service terms */}
         <p className="text-[11px] text-slate-500/80 leading-snug mb-2.5">
-          Their working dialogue about this room — not the conversation itself.
+          Clio &amp; Sage working on what this room could gain — tools we run, features for you to vote on.
         </p>
 
         {/* Recent exchanges — vertical scroll once we have multiple */}
@@ -287,13 +287,13 @@ export default function AgentChatbox({
             onClick={() => setShowFullHistory(true)}
             className="text-cyan-700 hover:text-cyan-900 font-medium"
           >
-            See all thoughts →
+            See full workshop →
           </button>
         </div>
 
         {latestExchange.observe_mode && (
           <div className="mt-2 px-2 py-1 rounded bg-amber-50 border border-amber-200 text-[11px] text-amber-700">
-            Both agents are observing for now — no immediate action.
+            Our current tools are doing their job — nothing new to ship right now.
           </div>
         )}
       </div>
@@ -330,13 +330,13 @@ function FullHistorySheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-sky-50 border-b border-sky-100 px-4 py-3 flex items-center gap-2">
-          <span className="text-sky-700">🔵</span>
+          <span className="text-sky-700">🛠️</span>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-800">
-              Agent Thoughts — {clusterName}
+              Room Workshop — {clusterName}
             </p>
             <p className="text-[10px] uppercase tracking-wide text-cyan-700/70 font-medium">
-              Clio &amp; Sage · most recent first
+              What we&apos;re building · most recent first
             </p>
           </div>
           <button
@@ -351,7 +351,7 @@ function FullHistorySheet({
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {reverseOrdered.length === 0 && (
             <p className="text-sm text-gray-500 text-center py-8">
-              🌱 Nothing here yet. Sage and Clio are getting to know this community.
+              🌱 Nothing here yet. Clio and Sage will surface tools and features as they figure out what this room could gain.
             </p>
           )}
           {reverseOrdered.map((exc) => (

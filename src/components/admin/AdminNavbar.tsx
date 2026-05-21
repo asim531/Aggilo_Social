@@ -14,7 +14,7 @@ const TABS = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/welfare", label: "Welfare", badge: "welfare" as const },
   { href: "/admin/character", label: "Care", badge: "character" as const },
-  { href: "/admin/thoughts", label: "Agent Thoughts" },
+  { href: "/admin/thoughts", label: "Workshop" },
   { href: "/admin/vault", label: "Vault" },
   { href: "/admin/llm", label: "LLM" },
   { href: "/admin/features", label: "Features" },

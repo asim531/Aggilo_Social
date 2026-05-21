@@ -62,9 +62,9 @@ export default function Navbar({ displayName }: NavbarProps) {
           <Link
             href="/cluster/features"
             className="text-sm text-white/70 hover:text-white transition-colors"
-            title="What might help this room"
+            title="Tools we run for this room and features you can vote on"
           >
-            Features
+            Workshop
           </Link>
           <span className="text-sm text-white/70">{displayName}</span>
           {showAdmin && (

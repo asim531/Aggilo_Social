@@ -1232,3 +1232,146 @@ CREATE TRIGGER feature_upvote_count_trigger
   FOR EACH ROW EXECUTE FUNCTION public.refresh_feature_upvote_count();
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║  v1.7 — Two-Track Capability Model: Tools and Features          ║
+-- ║                                                                  ║
+-- ║  Renames the member-facing surface from "Agent Thoughts" to      ║
+-- ║  "Room Workshop" and introduces the two-track distinction.       ║
+-- ║                                                                  ║
+-- ║  Track 1 — Agent Tools (kind = 'agent_tool')                    ║
+-- ║    • Things Sage/Clio run on behalf of the room.                ║
+-- ║    • Members receive output, never click anything.              ║
+-- ║    • No member vote required. Agents deploy autonomously         ║
+-- ║      within rules. Admin can veto. Logged to admin in real time. ║
+-- ║    • Examples: tajweed formatter, daily reflection prompt,       ║
+-- ║      verified-reference digest, gentle reminders.                ║
+-- ║                                                                  ║
+-- ║  Track 2 — Member Features (kind = 'member_feature')            ║
+-- ║    • UI surfaces and interaction patterns members use.           ║
+-- ║    • Member vote-gated (count threshold, not percentage).        ║
+-- ║    • Admin awareness required.                                   ║
+-- ║    • Examples: "mark thread resolved" button, quiet hours        ║
+-- ║      setting, member-only question queue.                        ║
+-- ║                                                                  ║
+-- ║  Build status — distinct from member status:                     ║
+-- ║    • deployable_now: Sage can run this with existing primitives  ║
+-- ║    • needs_building: requires developer code work                ║
+-- ║    • building: in development                                    ║
+-- ║    • live: deployed and active                                   ║
+-- ║    • paused / retired: lifecycle endings                         ║
+-- ║                                                                  ║
+-- ║  Phase 0: agents propose; Admin builds. Once built, registered   ║
+-- ║  here so agents can invoke the tool. Phase 1: agents may deploy  ║
+-- ║  agent_tools autonomously into a sandboxed runtime.              ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+-- Extend cluster_features with the kind discriminator and build status.
+-- We keep using cluster_features as the single table for both tracks
+-- so existing upvote/comment/realtime infrastructure continues to work.
+-- The kind column branches the UX: agent_tools never show member voting
+-- UI; member_features always do.
+ALTER TABLE public.cluster_features
+  ADD COLUMN IF NOT EXISTS kind VARCHAR(16) DEFAULT 'member_feature',
+  ADD COLUMN IF NOT EXISTS build_status VARCHAR(24) DEFAULT 'needs_building',
+  ADD COLUMN IF NOT EXISTS spec JSONB DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS invocation_count INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_invoked_at TIMESTAMPTZ;
+
+-- Backfill existing rows: anything already in the table from earlier
+-- versions is treated as a member-facing feature (that was the only
+-- track that existed before v1.7).
+UPDATE public.cluster_features
+   SET kind = COALESCE(kind, 'member_feature'),
+       build_status = COALESCE(
+         build_status,
+         CASE
+           WHEN status = 'live' THEN 'live'
+           WHEN status = 'in_development' THEN 'building'
+           ELSE 'needs_building'
+         END
+       )
+ WHERE kind IS NULL OR build_status IS NULL;
+
+-- Index for the Workshop view: list active items per cluster, separated
+-- by kind, sorted by member upvotes (features) or invocation count (tools).
+CREATE INDEX IF NOT EXISTS idx_cluster_features_workshop
+  ON public.cluster_features(cluster_id, kind, build_status, upvote_count DESC);
+
+-- Loosen the public read policy: members may see deployable-now and
+-- live items of either kind, plus member_features in the build pipeline
+-- they can vote on. agent_tools in 'needs_building' state stay internal
+-- (admin-only) until they go live or to the workshop.
+DROP POLICY IF EXISTS "Authenticated users read features" ON public.cluster_features;
+CREATE POLICY "Authenticated users read features"
+  ON public.cluster_features FOR SELECT
+  TO authenticated
+  USING (
+    status NOT IN ('rejected', 'deferred', 'proposed_in_thoughts')
+    AND (
+      -- Member-facing features in the visible pipeline
+      kind = 'member_feature'
+      -- Agent tools that are deployable now or already running
+      OR (kind = 'agent_tool' AND build_status IN ('deployable_now', 'live'))
+    )
+  );
+
+-- ── 26) cluster_tool_invocations ──────────────────────────────────
+-- Closed-loop telemetry for agent_tool usage. Every time an agent
+-- invokes a registered tool, a row lands here. Powers the "this tool
+-- has helped X members in the last week" counters and lets admin see
+-- which tools are actually serving the room.
+CREATE TABLE IF NOT EXISTS public.cluster_tool_invocations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id TEXT NOT NULL,
+  feature_id UUID NOT NULL REFERENCES public.cluster_features(id) ON DELETE CASCADE,
+  invoked_by VARCHAR(16) NOT NULL,           -- 'sage' | 'clio' | 'system'
+  trigger_context VARCHAR(48),               -- 'cadence' | 'member_post' | 'manual' | etc.
+  related_post_id UUID REFERENCES public.posts(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  output_summary TEXT,                       -- short non-PII description of what the tool did
+  succeeded BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tool_invocations_feature
+  ON public.cluster_tool_invocations(feature_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_tool_invocations_cluster_recent
+  ON public.cluster_tool_invocations(cluster_id, created_at DESC);
+
+ALTER TABLE public.cluster_tool_invocations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users read tool invocations" ON public.cluster_tool_invocations;
+CREATE POLICY "Authenticated users read tool invocations"
+  ON public.cluster_tool_invocations FOR SELECT
+  TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "System inserts tool invocations" ON public.cluster_tool_invocations;
+CREATE POLICY "System inserts tool invocations"
+  ON public.cluster_tool_invocations FOR INSERT
+  WITH CHECK (true);
+
+-- Trigger: when a tool is invoked, bump the parent's invocation count
+-- and last_invoked_at. Same denormalisation pattern as upvote_count.
+CREATE OR REPLACE FUNCTION public.refresh_tool_invocation_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.cluster_features
+     SET invocation_count = invocation_count + 1,
+         last_invoked_at = NEW.created_at,
+         updated_at = NOW()
+   WHERE id = NEW.feature_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS tool_invocation_count_trigger
+  ON public.cluster_tool_invocations;
+
+CREATE TRIGGER tool_invocation_count_trigger
+  AFTER INSERT ON public.cluster_tool_invocations
+  FOR EACH ROW EXECUTE FUNCTION public.refresh_tool_invocation_count();
+
+NOTIFY pgrst, 'reload schema';

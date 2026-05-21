@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase-server";
 export const dynamic = "force-dynamic";
 
 const STATUS_LABELS: Record<string, string> = {
-  proposed_in_thoughts: "Proposed in Agent Thoughts",
-  in_features_tab: "In Features tab — collecting feedback",
+  proposed_in_thoughts: "Proposed in Workshop",
+  in_features_tab: "In Workshop — collecting feedback",
   members_engaged: "Members engaged",
   admin_approved: "Admin approved",
   in_development: "In development",
@@ -49,7 +49,7 @@ export default async function FeaturesPage() {
           &quot;in_features_tab&quot; status.
         </p>
         <p className="text-xs text-gray-500 mt-2">
-          Member-facing Features tab:{" "}
+          Member-facing Workshop:{" "}
           <Link href="/cluster/features" className="text-aggilo-deep underline">
             /cluster/features
           </Link>
@@ -107,13 +107,14 @@ export default async function FeaturesPage() {
       </section>
 
       <section className="bg-white rounded-xl border border-gray-200 p-4">
-        <h2 className="text-sm font-semibold text-gray-900 mb-2">How features flow</h2>
+        <h2 className="text-sm font-semibold text-gray-900 mb-2">How the Workshop flows</h2>
         <ol className="text-xs text-gray-600 space-y-1.5 leading-relaxed list-decimal list-inside">
-          <li>Sage and Clio discuss in Agent Thoughts. If they agree on a feature, they add it here at status <code className="px-1 rounded bg-gray-100">proposed_in_thoughts</code>.</li>
-          <li>Once Clio approves it for member visibility, status moves to <code className="px-1 rounded bg-gray-100">in_features_tab</code> and members see it in the Features tab.</li>
-          <li>Members upvote and comment. Their feedback IS the signal that it matters.</li>
+          <li>Sage and Clio discuss in the Workshop. If they agree on a capability, they add it here. <strong>Tools</strong> (kind=agent_tool) are agent-run; <strong>features</strong> (kind=member_feature) are member-facing.</li>
+          <li>Tools that are <code className="px-1 rounded bg-gray-100">deployable_now</code> can run immediately. Tools that <code className="px-1 rounded bg-gray-100">need_building</code> wait for development.</li>
+          <li>Features start at <code className="px-1 rounded bg-gray-100">in_features_tab</code> for member upvoting (15+ members) or <code className="px-1 rounded bg-gray-100">proposed_in_thoughts</code> for smaller rooms.</li>
+          <li>Members upvote and comment. Their feedback IS the signal that it matters. Threshold for admin priority: 10 upvotes.</li>
           <li>You review, approve for development, schedule, or defer. Decision is logged.</li>
-          <li>When live, members see &quot;Now live&quot; in the Features tab.</li>
+          <li>When live, members see &quot;Now live&quot; in the Workshop.</li>
         </ol>
       </section>
     </div>

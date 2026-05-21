@@ -200,9 +200,9 @@ export default async function AdminOverviewPage() {
             need active human judgment; the system never resolves them itself.
           </li>
           <li>
-            <strong>Agent Thoughts</strong> shows what the agents have been
-            doing in this room — Sage&apos;s posts and silences, plus the live
-            Clio↔Sage exchanges about how the room is doing.
+            <strong>Workshop</strong> shows what the agents have been
+            building for this room — Sage&apos;s posts and silences, plus the live
+            Clio↔Sage exchanges about tools to run and features to propose.
           </li>
           <li>
             <strong>Vault</strong> is the source of truth for verified
