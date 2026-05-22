@@ -344,3 +344,140 @@ V3.4 invariants 1–8 are unchanged. Cadence floor (2h cold / 4h active), 60/40 
 Session A done criteria fully met. Session B (`SESSION_B_DISCOVERABILITY.md`) is now unblocked: cluster identity is settled, the slider/skill/configurability schema is in place, and the bug fixes have stabilised the live product surface that public previews will link to.
 
 *Updated 2026-05-22 as part of V3.5 (Session A: bug fixes + premium configurability + cluster identity decisions). Previous revision: V3.4.*
+
+
+---
+
+## V3.6 — Session B: External Discoverability + Atlas Pulse Foundation (current)
+
+This revision closes Session B (Part a) from `docs/sessions/SESSION_B_DISCOVERABILITY.md`. Aggilo's clusters become discoverable on the open internet — search engines, social shares, and AI assistants — without leaking any member content. Atlas is registered as a live capability with the schema in place; the Atlas runtime worker, admin RSS panel, and Pulse Timeline card ship in Session B.5.
+
+### Cluster identity becomes a public surface (member content stays sealed)
+
+The discoverability layer is *additive*. The authenticated cluster room (`/cluster`) and every member-facing surface inside it remain unchanged. What ships is a *parallel public layer* that strangers and crawlers see:
+
+- **`/c/<slug>` — public preview page.** Server-rendered. Reads from `public_cluster_view` only. Renders cluster name, tagline, description, demographic chips, anchor seed (the room's founding statement), rounded member-count bracket, the latest live Atlas Pulse if public-safe, and a curated capabilities list. Includes schema.org `Organization` JSON-LD (Aggilo as parent), full OpenGraph + Twitter card metadata, and a canonical URL.
+- **`/api/og/cluster/<slug>` — dynamic 1200×630 OG image.** Generated on the fly from `public_cluster_view`. Cached 1h on the edge.
+- **`/sitemap.xml` — admin-listed clusters only.** Until a cluster's founder flips `is_public_listed`, the cluster is invisible to search engines.
+- **`/robots.txt` — strict allow/disallow.** Allows `/c/`, `/api/og/cluster/`, and the landing root. Disallows `/cluster`, `/admin`, `/api/`, `/auth/`. Search engines never reach member content.
+
+The privacy invariant is enforced at the *data layer*: the public preview page can only read columns that exist in `public_cluster_view`. It is structurally incapable of returning member posts, replies, welfare flags, or vault gap requests.
+
+### Atlas is registered as a live capability (runtime in B.5)
+
+Atlas — Aggilo's contemporary-awareness layer — moves from concept to schema:
+
+- `atlas_pulses` table holds every candidate Atlas considers, including ones Sage rejects (full editorial trail).
+- `cluster_config.atlas_rss_feeds` holds the per-cluster admin-curated RSS feed list. **No platform-default feeds.** Atlas stays silent until the founder curates at least one source.
+- `public_cluster_view` joins the latest live + public-safe Pulse so the public preview lights up automatically when Atlas surfaces.
+- Three new entries in `skill_registry`: `atlas-cluster-pulse`, `public-discoverability`, `share-line-generator`.
+- Sisters in Dua's enabled skill list is updated to include `atlas-cluster-pulse` and `share-line-generator`.
+
+Sage holds editorial authority over every Pulse — `sage_verdict ∈ { pending, approved, rejected_off_topic, rejected_dignity, rejected_duplicate }`. Members and the public preview see only `approved` Pulses. The full design and B.5 deliverables are in [`docs/ATLAS_RUNTIME_DESIGN.md`](ATLAS_RUNTIME_DESIGN.md).
+
+### Public-listing controls (per-cluster, admin-managed)
+
+`cluster_config` extends with four columns:
+
+| Column | Purpose |
+|---|---|
+| `is_public_listed` BOOL | Founder/platform-admin opt-in. Default FALSE. |
+| `public_slug` TEXT UNIQUE | The slug used in `/c/<slug>`. Must be set when listed (CHECK constraint). |
+| `public_meta` JSONB | Display name, tagline, description, demographic chips, accent gradient, capabilities copy, anchor seed post id, vault opt-in. |
+| `atlas_rss_feeds` JSONB | Per-cluster Atlas RSS curation. Admin-managed in B.5. |
+
+Sisters in Dua is **slug-seeded but listing-disabled** at migration time. `public_slug = 'sisters-in-dua'` and `public_meta` is fully populated, but `is_public_listed` stays FALSE until the founder flips it (B.5 admin panel). The moment they do, the page is live.
+
+### Sage-voiced share-line generator
+
+Two new prompts in `lib/share-prompts.ts`:
+
+- **Cluster-card share** — outbound social post (Twitter, LinkedIn). ≤180 chars. Speaks to outsiders. No hype, no exclamations, no marketing voice.
+- **Member-invite line** — for WhatsApp / Telegram. ≤120 chars before the URL. Sounds like a friend recommending a place.
+
+Behind `POST /api/clusters/<slug>/share`. Admin-only (founder/manager/platform_admin). All calls observable via `llm_response_logs` and visible in the existing admin observability surface. Phase 0: admin reviews before posting; Phase 1 considers automation.
+
+### Inbound landing flow respects the AGGIL filter
+
+A visitor arriving at `/c/sisters-in-dua` and clicking "Join this room" lands on the existing auth flow with `?ref=<slug>` present. Two graceful exits handle the AGGIL mismatch cases:
+
+- **Wrong gender** (man on a women-only cluster) → existing waitlist screen, plus a non-PII demand signal so the platform admin sees who knocked.
+- **Wrong country** (non-India on the India-only beta) → existing geo-block screen, plus a demand signal recording country + slug.
+
+Demand signals land in `cluster_demand_signals` (anon-writeable, admin-readable) so the founder/platform admin sees what audiences keep arriving for clusters that don't yet exist for them. This is a passive growth signal, not active outreach in Phase 0.
+
+### AI provider directory tracking
+
+A live document at [`docs/AI_PROVIDER_REGISTRATIONS.md`](AI_PROVIDER_REGISTRATIONS.md) tracks Aggilo's submissions to:
+
+- **OpenAI** — GPT Store / Apps
+- **Anthropic** — Apps / Connectors
+- **Perplexity** — Sources
+- **Google Gemini** — Extensions
+- **You.com** — Sources
+- **Meta AI** — no public channel today
+
+Includes a reusable submission packet, a per-cluster rider template, and an OpenAPI 3.0 stub describing only the public-discovery endpoints (sitemap, robots, public page, OG image — no agent actions, no authenticated routes). The tracker applies to **every cluster** Aggilo hosts; per-cluster admin controls land in B.5.
+
+### What V3.6 deliberately defers to B.5
+
+- Admin panel UI for `is_public_listed`, `public_slug`, `public_meta` editor, RSS feed list, Pulse review queue.
+- Atlas worker process (Node.js / BullMQ on Railway).
+- Pulse card Timeline component for members.
+- Per-cluster AI-provider submission tracker (today: a Markdown document at platform-admin level).
+
+The schema is laid for all of this so B.5 is a UI + worker exercise, not another schema migration.
+
+### Schema changes (APPLY_NOW.sql v1.9)
+
+| # | Object | Purpose |
+|---|---|---|
+| 32 | `cluster_config` ALTER | Adds `is_public_listed`, `public_slug` (UNIQUE WHERE NOT NULL), `public_meta` JSONB, `atlas_rss_feeds` JSONB |
+| 33 | `cluster_demand_signals` | Anon-writeable AGGIL-mismatch capture; admin-readable |
+| 34 | `atlas_pulses` | Atlas → Sage editorial pipeline; status drives public/member surfacing |
+| 35 | `public_cluster_view` | Anon-readable view; public-safe projection only — never member content |
+| 36 | `skill_registry` INSERT | Three new skills: atlas-cluster-pulse, public-discoverability, share-line-generator |
+| 37 | Sisters in Dua backfill | Slug, public_meta, expanded `enabled_skills`. Listing stays disabled until admin flips. |
+
+Idempotent and safe to re-run.
+
+### Files added
+
+- `mvp/src/app/c/[slug]/page.tsx` — public preview page
+- `mvp/src/app/api/og/cluster/[slug]/route.ts` — dynamic OG image
+- `mvp/src/app/sitemap.ts`, `mvp/src/app/robots.ts`
+- `mvp/src/app/api/clusters/[slug]/share/route.ts` — Sage-voiced share lines
+- `mvp/src/app/api/demand-signals/route.ts` — anon demand signal capture
+- `mvp/src/lib/public-cluster.ts` — read helpers + `siteUrl()` env-aware base
+- `mvp/src/lib/share-prompts.ts` — Sage-voiced share prompts
+- `docs/ATLAS_RUNTIME_DESIGN.md` — Atlas B.5 design + open questions
+- `docs/AI_PROVIDER_REGISTRATIONS.md` — per-provider tracker + reusable packet
+- `docs/sessions/SESSION_B5_PUBLIC_LISTING_ADMIN.md` — Session B.5 brief
+
+### Files changed
+
+- `mvp/src/components/AuthForm.tsx` — `?ref=<slug>` handling, demand-signal posts on AGGIL mismatch, sign-up tab default for inbound visitors
+- `mvp/supabase/APPLY_NOW.sql` — v1.9 block
+
+### Environment
+
+- `NEXT_PUBLIC_SITE_URL` (optional) — defaults to `https://mvp.aggilo.in`. Override for staging or for a future cutover to `aggilo.in/c/`.
+
+### Done criteria status
+
+- Public preview page renders for `/c/sisters-in-dua` once the founder flips `is_public_listed = TRUE` (deferred admin panel; manual SQL until B.5).
+- OG image route generates 1200×630 from view data.
+- Sitemap.xml lists every publicly listed cluster with last-modified.
+- Robots.txt allows `/c/`, `/api/og/cluster/`; disallows `/cluster`, `/admin`, `/api/`, `/auth/`.
+- Schema.org JSON-LD validates as `Organization`.
+- Sage-voiced share-line endpoint returns admin-reviewable copy for both kinds.
+- Inbound landing flow handles AGGIL mismatch gracefully and writes demand signals.
+- AI provider applications tracker documented; submissions queued for human action.
+- Atlas runtime designed end-to-end; B.5 deliverables enumerated.
+
+### What stays the same
+
+V3.4 + V3.5 invariants are unchanged. Sage's voice, Clio's storage classes, the two-track capability model, the slider, the closed-loop telemetry — all carry forward without modification. The discoverability layer is *additive* on top of them.
+
+*Updated 2026-05-22 as part of V3.6 (Session B Part a: external discoverability + Atlas Pulse foundation). Previous revision: V3.5.*
+

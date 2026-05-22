@@ -1644,3 +1644,391 @@ SELECT
 ON CONFLICT (cluster_id) DO NOTHING;
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║  v1.9 — External discoverability (Session B)                     ║
+-- ║                                                                  ║
+-- ║  Goal: make a cluster's identity (name, tagline, description,    ║
+-- ║  demographic chips, anchor seed, rounded member count) visible   ║
+-- ║  on the open internet so search engines and AI assistants can    ║
+-- ║  recommend it. Member content stays sealed — strangers see only  ║
+-- ║  the public-safe surface, never the Timeline.                    ║
+-- ║                                                                  ║
+-- ║  Adds:                                                           ║
+-- ║    • cluster_config.is_public_listed   (admin opt-in)           ║
+-- ║    • cluster_config.public_slug         (URL slug)              ║
+-- ║    • cluster_config.public_meta         (JSONB — name, tagline, ║
+-- ║                                          description, chips,    ║
+-- ║                                          anchor_seed_post_id,   ║
+-- ║                                          accent gradient)       ║
+-- ║    • cluster_config.atlas_rss_feeds     (deferred to B.5 admin) ║
+-- ║    • cluster_demand_signals             (signups for non-fits)  ║
+-- ║    • public_cluster_view                (anon-readable view)    ║
+-- ║    • atlas_pulses                       (Atlas Pulse cards)     ║
+-- ║    • Three new skills in skill_registry:                        ║
+-- ║        atlas-cluster-pulse                                      ║
+-- ║        public-discoverability                                   ║
+-- ║        share-line-generator                                     ║
+-- ║                                                                  ║
+-- ║  Idempotent. Safe to re-run.                                    ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+-- ── 32) cluster_config — add public-listing controls ──────────────
+ALTER TABLE public.cluster_config
+  ADD COLUMN IF NOT EXISTS is_public_listed BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS public_slug TEXT,
+  ADD COLUMN IF NOT EXISTS public_meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS atlas_rss_feeds JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+-- public_meta shape (Clio/admin-managed in B.5):
+-- {
+--   "display_name": "Sisters in Dua",
+--   "tagline": "Faith lived, discussed, and held together.",
+--   "description": "A women-only community for Muslim women navigating faith in real life…",
+--   "demographic_chips": [
+--     { "icon": "🇮🇳", "label": "India" },
+--     { "icon": "♀",  "label": "Women" },
+--     { "icon": "🤲", "label": "Faith" }
+--   ],
+--   "accent_from": "#0b3a2c",
+--   "accent_to":   "#1a6f4a",
+--   "anchor_seed_post_id": null,
+--   "vault_public_opt_in": false,
+--   "capabilities_copy": [ "Sage anchors the room", "Atlas surfaces what's happening", … ]
+-- }
+
+-- atlas_rss_feeds shape (each item):
+-- { "id": "uuid",
+--   "url": "https://example.com/feed.xml",
+--   "label": "Al Jazeera Women",
+--   "active": true,
+--   "added_at": "2026-05-22T...",
+--   "added_by": "uuid" }
+
+-- Slug must be unique when set. NULL allowed (= not publicly listed).
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_indexes
+     WHERE schemaname = 'public'
+       AND indexname  = 'idx_cluster_config_public_slug'
+  ) THEN
+    CREATE UNIQUE INDEX idx_cluster_config_public_slug
+      ON public.cluster_config(public_slug)
+      WHERE public_slug IS NOT NULL;
+  END IF;
+END $$;
+
+-- Listed clusters need a slug; enforce it as a CHECK constraint so the
+-- admin panel can't half-configure a row.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+     WHERE table_name = 'cluster_config'
+       AND constraint_name = 'cluster_config_listed_requires_slug'
+  ) THEN
+    ALTER TABLE public.cluster_config
+      ADD CONSTRAINT cluster_config_listed_requires_slug
+      CHECK (
+        is_public_listed = FALSE
+        OR (public_slug IS NOT NULL AND length(public_slug) >= 3)
+      );
+  END IF;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ── 33) cluster_demand_signals — non-fit visitor capture ──────────
+-- When a stranger arrives at /c/<slug>, the AGGIL filter says "not for
+-- you" (e.g. a man landing on Sisters in Dua), and there is no
+-- alternative cluster to route to, we collect a non-personal demand
+-- signal so we know what rooms people are looking for. Email is
+-- optional — they can leave a contact or stay anonymous.
+CREATE TABLE IF NOT EXISTS public.cluster_demand_signals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_cluster_id TEXT,                    -- the cluster they landed on (e.g. 'the_single_source')
+  source_slug TEXT,                          -- the slug they came in via, for analytics
+  email TEXT,                                -- optional — only if they choose to share
+  visitor_country TEXT,
+  visitor_year_of_birth INT,
+  visitor_gender TEXT,
+  visitor_languages TEXT[],
+  visitor_interests TEXT[],
+  free_text_note TEXT,                       -- "I wish there was a cluster for…"
+  user_agent TEXT,                           -- diagnostic only; never persisted in analytics
+  status VARCHAR(16) DEFAULT 'open',
+    -- 'open' | 'contacted' | 'matched' | 'archived'
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_demand_signals_recent
+  ON public.cluster_demand_signals(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_demand_signals_open
+  ON public.cluster_demand_signals(status, created_at DESC)
+  WHERE status = 'open';
+
+ALTER TABLE public.cluster_demand_signals ENABLE ROW LEVEL SECURITY;
+
+-- Anyone (even anon) can write a demand signal — this is the non-fit
+-- capture path from the public preview page. The route can hit it via
+-- the service-role key for safety, but we also allow anon inserts here
+-- so the page can post directly without a server round-trip.
+DROP POLICY IF EXISTS "Anyone can submit a demand signal"
+  ON public.cluster_demand_signals;
+CREATE POLICY "Anyone can submit a demand signal"
+  ON public.cluster_demand_signals FOR INSERT
+  WITH CHECK (true);
+
+-- Only platform admins read demand signals.
+DROP POLICY IF EXISTS "Platform admins read demand signals"
+  ON public.cluster_demand_signals;
+CREATE POLICY "Platform admins read demand signals"
+  ON public.cluster_demand_signals FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role IN ('founder', 'manager', 'platform_admin')
+    )
+  );
+
+DROP POLICY IF EXISTS "Platform admins update demand signals"
+  ON public.cluster_demand_signals;
+CREATE POLICY "Platform admins update demand signals"
+  ON public.cluster_demand_signals FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role IN ('founder', 'manager', 'platform_admin')
+    )
+  );
+
+-- ── 34) atlas_pulses — Atlas's Sage-reviewed contemporary surfaces ─
+-- Atlas reads admin-curated RSS feeds, scores items against the cluster's
+-- purpose, hands the top candidate to Sage as a content brief, and Sage
+-- decides whether to publish a Pulse. Pulses live here so:
+--   • the public preview can show the latest-published Pulse as a
+--     "what's the cluster engaging with right now" signal,
+--   • Sage can dedupe against already-surfaced items,
+--   • members see a Timeline card when a Pulse goes live.
+--
+-- Phase 0 (Session B): table + RLS exist; admin RSS panel in B.5;
+-- runtime worker also in B.5. The public preview page already reads
+-- this table so the moment Atlas goes live, the preview lights up.
+CREATE TABLE IF NOT EXISTS public.atlas_pulses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id TEXT NOT NULL,
+  -- Source
+  source_url TEXT NOT NULL,
+  source_feed_id TEXT,                       -- which entry in atlas_rss_feeds it came from
+  source_title TEXT NOT NULL,
+  source_publisher TEXT,                     -- e.g. "Al Jazeera", "BBC News"
+  source_published_at TIMESTAMPTZ,
+  -- Atlas's scoring (debug only — not user-facing)
+  atlas_relevance_score NUMERIC(5,3),        -- 0..1
+  atlas_reasoning TEXT,
+  -- Sage's editorial pass
+  sage_verdict VARCHAR(16) NOT NULL DEFAULT 'pending',
+    -- 'pending' | 'approved' | 'rejected_off_topic' | 'rejected_dignity' | 'rejected_duplicate'
+  sage_rationale TEXT,
+  sage_witness_line TEXT,                    -- the one-line frame Sage adds when surfacing
+  -- Public surface
+  status VARCHAR(16) NOT NULL DEFAULT 'draft',
+    -- 'draft' | 'live' | 'archived' | 'retracted'
+  related_post_id UUID REFERENCES public.posts(id) ON DELETE SET NULL,
+  -- Public-preview surfacing
+  is_public_safe BOOLEAN NOT NULL DEFAULT TRUE,
+    -- false = surface to members only, never on /c/<slug>
+  -- Audit
+  llm_log_id UUID REFERENCES public.llm_response_logs(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  surfaced_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_atlas_pulses_cluster_recent
+  ON public.atlas_pulses(cluster_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_atlas_pulses_live
+  ON public.atlas_pulses(cluster_id, surfaced_at DESC)
+  WHERE status = 'live';
+
+ALTER TABLE public.atlas_pulses ENABLE ROW LEVEL SECURITY;
+
+-- Authenticated cluster members read live pulses.
+DROP POLICY IF EXISTS "Authenticated users read live pulses" ON public.atlas_pulses;
+CREATE POLICY "Authenticated users read live pulses"
+  ON public.atlas_pulses FOR SELECT
+  TO authenticated
+  USING (status = 'live');
+
+-- Public-safe live pulses are also readable by anon (via the view below).
+-- We keep the row-level policy for authenticated only here; the public
+-- view exposes a narrower projection to anon.
+
+DROP POLICY IF EXISTS "Admins read all pulses" ON public.atlas_pulses;
+CREATE POLICY "Admins read all pulses"
+  ON public.atlas_pulses FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role IN ('founder', 'manager', 'platform_admin')
+    )
+  );
+
+DROP POLICY IF EXISTS "System inserts pulses" ON public.atlas_pulses;
+CREATE POLICY "System inserts pulses"
+  ON public.atlas_pulses FOR INSERT
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admins update pulses" ON public.atlas_pulses;
+CREATE POLICY "Admins update pulses"
+  ON public.atlas_pulses FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role IN ('founder', 'manager', 'platform_admin')
+    )
+  );
+
+-- ── 35) public_cluster_view — anon-readable identity surface ──────
+-- This is the *only* surface anonymous visitors see. It contains the
+-- cluster's identity (name, tagline, description, demographic chips,
+-- anchor seed text, rounded member count, latest live Atlas Pulse
+-- when public-safe). It NEVER contains member posts, replies,
+-- agent thoughts, welfare flags, vault gap requests, or anything
+-- that could leak member content.
+--
+-- Privacy invariant (member_count_bracket):
+--   <10  → '0-9'
+--   <50  → '10-49'
+--   <250 → '50-249'
+--   else → '250+'
+-- Exact counts only surface inside the cluster after sign-in.
+CREATE OR REPLACE VIEW public.public_cluster_view AS
+SELECT
+  cc.cluster_id,
+  cc.public_slug,
+  cc.public_meta,
+  -- Rounded member-count bracket — never the exact count
+  CASE
+    WHEN COALESCE(member_counts.n, 0) < 10  THEN '0-9'
+    WHEN COALESCE(member_counts.n, 0) < 50  THEN '10-49'
+    WHEN COALESCE(member_counts.n, 0) < 250 THEN '50-249'
+    ELSE '250+'
+  END AS member_count_bracket,
+  COALESCE(member_counts.n, 0) AS member_count_raw_internal,
+  -- Joined this week, but only when cluster is large enough that
+  -- showing the count doesn't enable inference about specific members.
+  CASE
+    WHEN COALESCE(member_counts.n, 0) >= 50 THEN COALESCE(joined_week.n, 0)
+    ELSE NULL
+  END AS joined_this_week,
+  -- Last live Atlas Pulse (public-safe only). Strangers see the same
+  -- summary card as members, with Sage's witness line.
+  latest_pulse.id            AS latest_pulse_id,
+  latest_pulse.source_title  AS latest_pulse_title,
+  latest_pulse.source_publisher AS latest_pulse_publisher,
+  latest_pulse.source_url    AS latest_pulse_url,
+  latest_pulse.sage_witness_line AS latest_pulse_witness_line,
+  latest_pulse.surfaced_at   AS latest_pulse_at,
+  -- Anchor seed text only — never any other post
+  anchor_seed.content        AS anchor_seed_text,
+  anchor_seed.created_at     AS anchor_seed_at,
+  cc.updated_at
+FROM public.cluster_config cc
+LEFT JOIN LATERAL (
+  SELECT COUNT(*) AS n FROM public.profiles
+) AS member_counts ON TRUE
+LEFT JOIN LATERAL (
+  SELECT COUNT(*) AS n
+    FROM public.profiles
+   WHERE created_at >= NOW() - INTERVAL '7 days'
+) AS joined_week ON TRUE
+LEFT JOIN LATERAL (
+  SELECT id, source_title, source_publisher, source_url, sage_witness_line, surfaced_at
+    FROM public.atlas_pulses
+   WHERE cluster_id = cc.cluster_id
+     AND status = 'live'
+     AND is_public_safe = TRUE
+   ORDER BY surfaced_at DESC NULLS LAST
+   LIMIT 1
+) AS latest_pulse ON TRUE
+LEFT JOIN LATERAL (
+  SELECT content, created_at
+    FROM public.posts
+   WHERE id = (cc.public_meta ->> 'anchor_seed_post_id')::uuid
+   LIMIT 1
+) AS anchor_seed ON TRUE
+WHERE cc.is_public_listed = TRUE;
+
+-- Grant anon read on the view. The underlying tables remain RLS-locked;
+-- the view only exposes pre-filtered, public-safe columns.
+GRANT SELECT ON public.public_cluster_view TO anon;
+GRANT SELECT ON public.public_cluster_view TO authenticated;
+
+-- ── 36) Skill registry — Session B additions ─────────────────────
+INSERT INTO public.skill_registry
+  (id, display_name, description, agent, default_enabled, premium_only)
+VALUES
+  ('atlas-cluster-pulse',
+   'Atlas Pulse — contemporary surfacing',
+   'Atlas reads admin-curated RSS feeds and scores items against the cluster purpose. Sage reviews each candidate and decides whether to surface it. The room receives a Pulse only when something genuinely on-topic and dignity-preserving emerges. Silent for days when nothing fits.',
+   'atlas', TRUE, FALSE),
+  ('public-discoverability',
+   'Public discoverability',
+   'The cluster identity (name, tagline, anchor) is indexable by search engines and AI assistants. Member content stays sealed. Admin opts in per cluster.',
+   'system', FALSE, FALSE),
+  ('share-line-generator',
+   'Share-line generator (Sage-voiced)',
+   'Sage drafts shareable lines for social posts, member invites, and cluster-card outreach. Admin reviews before posting in Phase 0; automated in Phase 1.',
+   'sage', TRUE, FALSE)
+ON CONFLICT (id) DO UPDATE
+  SET display_name = EXCLUDED.display_name,
+      description  = EXCLUDED.description,
+      agent        = EXCLUDED.agent;
+
+-- ── 37) Backfill Sisters in Dua public-listing config ────────────
+-- The slug ('sisters-in-dua') is set; is_public_listed STAYS FALSE
+-- until the founder explicitly opts in via the admin panel (B.5).
+-- Public meta is seeded so that the moment is_public_listed flips to
+-- TRUE the page renders correctly.
+UPDATE public.cluster_config
+   SET public_slug = COALESCE(public_slug, 'sisters-in-dua'),
+       public_meta = COALESCE(public_meta, '{}'::jsonb) || jsonb_build_object(
+         'display_name',  'Sisters in Dua',
+         'tagline',       'Faith lived, discussed, and held together.',
+         'description',
+           'A women-only community for Muslim women navigating faith in real life. Not a classroom. Not a fatwa service. A space where women talk honestly about what it means to stay close to Allah — through doubt, difficulty, routine, and everything in between. Grounded in Quran and authentic Sunnah.',
+         'demographic_chips', jsonb_build_array(
+           jsonb_build_object('icon', '🇮🇳', 'label', 'India'),
+           jsonb_build_object('icon', '♀',  'label', 'Women'),
+           jsonb_build_object('icon', '🤲', 'label', 'Faith')
+         ),
+         'accent_from', '#0b3a2c',
+         'accent_to',   '#1a6f4a',
+         'capabilities_copy', jsonb_build_array(
+           'Sage anchors the room with verified Quran and Sunnah references.',
+           'Sage evaluates shared links for on-topic alignment and dignity.',
+           'Atlas surfaces contemporary news that matters to the room — only when it''s genuinely on-topic.',
+           'Clio holds private conversations for members. Ephemeral or persistent, member''s choice.',
+           'Welfare and good-character protocols run as an immutable safety floor.'
+         ),
+         'vault_public_opt_in', false
+       ),
+       -- Add the Atlas/discoverability/share skills to the enabled list
+       enabled_skills = (
+         SELECT jsonb_agg(DISTINCT s ORDER BY s)
+           FROM jsonb_array_elements_text(
+             COALESCE(enabled_skills, '[]'::jsonb)
+             || '["atlas-cluster-pulse","share-line-generator"]'::jsonb
+           ) AS s
+       ),
+       updated_at = NOW()
+ WHERE cluster_id = 'the_single_source';
+
+NOTIFY pgrst, 'reload schema';

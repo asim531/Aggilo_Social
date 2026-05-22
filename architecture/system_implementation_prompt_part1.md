@@ -667,6 +667,74 @@ The role exists as a structural escape hatch for the small number of cases where
 
 The full DDL for `cluster_config`, `cluster_admin_actions`, `skill_registry`, plus the `profiles.role` CHECK constraint extension to include `platform_admin`, lives in `mvp/supabase/APPLY_NOW.sql` v1.8 (Phase 0 reference implementation). Phase 1 will re-implement against the equivalent service layer; the table shapes and RLS policies are stable.
 
+### 7.10 External Discoverability — Public Cluster Surface (V3.6)
+
+Aggilo's clusters become discoverable on the open internet — search engines, social platforms, and AI assistants — without exposing any member content. The discoverability layer is *additive*. The authenticated cluster surface is unchanged. A parallel public layer renders cluster identity, demographic chips, the room's anchor seed, and the latest contemporary signal Atlas has surfaced.
+
+#### The privacy invariant
+
+The public layer is enforced at the **data layer**, not the prompt or component layer. A Postgres view `public_cluster_view` returns only public-safe columns:
+
+| Surface | Visibility |
+|---|---|
+| Cluster name, tagline, description | Public |
+| Demographic restriction chips | Public |
+| Anchor seed (the room's founding statement) | Public |
+| Member count — bracket only (`0-9`, `10-49`, `50-249`, `250+`) | Public |
+| "Joined this week" count | Public *only when cluster ≥ 50 members* (avoids small-N inference) |
+| Latest live Atlas Pulse + Sage's witness line | Public *only when `is_public_safe = TRUE`* |
+| Capability copy (admin-curated list of what the agents do here) | Public |
+| Any individual member post or reply | Never public |
+| Welfare flags, vault gap requests, agent thoughts | Never public |
+
+The public preview page (`/c/<slug>`) and the OG image generator (`/api/og/cluster/<slug>`) read **only** from `public_cluster_view`. They are structurally incapable of returning member content.
+
+#### Per-cluster opt-in
+
+Public listing is admin opt-in per cluster. `cluster_config` adds:
+
+- `is_public_listed` BOOL DEFAULT FALSE
+- `public_slug` TEXT UNIQUE — required when listed (CHECK constraint)
+- `public_meta` JSONB — display name, tagline, description, demographic chips, accent gradient, capabilities copy, anchor seed post selection, vault opt-in
+- `atlas_rss_feeds` JSONB — Atlas's per-cluster RSS feed list (admin-curated; no platform defaults)
+
+Until the founder flips `is_public_listed`, the cluster is invisible to search engines, the sitemap, and AI assistant crawlers.
+
+#### Sitemap, robots, schema.org
+
+- Sitemap (`/sitemap.xml`) lists only publicly listed clusters.
+- Robots (`/robots.txt`) explicitly allows `/c/`, `/api/og/cluster/`, and the landing root; explicitly disallows `/cluster`, `/admin`, `/api/`, `/auth/`. Search engines never reach member content.
+- Each `/c/<slug>` page emits a schema.org `Organization` JSON-LD block with Aggilo as the parent organisation and the cluster's audience labels as `knowsAbout`. AI assistants citing the cluster have a structured signal of who it serves.
+
+#### Atlas — registered as a live capability (runtime in B.5)
+
+Atlas, Aggilo's contemporary-awareness layer, lands as schema in V3.6. The `atlas_pulses` table holds every candidate Atlas considers, with a `sage_verdict` column ensuring Sage retains editorial authority. Members and the public preview see only Sage-approved Pulses. The full design and Session B.5 deliverables (worker, admin RSS panel, Pulse review queue, Pulse Timeline card) live in [`docs/ATLAS_RUNTIME_DESIGN.md`](../../docs/ATLAS_RUNTIME_DESIGN.md).
+
+The Atlas runtime constraint is platform-level: Atlas reads RSS only. Per `AGGILO_PLATFORM_RULES.md` §AI Agent Rules, direct scraping with Puppeteer/Playwright is prohibited. Any future expansion to managed APIs goes through the same governance.
+
+#### Sage-voiced share-line generation
+
+Two prompt patterns ship in Phase 0, both subject to admin review before posting:
+
+- **Cluster-card share** — outbound social post for Twitter/LinkedIn. ≤180 chars. Speaks to outsiders. No hype.
+- **Member invite line** — for WhatsApp/Telegram. ≤120 chars before the URL. Sounds like a friend recommending a place.
+
+Both run through `llmCall()` so they appear in `llm_response_logs` with full token-cost telemetry. Phase 1 considers automation; Phase 0 keeps the human in the loop.
+
+#### Inbound landing flow respects AGGIL
+
+A visitor arriving at `/c/<slug>` and clicking "Join this room" lands on the existing auth flow with `?ref=<slug>`. AGGIL mismatches (e.g. a man on a women-only cluster, or a non-India visitor on an India-only cluster) route to the existing waitlist/geo-block screens **plus** a non-PII insert into `cluster_demand_signals`. This is a passive growth signal — the platform admin sees what audiences keep arriving for clusters that don't yet exist for them, without any active outreach in Phase 0.
+
+#### AI provider directory registration
+
+The platform tracks submissions to OpenAI, Anthropic, Perplexity, Gemini, and You.com in [`docs/AI_PROVIDER_REGISTRATIONS.md`](../../docs/AI_PROVIDER_REGISTRATIONS.md). Submissions register the **public discovery surface** as a content source AI assistants can cite — not as an interactive plugin. Only the public-preview pages, sitemap, robots, and OG image are exposed to assistant crawlers. The OpenAPI 3.0 stub that providers may require describes only those endpoints.
+
+This applies to **every cluster** on Aggilo — generic and Premium — once its founder opts in to public listing. The reusable submission packet, per-cluster rider template, and OpenAPI stub are in the same document. Per-cluster admin tooling for tracking submissions ships in Session B.5.
+
+#### Schema location
+
+The full DDL for `cluster_config` extensions, `cluster_demand_signals`, `atlas_pulses`, `public_cluster_view`, and the V3.6 additions to `skill_registry`, lives in `mvp/supabase/APPLY_NOW.sql` v1.9.
+
 
 ---
 

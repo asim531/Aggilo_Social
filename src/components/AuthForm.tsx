@@ -43,8 +43,13 @@ const COUNTRIES = [
 function AuthFormContent() {
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
+  // ?ref=<slug> is set when a visitor arrives from a public cluster
+  // preview (/c/<slug>). We use it for two things: (1) so non-fits
+  // produce a demand signal pointing at the right cluster, and (2)
+  // so the success copy can be cluster-specific in a future iteration.
+  const refSlug = searchParams.get("ref");
 
-  const [mode, setMode] = useState<AuthMode>("signin");
+  const [mode, setMode] = useState<AuthMode>(refSlug ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [gender, setGender] = useState("");
@@ -160,6 +165,18 @@ function AuthFormContent() {
   function handleGenderSubmit(e: FormEvent) {
     e.preventDefault();
     if (gender !== "woman") {
+      // AGGIL mismatch — record a demand signal so platform admin knows
+      // a non-fit visitor came in via this slug. Best-effort, never blocks.
+      void fetch("/api/demand-signals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_slug: refSlug ?? "sisters-in-dua",
+          email: email.trim() || undefined,
+          visitor_gender: gender,
+          free_text_note: "Stranger arrived on a women-only cluster preview.",
+        }),
+      }).catch(() => undefined);
       setStep("waitlist");
       return;
     }
@@ -172,6 +189,18 @@ function AuthFormContent() {
 
     // Hard geographic restriction: Sisters in Dua MVP is India-only
     if (!isIndia(country)) {
+      // Record the non-fit so we know which countries are knocking.
+      void fetch("/api/demand-signals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_slug: refSlug ?? "sisters-in-dua",
+          email: email.trim() || undefined,
+          visitor_country: country,
+          visitor_gender: gender || undefined,
+          free_text_note: `Country ${country} not yet in scope for this cluster.`,
+        }),
+      }).catch(() => undefined);
       setStep("geo_block");
       return;
     }
