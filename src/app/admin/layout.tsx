@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq("id", user.id)
     .single();
 
-  if (!profile || (profile.role !== "founder" && profile.role !== "manager")) {
+  if (!profile || (profile.role !== "founder" && profile.role !== "manager" && profile.role !== "platform_admin")) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="max-w-md text-center bg-white rounded-2xl shadow-md p-8 border border-gray-200">

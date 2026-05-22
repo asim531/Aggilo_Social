@@ -481,3 +481,123 @@ V3.4 + V3.5 invariants are unchanged. Sage's voice, Clio's storage classes, the 
 
 *Updated 2026-05-22 as part of V3.6 (Session B Part a: external discoverability + Atlas Pulse foundation). Previous revision: V3.5.*
 
+
+---
+
+## V3.7 — Session B.5: Public-Listing Admin Panel + Atlas Runtime (current)
+
+This revision closes Session B.5 from `docs/sessions/SESSION_B5_PUBLIC_LISTING_ADMIN.md`. The admin surfaces V3.6 promised land, and Atlas Pulse moves from registered-capability to *running* end-to-end. Sisters in Dua's founder can now flip the cluster public from the UI, curate Atlas's RSS feeds, and review every Pulse Atlas considers — without touching SQL.
+
+### Per-cluster admin panel (`/admin/clusters/<slug>`)
+
+The new admin page renders four sections:
+
+1. **Public identity editor** — toggle `is_public_listed`, set `public_slug`, edit `public_meta` (display name, tagline, description, demographic chips, accent gradient, capabilities copy, anchor seed picker, vault opt-in). Saves trigger `revalidatePath('/c/<slug>')` and `revalidatePath('/sitemap.xml')` so the public surface updates immediately.
+2. **Atlas RSS feed list** — add/toggle/remove feeds. Add validates the URL with HEAD (or a tiny ranged GET fallback) before persisting. Each entry stores `last_fetched_at` and `last_fetch_status` once Atlas runs against it.
+3. **Pulse review queue** — every Pulse Atlas considered, filterable by Sage's verdict. Admin can override a rejected verdict to `approved`, promote an approved draft to `live`, retract a live Pulse, and toggle public-safety per row.
+4. **Demand signals preview** — last 10 AGGIL-mismatch arrivals scoped to this cluster's slug. Full table at `/admin/demand`.
+
+Every write goes through one of three new admin endpoints, each of which appends a row to `cluster_admin_actions` for the audit trail:
+
+- `PATCH /api/admin/clusters/[slug]/identity` — listing toggle, slug change, meta update
+- `POST /api/admin/clusters/[slug]/feeds` — `{action: add|toggle|remove}`
+- `POST /api/admin/clusters/[slug]/pulses` — `{action: go_live|retract|override_approve|toggle_public_safe}`
+
+Action types stamped: `public_listing_toggled`, `public_slug_changed`, `public_meta_updated`, `atlas_feed_added`, `atlas_feed_enabled`, `atlas_feed_disabled`, `atlas_feed_removed`, `pulse_went_live`, `pulse_retracted`, `pulse_overridden`, `pulse_public_safe_on`, `pulse_public_safe_off`.
+
+### Atlas runtime — `lib/atlas-runtime.ts` + `/api/admin/atlas/tick`
+
+Per `system_implementation_prompt_part1.md` §8.4, Phase 0 must not run BullMQ workers. Atlas instead runs as a Next.js route invoked by Vercel cron (or any external scheduler):
+
+```
+GET  /api/admin/atlas/tick          (Bearer ATLAS_CRON_SECRET → tick all listed clusters, autoGoLive=true)
+POST /api/admin/atlas/tick          (admin-authenticated → tick one cluster, autoGoLive=false by default)
+```
+
+Pipeline per tick (per cluster):
+
+1. Read `cluster_config.atlas_rss_feeds` (active only).
+2. Fetch each feed in parallel (timeout 8s, custom UA). Update `last_fetched_at` on every feed row.
+3. Parse RSS 2.0 and Atom (no third-party dep — minimal regex parser; tolerant of CDATA, common quirks).
+4. Dedupe candidate URLs against existing `atlas_pulses.source_url` for the cluster.
+5. For up to 12 fresh candidates, Atlas scores against the cluster's `public_meta.description` + chip labels (`atlas_score` operation, ~80 prompt tokens, json_object response). Below 0.55 → row written with `sage_verdict='rejected_off_topic'`, no Sage call.
+6. The highest-scoring approved candidate goes to Sage (`atlas_pulse_review`). Sage applies the on-topic / dignity / dedup gates and drafts a witness line on approval. Daily cap: max 1 approved Pulse per cluster per tick.
+7. When `autoGoLive=true` (cron path), an approved Pulse is also published as a Sage-attributed Timeline post (`post_subtype='atlas_pulse'`) and `atlas_pulses.status` is set to `live`. When `autoGoLive=false` (admin tick), it stays `draft` for manual review.
+
+Both Atlas scoring and Sage editorial calls flow through the existing `llmCall()` helper, so every call appears in `llm_response_logs` with token cost, latency, and fallback flag. Daily LLM budget cap (`LLM_DAILY_BUDGET_USD`) applies — when exceeded, both calls return the graceful step-back placeholder rather than over-spending.
+
+The runtime is **idempotent**. The same RSS item appearing on consecutive ticks is dedup'd by URL; LLM calls do not fire for duplicates. A failed feed fetch surfaces in `last_fetch_status` for the admin and is otherwise silent.
+
+### Vercel cron config
+
+`mvp/vercel.json` schedules the tick hourly at minute 0:
+
+```json
+{ "crons": [ { "path": "/api/admin/atlas/tick", "schedule": "0 * * * *" } ] }
+```
+
+Vercel sends the cron's `Authorization: Bearer <CRON_SECRET>` header. The route accepts either that or `x-cron-secret`. Set `ATLAS_CRON_SECRET` in the Vercel environment to enable cron; without it, GET returns 500 and the route is effectively disabled.
+
+### Demand signals admin (`/admin/demand`)
+
+Full table view of `cluster_demand_signals` with status filter, inline status updates (`open` → `contacted` / `matched` / `archived`), and CSV export for outreach. Backed by `PATCH /api/admin/demand/[id]`.
+
+### Admin nav additions
+
+`AdminNavbar.tsx` now exposes two new tabs: **Cluster** (`/admin/clusters/sisters-in-dua`) and **Demand** (`/admin/demand`). Layout guard updated to accept `platform_admin` as a valid admin role (in addition to `founder` and `manager`).
+
+### What V3.7 deliberately does not include
+
+- Per-Pulse member voting / feedback wiring on Pulse Timeline cards. The cards render via the existing `PostCard` (Sage-attributed). Adding a Pulse-specific feedback row pulls Session C work forward and is deferred to a Session D scope decision.
+- Pulse card visual polish (custom card vs. plain Sage post). Phase 0 reuses the existing post visual; B.5 ships function over polish.
+- A per-cluster AI-provider submission tracker DB. The Markdown tracker at `docs/AI_PROVIDER_REGISTRATIONS.md` is the source of truth for Phase 0; the DB schema for it (`cluster_ai_provider_submissions`) waits until volume justifies it.
+- Multi-cluster Phase 1 platform build.
+
+### Files added (mvp)
+
+- `src/app/admin/clusters/[slug]/page.tsx`
+- `src/app/admin/demand/page.tsx`
+- `src/app/api/admin/clusters/[slug]/identity/route.ts`
+- `src/app/api/admin/clusters/[slug]/feeds/route.ts`
+- `src/app/api/admin/clusters/[slug]/pulses/route.ts`
+- `src/app/api/admin/atlas/tick/route.ts`
+- `src/app/api/admin/demand/[id]/route.ts`
+- `src/components/admin/ClusterIdentityForm.tsx`
+- `src/components/admin/AtlasFeedList.tsx`
+- `src/components/admin/PulseReviewTable.tsx`
+- `src/components/admin/DemandSignalsPreview.tsx`
+- `src/components/admin/DemandSignalsTable.tsx`
+- `src/lib/admin-cluster.ts`
+- `src/lib/atlas-runtime.ts`
+- `vercel.json`
+
+### Files changed (mvp)
+
+- `src/app/admin/layout.tsx` — `platform_admin` role accepted
+- `src/components/admin/AdminNavbar.tsx` — Cluster + Demand tabs, platform_admin label
+
+### Schema status
+
+No schema migration in V3.7. V3.6 (`APPLY_NOW.sql` v1.9) already laid `cluster_config.atlas_rss_feeds`, `atlas_pulses`, `cluster_demand_signals`, `public_cluster_view`. B.5 is UI + runtime only.
+
+### Environment
+
+- `ATLAS_CRON_SECRET` (required for cron; without it, `GET /api/admin/atlas/tick` returns 500)
+- `SUPABASE_SERVICE_ROLE_KEY` (already required; the tick uses the service-role client for inserts)
+
+### Done criteria status
+
+- [x] Admin can toggle Sisters in Dua public from the UI; revalidates the preview path on save.
+- [x] Identity editor saves all `public_meta` fields including chips, capabilities, anchor seed, accent.
+- [x] At least one Atlas RSS feed can be added/toggled/removed; URL validated on add.
+- [x] Manual Atlas tick endpoint runs end-to-end; admin can `Tick now` from the panel.
+- [x] Pulse review queue lists every candidate with admin actions.
+- [x] Demand-signal admin view + per-row status update + CSV export.
+- [x] All admin actions land in `cluster_admin_actions`.
+- [x] Vercel cron config in place; ATLAS_CRON_SECRET documented.
+
+### What stays the same
+
+V3.4 + V3.5 + V3.6 invariants are unchanged. The discoverability layer is still purely additive on top of the authenticated cluster surface. Public-safe projection still flows through `public_cluster_view` only. Atlas remains silent on any cluster without admin-curated feeds. Sage retains editorial authority over every Pulse — admin override exists but is audited and visible.
+
+*Updated 2026-05-22 as part of V3.7 (Session B.5: public-listing admin panel + Atlas runtime). Previous revision: V3.6.*

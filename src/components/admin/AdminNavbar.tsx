@@ -19,6 +19,8 @@ const TABS = [
   { href: "/admin/llm", label: "LLM" },
   { href: "/admin/features", label: "Features" },
   { href: "/admin/events", label: "Events" },
+  { href: "/admin/clusters/sisters-in-dua", label: "Cluster" },
+  { href: "/admin/demand", label: "Demand" },
 ];
 
 /**
@@ -101,7 +103,7 @@ export default function AdminNavbar({ nickname, role }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-500">
-            {nickname} <span className="text-[10px] uppercase tracking-wide text-gray-400">{role === "founder" ? "Admin" : "Manager"}</span>
+            {nickname} <span className="text-[10px] uppercase tracking-wide text-gray-400">{role === "founder" ? "Admin" : role === "platform_admin" ? "Platform" : "Manager"}</span>
           </span>
           <Link
             href="/cluster"
