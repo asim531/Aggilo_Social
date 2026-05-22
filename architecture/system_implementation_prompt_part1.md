@@ -514,7 +514,7 @@ These do not vary by cluster type, persona, or admin preference:
 4. **No protocol disclosure** — Sage never narrates her decision tree. Admins see neutralised labels in the dashboard, not framework mechanics.
 5. **Repetition guard** — Sage's recent posts are part of every prompt. Application-layer Jaccard similarity check (`isSagePostRepetitive`, threshold ≥ 0.55) suppresses near-duplicates before they reach the cluster.
 6. **Skepticism in agent dialogue** — the cadence and ideation prompts forbid sycophancy. Disagreement and "let's wait" are valid outcomes.
-7. **Privacy boundaries** — Clio's "Just between us" tab content never persists server-side. The admin sees that a session existed, never its content.
+7. **Privacy boundaries** — Clio's "Just Clio · forgets" tab content never persists server-side. The admin sees that a session existed, never its content.
 8. **AGGIL post-spawn protections** — once members join, the cluster cannot retroactively narrow.
 
 ### 7.3 What Varies by Cluster
@@ -549,7 +549,7 @@ A new member arriving in a cluster sees, in priority order:
 2. **Pinned anchor** — Sage's seed post, expanded on first visit, collapsed thereafter. Per-device preference.
 3. **Timeline** — newest first.
 4. **Compose bar** — sticky bottom, with a daily nudge prompt and an anonymous typing indicator ("someone is writing…", or in a faith cluster "a sister is writing…") when other members are typing.
-5. **Clio FAB** — top-right, dual-tab (Just between us / Ask me anything). The button breathes gently with a soft halo while idle to communicate that the intelligence layer is alive without demanding attention.
+5. **Clio FAB** — top-right, dual-tab (Just Clio · forgets / Just Clio · remembers). The button breathes gently with a soft halo while idle to communicate that the intelligence layer is alive without demanding attention.
 6. **Room Workshop** — **collapsed by default**. A one-line strip that members can expand if curious. Shows what Clio and Sage are building for the room: tools they run, features for member voting. Never the foreground; never about members.
 
 The Workshop and admin link only surface when the user has earned their way to them (3+ posts, role=admin/manager).
@@ -658,7 +658,7 @@ What `platform_admin` can do:
 What `platform_admin` cannot do:
 
 - Bypass the immutable safety floor (welfare detection, character protocol, soft handoff). These run for every cluster regardless of any role's preference.
-- Read members' private Clio "Just between us" tab content. The privacy boundary is structural, not policy — the data does not leave the user's browser.
+- Read members' private Clio "Just Clio · forgets" tab content. The privacy boundary is structural, not policy — the data does not leave the user's browser.
 - Act untraceably. Every `platform_admin` action produces a `cluster_admin_actions` row.
 
 The role exists as a structural escape hatch for the small number of cases where the platform must intervene faster than the workshop pipeline allows: an admin makes a configuration choice that violates an invariant the parser missed, a skill needs to be retired across all clusters because of a discovered issue, or a cluster goes silent and the team needs to read its config to understand why.

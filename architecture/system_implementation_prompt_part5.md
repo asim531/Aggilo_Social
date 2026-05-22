@@ -495,19 +495,19 @@ Adds the dual-tab Clio surface and the soft handoff mechanism. Spec: `clio/CLIO_
 - Initial pull on mount handles greetings queued while the user was offline; the realtime channel handles greetings queued while the user is in the cluster. Both feed the same `ingestGreeting` reducer with dedupe.
 
 **Frontend:**
-- `ClioFab` becomes a dual-tab surface (default: Just between us; opt-in: About this room)
+- `ClioFab` becomes a dual-tab surface (default: Just Clio · forgets; opt-in: Just Clio · remembers)
 - Per-tab thread storage in the storage class appropriate to each tab (server-side ephemeral for non-PII, server-persistent for PII); visual differentiation (deep teal vs amber)
-- First-time tooltip explains the tabs (`localStorage.aggilo:clio_tabs_tip_dismissed`)
+- The earlier first-time tooltip was retired once the symmetric tab labels became self-describing
 - `PostCard` renders the cluster-visible inline note ("Clio is following up privately.") when `sage_handoff_to_clio_at` is set
-- Pending handoff greetings render with `FROM SAGE` label and rose-50 bubble in the private tab
+- Pending handoff greetings render with `FROM SAGE` label and rose-50 bubble in the "forgets" tab
 - Soft rose dot on FAB icon when an unread handoff greeting exists
 
 **Verify:**
 1. Apply schema. Confirm `posts.sage_handoff_to_clio_at`, `clio_handoff_greetings`, and the realtime publication entries exist.
 2. Post a welfare-pattern message. Sage stays silent. Cluster shows "Clio is following up privately." note **without a refresh** (UPDATE event arrives via realtime). FAB shows rose dot **without a refresh** (INSERT event arrives via realtime).
-3. Open Clio FAB. Default tab is "Just between us". Greeting message appears with FROM SAGE label.
-4. Switch to "About this room" tab. Banner changes to amber. Ask "what did Sage mean?" — answer references actual recent posts.
-5. Switch back to "Just between us". Greeting still there. Per-tab thread isolation confirmed.
+3. Open Clio FAB. Default tab is "Just Clio · forgets". Greeting message appears with FROM SAGE label.
+4. Switch to "Just Clio · remembers" tab. Banner changes to amber. Ask "what did Sage mean?" — answer references actual recent posts.
+5. Switch back to "Just Clio · forgets". Greeting still there. Per-tab thread isolation confirmed.
 6. Post a non-welfare message. No handoff queued. No cluster note rendered.
 7. Open the cluster in two browser tabs as the same user. Trigger a handoff in tab A. The greeting and rose dot appear in tab B within ~1s without action.
 

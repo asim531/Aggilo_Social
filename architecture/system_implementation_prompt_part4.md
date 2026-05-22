@@ -771,12 +771,12 @@ The cluster Clio panel exposes **two tabs** that both produce private conversati
 
 | Tab | Default | Endpoint | Cluster context | Vault access | Storage class | Persistence |
 |-----|---------|----------|-----------------|--------------|---------------|-------------|
-| **Just between us** | ✓ default on first open | `/api/clio/ephemeral` | None | None | **Non-PII** | Server-side ephemeral store (Redis) with 12h TTL; pilot deployments may use sessionStorage as a Phase 0 expedient — see `docs/PHASE_0_PILOT.md` |
-| **Ask me anything** (AMA) | Opt-in tab switch | `/api/clio/chat` | Last 10 posts + Sage role | Read-only (titles only) | **PII** | Server-persistent against the user's profile |
+| **Just Clio · forgets** | ✓ default on first open | `/api/clio/ephemeral` | None | None | **Non-PII** | Server-side ephemeral store (Redis) with 12h TTL; pilot deployments may use sessionStorage as a Phase 0 expedient — see `docs/PHASE_0_PILOT.md` |
+| **Just Clio · remembers** | Opt-in tab switch | `/api/clio/chat` | Last 10 posts + Sage role | Read-only (titles only) | **PII** | Server-persistent against the user's profile |
 
-Both tabs are private — neither posts to Timeline or shares with Sage. Tab choice is visible only to the user. Per-tab message threads are stored separately by storage class (server-side ephemeral for non-PII, server-persistent for PII). A first-time tooltip explains the privacy difference; once dismissed (`localStorage.aggilo:clio_tabs_tip_dismissed`), it does not return.
+Both tabs are private — neither posts to Timeline or shares with Sage. Both are conversations with **Clio alone**, never with the cluster admin, Founder, or any other human. The symmetric "Just Clio" naming exists precisely so members never wonder who "us" might be. Tab choice is visible only to the user. Per-tab message threads are stored separately by storage class (server-side ephemeral for non-PII, server-persistent for PII). The earlier first-time tooltip (`localStorage.aggilo:clio_tabs_tip_dismissed`) was retired in favour of self-describing labels.
 
-**Privacy class is the load-bearing UX distinction.** Visual differentiation: the private tab uses an aggilo-deep header, gray bubbles, and the banner *"Private. Not stored on any server. Clears in 12h."* with a lock glyph. The AMA tab uses an amber header, amber-tinted bubbles, and the banner *"Private to you. I'll remember this to help you better next time."* with a shield-check glyph. The AMA welcome message states explicitly that Clio uses these conversations to learn what helps the member over time.
+**Privacy class is the load-bearing UX distinction, communicated by the tab labels themselves.** Visual differentiation: the "forgets" tab uses an aggilo-deep header, gray bubbles, header subtitle *"Forgets after 12 hours"*, and the banner *"Private to you. Auto-deletes after 12 hours. Nothing reaches the platform."* with a lock glyph. The "remembers" tab uses an amber header, amber-tinted bubbles, header subtitle *"Remembers our conversations"*, and the banner *"Private to you. Clio remembers what helps so she can serve you better next time."* with a shield-check glyph. The "remembers" welcome message states explicitly that Clio uses these conversations to learn what helps the member over time.
 
 **Mobile responsiveness:** FAB is 44px (WCAG 2.5.5 minimum target). Panel is full-width minus 8px gutter on phones, 22rem cap on tablets+. Anchored at `top-32` (128px) when inside a cluster so it sits cleanly below the FAB without overlap. The cluster page uses **single-scroll layout** — every section flows in one continuous document scroll. The composer is sticky at the bottom of the viewport.
 
@@ -834,7 +834,7 @@ sage/evaluate (post arrives)
 
 **Cluster-visible artifact:** under the affected post, an 11px gray italic line: *"Clio is following up privately."* — phrased about Clio's action, never naming the member.
 
-**Member-side delivery:** the FAB shows a soft rose dot. Opening the panel lands them on "Just between us" (default tab) where the most recent Clio message is the templated greeting, marked `FROM SAGE` with rose-50 bubble background.
+**Member-side delivery:** the FAB shows a soft rose dot. Opening the panel lands them on "Just Clio · forgets" (default tab) where the most recent Clio message is the templated greeting, marked `FROM SAGE` with rose-50 bubble background.
 
 **Handoff greeting text is templated, not Sage-authored.** Sage does not pass message-specific content to Clio; this prevents the handoff from becoming a back-channel for member analysis.
 

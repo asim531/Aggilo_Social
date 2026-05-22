@@ -116,7 +116,7 @@ Three sub-types, each with its own CDC subscription:
 
 **Owner:** `ClioFab`.
 
-**Display:** Greeting lands in the "Just between us" tab as the most-
+**Display:** Greeting lands in the "Just Clio · forgets" tab as the most-
 recent Clio message. FAB icon shows a soft rose dot for unread.
 
 **Privacy posture:** This is the most weight-bearing realtime signal.

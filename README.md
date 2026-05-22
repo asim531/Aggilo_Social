@@ -99,8 +99,8 @@ npm run dev
 | `sage_dua_select` | `sage_dua_select` | Every 6h on cluster load (cadence-gated) |
 | `clio_dua_review` | `clio_dua_review` | Editorial gate after Sage selects a dua |
 | `cadence` | `cadence_exchange` | 15-min floor for cold cluster, 1h for active |
-| `clio` | `clio_chat` | Cluster-aware Clio FAB (Ask me anything tab) |
-| `clio` | `clio_ephemeral` | Private "Just between us" tab |
+| `clio` | `clio_chat` | Cluster-aware Clio FAB ("Just Clio · remembers" tab) |
+| `clio` | `clio_ephemeral` | Private "Just Clio · forgets" tab |
 | `link_alignment` | `link_alignment_check` | When a member posts a URL |
 
 Every call: cost recorded, latency recorded, fallback recorded, decision recorded. Visit `/admin/llm` for the live dashboard.

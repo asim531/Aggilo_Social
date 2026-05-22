@@ -34,12 +34,12 @@ runs there.
 ### What you should see
 
 The cluster page has a Clio FAB in the top-right (inside a cluster).
-Tap it. The chat panel opens with two tabs: "Just between us" and
-"Private Chat". The tour lives **inside the Private Chat tab**.
+Tap it. The chat panel opens with two tabs: "Just Clio · forgets" and
+"Just Clio · remembers". The tour lives **inside the "remembers" tab**.
 
 ### Test sequence
 
-1. **Open the Private Chat tab.** Click the right tab. You should see
+1. **Open the "Just Clio · remembers" tab.** Click the right tab. You should see
    a sky-blue privacy banner ("Private to you. I remember our
    conversations…") and, just below it, a collapsible amber section
    labelled **"What's on this page?"** with the hint "Tap a topic" on
@@ -68,8 +68,8 @@ Tap it. The chat panel opens with two tabs: "Just between us" and
 
 ### If you can't see it
 
-- **Make sure you're on the Private Chat tab.** The help section is
-  hidden in the "Just between us" tab.
+- **Make sure you're on the "Just Clio · remembers" tab.** The help section is
+  hidden in the "Just Clio · forgets" tab.
 - **Make sure you're inside the cluster** (URL = `/cluster`). The
   help section is gated to `inCluster` mode.
 - **Hard-reload** (`Ctrl+Shift+R`) to bypass any cached client bundle.

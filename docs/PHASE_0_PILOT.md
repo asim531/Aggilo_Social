@@ -57,7 +57,7 @@ does not endorse. Each one carries a named Phase 1 replacement.
 
 ### Expedient: Clio ephemeral storage uses sessionStorage
 
-Phase 0: Clio's "Just between us" tab persists messages in browser
+Phase 0: Clio's "Just Clio · forgets" tab persists messages in browser
 `sessionStorage` with a 12-hour TTL. The platform observes only that a
 session existed (count, welfare flag, duration); never the content.
 
