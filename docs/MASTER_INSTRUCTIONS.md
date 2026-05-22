@@ -726,7 +726,7 @@ V3.4 + V3.5 + V3.6 + V3.7 invariants are unchanged. No live prompt was edited in
 
 ---
 
-## V3.9 — Clio anchored tour (current)
+## V3.9 — Clio anchored tour
 
 V3.8's "What's on this page?" section in the Private Chat tab gave members a collapsible list of cluster surfaces with click-to-scroll behaviour and a brief flash highlight. V3.9 upgrades that interaction into a proper anchored tour: when a member taps a topic, the page scrolls to the surface and a Clio-attributed popover lands beside it with a one-or-two-sentence explanation, Prev/Next controls, a step counter, and a close affordance. The tour can be reopened from the same help section any time, and the help section now shows which step is currently active.
 
@@ -794,3 +794,80 @@ No new environment variables.
 V3.4 + V3.5 + V3.6 + V3.7 + V3.8 invariants are unchanged. No prompt edits in V3.9. The cluster timeline, Sage's behaviour, Clio's chat behaviour, the Workshop dialogue, and the ephemeral surface are untouched. The tour is purely additive on top of the V3.5 help section.
 
 *Updated 2026-05-22 as part of V3.9 (Clio anchored tour). Previous revision: V3.8.*
+
+
+---
+
+## V3.10 — Cluster UX pass (current)
+
+This revision is a focused UX pass on the cluster surface, prompted by a senior-UX review of the V3.9 tour and the cluster shell. Eleven findings, all addressed in this revision. No prompt edits, no schema changes — pure interaction polish layered on V3.4's hierarchy-first foundation.
+
+### Changes
+
+1. **Click-anywhere-to-close on the tour popover.** The original `Done` button was a redundant fourth way to dismiss alongside Esc, ×, and an explicit dismissal target. Replaced with a capture-phase `pointerdown` listener that closes the popover whenever the click lands outside the popover and outside the active highlighted target. Tapping the highlighted surface itself does not dismiss — members can interact with the surface they're learning about (tap a post, expand the anchor) without the tour vanishing on the way to the popover. The last step's footer reads "Tap anywhere to close" so the affordance is named.
+
+2. **`Done` button removed from the last tour step.** Once click-outside dismisses, "Done" is dead weight. The last step still shows step counter and Back; the Next slot becomes a quiet italic "Tap anywhere to close" instead of a fourth dismissal button.
+
+3. **Skip-to-feed link.** Keyboard users now tab to a visually-hidden `<a href="#aggilo-cluster-timeline">Skip to feed</a>` as the first focusable element on the cluster page. WCAG 2.4.1 (Bypass Blocks). Reveals on focus with a high-contrast aggilo-deep button. Adds `tabIndex={-1}` to `#aggilo-cluster-timeline` so the anchor target accepts programmatic focus when activated.
+
+4. **`role="status"` + `aria-live="polite"` on the new-posts pill.** Non-sighted members now hear the count change ("1 new post" / "3 new posts") without it interrupting current screen-reader output. The button itself carries an `aria-label` that includes the action ("3 new posts — tap to view") for clarity over the visual-only "↑" arrow.
+
+5. **Dynamic new-posts pill threshold.** The 320px hard-coded `scrollY` threshold has been replaced with a position check on `feedTopRef`. The pill now appears only when the feed-top anchor has scrolled above the viewport with a 32px tolerance — meaning the pill triggers on actual feed-position state, not on header-height assumptions. On a tall pinned-anchor expansion the old constant could fire falsely; this version doesn't.
+
+6. **First-session cadence gate.** Cadence dialogue (Sage ↔ Clio Workshop exchange) used to fire 12s after page mount, which meant a brand-new visitor could see agents debating before they understood who Sage and Clio are. V3.10 stamps `aggilo:first_session_done` after the welcome flow completes; cadence runs from session two onward. The trigger delay is also bumped from 12s to 30s on returning visits so the dialogue doesn't compete for attention with the dua suggestion + welcome ack on the same page mount.
+
+7. **Pinned anchor collapsed-strip label rewritten.** "Room anchor · tap to read" was content-blind (members couldn't tell it was Sage's seed). New copy: `From Sage · Anchor — tap to expand`. Source named, intent named, action named — three pieces of information in the same vertical budget.
+
+8. **Cluster meta line condensed.** "Beta Cluster · Hosted community · Verified sources only" was three equally-weighted labels for three different concerns (operational, positioning, trust). Operational ("Beta Cluster") removed from the member view — members don't need to know they're in beta and the URL says it. The remaining labels collapsed into a single warm trust line: "Hosted community · verified sources only".
+
+9. **`TypingIndicator` reserves a fixed-height slot.** The indicator used to render-or-not-render based on typing presence, which on iOS could shift the compose textarea up mid-keystroke and move focus position. V3.10 reserves a 24px slot at all times. Empty when no one types (`aria-hidden`), filled when one or more sisters write. Compose bar position no longer shifts; iOS keystroke focus stays anchored.
+
+10. **Workshop discoverability + `aria-expanded`.** The minimised Workshop strip now carries `aria-expanded={false}`, `aria-controls`, and a `title` attribute that names exactly what it is for first-time visitors: "What Clio and Sage are building for this room. Read if curious; the conversation is above." Layout cleanup: explicit ordering on the badge / chevron so they don't compete for the same `ml-auto` slot.
+
+11. **Compose-bar placeholder shortened.** The default placeholder was 60+ characters and truncated on narrow inputs. Shortened to "Share what's on your heart…" with the per-user daily-rotating nudge handling variety. The same change is applied at both the prop default and the `ClusterFeed` parent override so a future renamer doesn't reintroduce the long string.
+
+### New documentation
+
+- `mvp/src/app/globals.css` now carries an in-file Aggilo accent budget block: six accents, one meaning each, with explicit guidance to retire one before adding a seventh. Documenting the visual budget at the source-code level so the next person who adds a feature sees it before reaching for a new hue.
+
+### What V3.10 deliberately does not include
+
+- Cluster-vocabulary parameterisation in the tour copy. Phase 1 prerequisite for multi-cluster — captured in the prompt audit as a C11 finding across the inventory.
+- A side-panel tour variant. The senior-UX review proposed moving the popover to the page side; the architectural argument (mobile-first, eye-coordination, anchored-as-label) prevailed. Click-anywhere-to-close addresses the underlying friction without changing the position model.
+- Auto-running the tour on first cluster visit. The first-open tab explainer in the FAB already nudges members toward "What's on this page?". Auto-running without member action would be performative; the explicit-tap entry preserves member autonomy.
+
+### Files added (mvp)
+
+None.
+
+### Files changed (mvp)
+
+- `src/components/ClioTour.tsx` — capture-phase click-outside dismissal; `data-clio-tour-popover` for the dismissal exemption; "Done" removed; last-step footer reads "Tap anywhere to close"
+- `src/components/ClusterFeed.tsx` — dynamic new-posts pill threshold via `feedTopRef.getBoundingClientRect()`; `role="status"` + `aria-live="polite"` + `aria-label` on the pill; `tabIndex={-1}` on the timeline anchor; shorter compose placeholder default
+- `src/components/ClusterShell.tsx` — skip-to-content link (`Skip to feed`); first-session cadence gate via `aggilo:first_session_done` localStorage flag; cadence trigger delay 12s → 30s
+- `src/components/ClusterHeader.tsx` — meta line condensed; `Beta Cluster` removed from member view
+- `src/components/PinnedAnchor.tsx` — collapsed-strip label rewritten; `aria-label` on the expand button
+- `src/components/TypingIndicator.tsx` — fixed-height (24px) slot; `aria-hidden` when empty; `role="status"` + `aria-live="polite"` when active
+- `src/components/PostComposer.tsx` — default nudge placeholder shortened
+- `src/components/AgentChatbox.tsx` — `aria-expanded` + `aria-controls` + `title` on minimised Workshop strip
+- `src/app/globals.css` — Aggilo accent budget documentation block
+
+### Schema status
+
+No schema migration in V3.10.
+
+### Environment
+
+No new environment variables.
+
+### Verification
+
+- `npm run build` clean (32/32 routes).
+- No new TypeScript or lint diagnostics across the touched files.
+- Manual test pass on the cluster surface: skip-to-feed reveals on Tab, new-posts pill triggers correctly only when feed-top is past viewport, click-outside dismisses tour without dismissing on highlighted-target taps, typing indicator no longer shifts compose bar, cadence skipped on first session, pinned anchor collapsed-strip self-describes.
+
+### What stays the same
+
+V3.4–V3.9 invariants are unchanged. No prompt edits in V3.10. Cluster behaviour, Sage's framework, Clio's chat model, Workshop dialogue logic, and the ephemeral surface are untouched. Skip-link, aria additions, and the typing-slot reservation are purely additive accessibility wins. The cadence-gate change is a delay, not a removal — once a member has spent one session in the room, cadence runs on its standard cold floor.
+
+*Updated 2026-05-22 as part of V3.10 (Cluster UX pass). Previous revision: V3.9.*

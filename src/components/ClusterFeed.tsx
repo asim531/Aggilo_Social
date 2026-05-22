@@ -15,10 +15,6 @@ interface ClusterFeedProps {
 }
 
 const PINNED_COLLAPSED_KEY = "aggilo:pinned_anchor_collapsed";
-// Show the "↑ New posts" pill only when the viewer has scrolled this many
-// pixels past the top of the feed. Below this threshold, new posts are
-// already visible and a jump-to-top pill is more nuisance than help.
-const NEW_POSTS_PILL_THRESHOLD = 320;
 
 export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) {
   const realtimePosts = useRealtimePosts(initialPosts);
@@ -49,6 +45,13 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
    * silently inserting content above the fold. The pill is dismissed when
    * the viewer scrolls back near the top, or taps the pill.
    *
+   * Threshold: dynamic, computed from the actual position of `feedTopRef`.
+   * If the feed-top is below the viewport, the viewer is genuinely
+   * scrolled down and pill-arrival is useful. If the feed-top is in the
+   * viewport, new posts are visible already and the pill would be noise.
+   * (This replaces a constant 320px threshold that fired falsely on
+   * tall headers.)
+   *
    * `seenPostsRef` carries the IDs the viewer has already "seen" — i.e.
    * those visible at the top of the feed when the user is near the top.
    * Anything new beyond that count when the user is scrolled down counts
@@ -62,7 +65,15 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
 
   useEffect(() => {
     function handleScroll() {
-      const isDown = window.scrollY > NEW_POSTS_PILL_THRESHOLD;
+      const topEl = feedTopRef.current;
+      // The feedTopRef anchor sits at the top of the timeline. When its
+      // top edge has scrolled above the viewport (with a 32px tolerance
+      // to avoid flicker at the boundary), the viewer is genuinely past
+      // the feed and a new-posts pill is useful. While the anchor is
+      // still in view, new posts are visible already.
+      const isDown = topEl
+        ? topEl.getBoundingClientRect().top < -32
+        : false;
       setScrolledDown(isDown);
       if (!isDown) {
         // Back near the top — clear the pill and absorb the new IDs.
@@ -71,6 +82,8 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
       }
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
+    // Run once on mount so initial scroll position is reflected.
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, [posts]);
 
@@ -229,19 +242,30 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
        * new top-level posts have arrived via realtime. Tapping returns
        * the viewer to the top of the feed and clears the pill. Sits below
        * the navbar and above the timeline so it never overlaps content.
+       *
+       * aria-live="polite": screen readers announce the count change
+       * without interrupting the current reading flow. role="status"
+       * marks it as a non-urgent live region. The button itself stays
+       * the interactive affordance for sighted users.
        */}
       {scrolledDown && newPostsCount > 0 && (
-        <div className="sticky top-14 z-30 flex justify-center pointer-events-none">
+        <div
+          className="sticky top-14 z-30 flex justify-center pointer-events-none"
+          role="status"
+          aria-live="polite"
+        >
           <button
             type="button"
             onClick={handleNewPostsPill}
             className="pointer-events-auto mt-2 px-4 py-1.5 rounded-full bg-aggilo-deep text-white text-xs font-medium shadow-lg hover:bg-aggilo-deep/90 transition-colors flex items-center gap-1.5"
+            aria-label={`${newPostsCount === 1 ? "1 new post — tap to view" : `${newPostsCount} new posts — tap to view`}`}
           >
             <svg
               className="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -264,7 +288,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
        * Immediately visible after the pinned anchor.
        * No agent surfaces between here and the compose bar.
        */}
-      <div className="bg-white" id="aggilo-cluster-timeline">
+      <div className="bg-white" id="aggilo-cluster-timeline" tabIndex={-1}>
         <div className="max-w-4xl mx-auto">
           {threads.length === 0 ? (
             <div className="text-center py-16 px-4">
@@ -323,7 +347,10 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
           userId={userId}
           replyTo={replyTo}
           onCancelReply={handleCancelReply}
-          placeholder="Share what's on your heart, ask a question, or just talk..."
+          // Placeholder intentionally short — falls through to the
+          // daily-rotating nudge selected per user inside PostComposer.
+          // Long, comma-strung placeholders truncate on small inputs.
+          placeholder="Share what's on your heart…"
           onOptimisticPost={handleOptimisticPost}
           onReplaceOptimistic={handleReplaceOptimistic}
           onRemoveOptimistic={handleRemoveOptimistic}

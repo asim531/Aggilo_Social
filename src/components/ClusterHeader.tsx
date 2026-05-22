@@ -81,12 +81,15 @@ export default function ClusterHeader() {
         </div>
 
         {/* ── Meta info ──────────────────────────────────────── */}
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-400">
-          <div className="flex items-center gap-4">
-            <span>Beta Cluster</span>
-            <span>Hosted community</span>
-            <span>Verified sources only</span>
-          </div>
+        {/*
+         * Single warm trust line. Operational labels (e.g. "Beta Cluster")
+         * removed from the member view — the URL and admin surface tell
+         * that story. What members need from this row is "this room is
+         * hosted, the references it uses are verified" — a quiet trust
+         * signal, not a stack of equally-weighted badges.
+         */}
+        <div className="mt-4 text-xs text-gray-400">
+          <span>Hosted community · verified sources only</span>
         </div>
       </div>
     </div>

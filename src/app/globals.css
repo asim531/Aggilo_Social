@@ -10,6 +10,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ────────────────────────────────────────────────────────────────
+ * Aggilo accent budget — six surface colours, full and stable
+ * ────────────────────────────────────────────────────────────────
+ *
+ * The platform's colour vocabulary is fixed at six accents. Each one
+ * carries a specific meaning. New surfaces should reuse one of these,
+ * not introduce a seventh.
+ *
+ *   aggilo-deep (--aggilo-deep)   Brand. Navbar, primary actions, "Just
+ *                                  between us" tab, post-author bubble.
+ *   amber                         Cluster persistence — "Private Chat ·
+ *                                  I remember", first-open explainer,
+ *                                  compose-bar warmth, help section.
+ *   rose                          Welfare handoff. Lowest-saturation use
+ *                                  reserved for the safety floor.
+ *   amber (handoff variant)       Personal-disclosure handoff (different
+ *                                  weight than the cluster-persistence
+ *                                  amber — context disambiguates).
+ *   indigo                        Fiqh-with-distress handoff.
+ *   sky / cyan                    Workshop / agent infrastructure (Sage
+ *                                  ↔ Clio dialogue strip, OG accents).
+ *   emerald                       Sage's verified content + the tour
+ *                                  popover's surface highlight. Note
+ *                                  the dual role: emerald is "verified"
+ *                                  and "this is here" — same family,
+ *                                  different intensity.
+ *
+ * If you find yourself reaching for a seventh hue, instead either:
+ *   1. Reuse the closest existing accent and adjust intensity, or
+ *   2. Open a UX issue to retire one of the six before adding.
+ * ────────────────────────────────────────────────────────────── */
+
 /* Belt-and-braces Arabic font — guarantees Naskh rendering even if the
    next/font/google CSS variable doesn't propagate to a particular subtree.
    Same families served by Google Fonts CDN. */

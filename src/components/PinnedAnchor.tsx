@@ -31,23 +31,27 @@ export default function PinnedAnchor({
 }: PinnedAnchorProps) {
   if (collapsed) {
     return (
-      // Collapsed: ultra-minimal — just a thin line with the room's tagline.
-      // The founding statement is always accessible but never in the way.
+      // Collapsed: ultra-minimal — just a thin line. Names the source
+      // (Sage · Anchor) so members who scroll past don't have to
+      // wonder what the strip represents.
       <div className="border-b border-gray-100 bg-white">
         <button
           type="button"
           onClick={onToggle}
           className="w-full max-w-4xl mx-auto px-4 py-1.5 flex items-center gap-2 hover:bg-gray-50/60 transition-colors text-left"
+          aria-label="Expand the room's founding statement"
         >
-          <div className="w-0.5 h-3 rounded-full bg-emerald-400/60 shrink-0" />
-          <span className="text-[11px] text-gray-400 italic flex-1 truncate">
-            Room anchor · tap to read
+          <div className="w-0.5 h-3 rounded-full bg-emerald-400/60 shrink-0" aria-hidden="true" />
+          <span className="text-[11px] text-gray-500 flex-1 truncate">
+            <span className="font-medium text-emerald-700">From Sage · Anchor</span>
+            <span className="text-gray-400 italic"> — tap to expand</span>
           </span>
           <svg
             className="w-3 h-3 text-gray-300 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>

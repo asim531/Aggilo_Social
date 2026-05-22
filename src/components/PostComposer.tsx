@@ -29,7 +29,7 @@ export default function PostComposer({
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [nudgePlaceholder, setNudgePlaceholder] = useState(
-    "Share what's on your heart, ask a question, or just talk..."
+    "Share what's on your heart…"
   );
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);

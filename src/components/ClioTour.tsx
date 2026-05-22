@@ -163,6 +163,29 @@ export default function ClioTour({ steps, activeIndex, onChange }: ClioTourProps
     return () => window.removeEventListener("keydown", onKey);
   }, [active, activeIndex, steps.length, onChange]);
 
+  // Click-outside-to-dismiss. Tapping anywhere outside the popover or
+  // the highlighted target closes the tour. The popover itself stops
+  // propagation; the highlighted target is exempt so a member can
+  // interact with the surface they're learning about (e.g. tap a post)
+  // without the tour suddenly vanishing on the way to the popover.
+  useEffect(() => {
+    if (active === null) return;
+    function onPointerDown(e: PointerEvent) {
+      const popoverEl = (e.target as HTMLElement | null)?.closest(
+        "[data-clio-tour-popover]"
+      );
+      if (popoverEl) return;
+      // Allow clicks on the active target without closing.
+      const target = targetRef.current;
+      if (target && target.contains(e.target as Node)) return;
+      onChange(null);
+    }
+    // Capture phase so the dismissal wins over inner handlers; pointerdown
+    // (not click) so the close fires before any inner click-action.
+    window.addEventListener("pointerdown", onPointerDown, true);
+    return () => window.removeEventListener("pointerdown", onPointerDown, true);
+  }, [active, onChange]);
+
   if (!mounted || !active || pos === null) return null;
   if (typeof document === "undefined") return null;
 
@@ -179,6 +202,7 @@ export default function ClioTour({ steps, activeIndex, onChange }: ClioTourProps
     >
       {/* Anchored popover */}
       <div
+        data-clio-tour-popover
         className="absolute pointer-events-auto"
         style={{
           top: pos.side === "below" ? pos.top : undefined,
@@ -223,7 +247,11 @@ export default function ClioTour({ steps, activeIndex, onChange }: ClioTourProps
             {active.description}
           </div>
 
-          {/* Controls */}
+          {/* Controls. Click-outside / Esc / × all dismiss; Prev/Next
+              step. Removed the "Done" affordance — once click-outside
+              dismisses, "Done" is a redundant fourth way to close. The
+              last step's Next is hidden, so members naturally either
+              tap outside or close with × when they reach the end. */}
           <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-gray-100 bg-gray-50">
             <span className="text-[11px] text-gray-500">
               {idx + 1} of {steps.length}
@@ -237,15 +265,7 @@ export default function ClioTour({ steps, activeIndex, onChange }: ClioTourProps
               >
                 Back
               </button>
-              {isLast ? (
-                <button
-                  type="button"
-                  onClick={() => onChange(null)}
-                  className="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
-                >
-                  Done
-                </button>
-              ) : (
+              {!isLast && (
                 <button
                   type="button"
                   onClick={() => onChange(idx + 1)}
@@ -253,6 +273,11 @@ export default function ClioTour({ steps, activeIndex, onChange }: ClioTourProps
                 >
                   Next
                 </button>
+              )}
+              {isLast && (
+                <span className="text-[11px] text-gray-400 italic">
+                  Tap anywhere to close
+                </span>
               )}
             </div>
           </div>

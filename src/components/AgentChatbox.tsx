@@ -198,15 +198,20 @@ export default function AgentChatbox({
         onClick={handleToggleMinimize}
         className="w-full max-w-4xl mx-auto px-4 py-2.5 bg-slate-50
                    flex items-center gap-2 text-xs hover:bg-slate-100 transition-colors"
+        aria-expanded={false}
+        aria-controls="aggilo-room-workshop-panel"
+        title="What Clio and Sage are building for this room. Read if curious; the conversation is above."
       >
-        <span className="text-cyan-600 text-base shrink-0">🛠️</span>
-        <span className="text-slate-600 text-[11px]">Room Workshop — what we&apos;re building for this room</span>
+        <span className="text-cyan-600 text-base shrink-0" aria-hidden="true">🛠️</span>
+        <span className="text-slate-600 text-[11px] text-left flex-1 truncate">
+          Room Workshop — what we&apos;re building for this room
+        </span>
         {newExchangeCount > 0 && (
-          <span className="ml-auto px-1.5 py-0.5 rounded-full bg-cyan-600 text-white text-[10px] font-semibold">
+          <span className="px-1.5 py-0.5 rounded-full bg-cyan-600 text-white text-[10px] font-semibold shrink-0">
             {newExchangeCount} new
           </span>
         )}
-        <svg className="w-3.5 h-3.5 ml-auto text-slate-400 shrink-0 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-3.5 h-3.5 text-slate-400 shrink-0 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -217,6 +222,7 @@ export default function AgentChatbox({
   return (
     <>
       <div
+        id="aggilo-room-workshop-panel"
         className="w-full max-w-4xl mx-auto bg-slate-50 border-b border-slate-200 px-4 py-3"
         role="region"
         aria-label="Room Workshop — Clio and Sage building for the room"
