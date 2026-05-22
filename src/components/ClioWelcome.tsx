@@ -22,7 +22,7 @@ export default function ClioWelcome({ nickname, onDismiss }: ClioWelcomeProps) {
     {
       key: "intro",
       title: `Assalamu Alaikum, ${nickname}`,
-      body: "I'm Clio. I help every member find their way around. I'm always one tap away — top-right of any cluster, or open a private chat anytime you want a conversation that stays just between us.",
+      body: "I'm Clio. I help every member find their way around. I'm always one tap away — top-right of any cluster, or open a private chat with me anytime — a conversation that stays just between you and me.",
       accent: "bg-amber-500",
     },
     {

@@ -4,10 +4,10 @@ import { useState, useEffect, type FormEvent, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import {
-  detectCountryFromGeolocation,
-  isIndia,
-  SOUTH_SE_ASIA_COUNTRIES,
-} from "@/lib/country-detect";
+  HYDERABAD_METRO_CANONICAL,
+  HYDERABAD_METRO_AREAS,
+  isHyderabadMetro,
+} from "@/lib/city-detect";
 
 type AuthMode = "signin" | "signup";
 type AuthState = "idle" | "loading" | "success" | "error";
@@ -15,29 +15,15 @@ type SignupStep =
   | "email"
   | "nickname"
   | "gender"
-  | "country"
+  | "city"
   | "geo_block"
-  | "beta_disclosure"
   | "waitlist";
 
-const COUNTRIES = [
-  "Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria",
-  "Bahrain", "Bangladesh", "Belgium", "Bhutan", "Bosnia and Herzegovina",
-  "Brazil", "Brunei", "Cambodia", "Canada", "Chad", "China", "Colombia",
-  "Comoros", "Denmark", "Djibouti", "Egypt", "Eritrea", "Ethiopia",
-  "Finland", "France", "Gambia", "Germany", "Ghana", "Guinea",
-  "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
-  "Japan", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Kyrgyzstan",
-  "Laos", "Lebanon", "Libya", "Malaysia", "Maldives", "Mali",
-  "Mauritania", "Mexico", "Morocco", "Myanmar", "Nepal", "Netherlands",
-  "New Zealand", "Niger", "Nigeria", "Norway", "Oman", "Pakistan",
-  "Palestine", "Philippines", "Poland", "Portugal", "Qatar",
-  "Russia", "Saudi Arabia", "Senegal", "Sierra Leone", "Singapore",
-  "Somalia", "South Africa", "South Korea", "Spain", "Sri Lanka",
-  "Sudan", "Sweden", "Switzerland", "Syria", "Tajikistan", "Tanzania",
-  "Thailand", "Timor-Leste", "Tunisia", "Turkey", "Turkmenistan",
-  "Uganda", "United Arab Emirates", "United Kingdom", "United States",
-  "Uzbekistan", "Vietnam", "Yemen", "Other",
+const HYDERABAD_CITY_OPTIONS = [
+  ...HYDERABAD_METRO_AREAS,
+  "Somewhere else in Telangana",
+  "Somewhere else in India",
+  "Outside India",
 ];
 
 function AuthFormContent() {
@@ -53,12 +39,19 @@ function AuthFormContent() {
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [gender, setGender] = useState("");
-  const [country, setCountry] = useState("");
-  const [detectingCountry, setDetectingCountry] = useState(false);
+  // The selected city option from HYDERABAD_CITY_OPTIONS. We store the
+  // canonical "Hyderabad" string in `cityToStore` once the user passes
+  // the gate; the raw selection is kept here for UI affordances (showing
+  // a non-fit explanation when "Somewhere else…" is picked).
+  const [citySelection, setCitySelection] = useState("");
   const [step, setStep] = useState<SignupStep>("email");
   const [state, setState] = useState<AuthState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [gpsConsent, setGpsConsent] = useState<"unknown" | "asked" | "granted" | "denied">("unknown");
+
+  /** True for any selection inside the metro — these all map to "Hyderabad". */
+  const isMetroSelection = HYDERABAD_METRO_AREAS.includes(citySelection);
+  /** Display string for non-fit messaging. */
+  const cityForCopy = citySelection || "your area";
 
   useEffect(() => {
     if (urlError) setErrorMsg(urlError);
@@ -74,23 +67,10 @@ function AuthFormContent() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Country detection is consent-based ONLY. We do NOT run passive IP
-  // detection on entering the country step. The user explicitly taps
-  // "Use my location to detect country" to invoke geolocation, and the
-  // browser handles the consent prompt. Per Senior UX review.
-
-  async function handleUseGps() {
-    setGpsConsent("asked");
-    setDetectingCountry(true);
-    const detected = await detectCountryFromGeolocation();
-    if (detected) {
-      setCountry(detected);
-      setGpsConsent("granted");
-    } else {
-      setGpsConsent("denied");
-    }
-    setDetectingCountry(false);
-  }
+  // ── City gate is self-declaration only ──────────────────────────────
+  // No GPS, no IP geolocation. The privacy threat model for a Muslim
+  // women's space runs *toward* privacy, so we never collect or store a
+  // coordinate against an account. The dropdown is the only signal.
 
   // ── SIGN IN: email-only → magic link ────────────────────────────────
   async function handleSignIn(e: FormEvent) {
@@ -180,38 +160,36 @@ function AuthFormContent() {
       setStep("waitlist");
       return;
     }
-    setStep("country");
+    setStep("city");
   }
 
-  function handleCountrySubmit(e: FormEvent) {
+  function handleCitySubmit(e: FormEvent) {
     e.preventDefault();
-    if (!country) return;
+    if (!citySelection) return;
 
-    // Hard geographic restriction: Sisters in Dua MVP is India-only
-    if (!isIndia(country)) {
-      // Record the non-fit so we know which countries are knocking.
+    // Hard geographic restriction: Sisters in Dua MVP is Hyderabad-only.
+    if (!isMetroSelection) {
+      // Record the non-fit so we know who's knocking and from where.
       void fetch("/api/demand-signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source_slug: refSlug ?? "sisters-in-dua",
           email: email.trim() || undefined,
-          visitor_country: country,
+          visitor_country: citySelection,
           visitor_gender: gender || undefined,
-          free_text_note: `Country ${country} not yet in scope for this cluster.`,
+          free_text_note: `${citySelection} not yet in scope — cluster is currently Hyderabad-only.`,
         }),
       }).catch(() => undefined);
       setStep("geo_block");
       return;
     }
 
-    // India-region beta acknowledgement still applies (just in case the
-    // country list expands later); for India directly, send OTP.
-    const needsBetaDisclosure = !SOUTH_SE_ASIA_COUNTRIES.includes(country);
-    if (needsBetaDisclosure) {
-      setStep("beta_disclosure");
-      return;
-    }
+    // Hyderabad metro confirmed — proceed straight to OTP. The earlier
+    // beta disclosure was conditional on non-South-Asia countries; with
+    // the cluster now scoped to one city in South Asia, every signup
+    // sits inside the regional context the disclosure described, so the
+    // disclosure step is no longer triggered for normal flow.
     sendOtp();
   }
 
@@ -227,7 +205,10 @@ function AuthFormContent() {
         data: {
           nickname: nickname.trim(),
           gender: gender,
-          country: country,
+          // We collapse any in-scope metro selection to the canonical
+          // "Hyderabad" value — the cluster treats the metro as one
+          // logical region. Non-fits never reach this code path.
+          country: HYDERABAD_METRO_CANONICAL,
         },
       },
     });
@@ -441,8 +422,7 @@ function AuthFormContent() {
             <div className="space-y-2">
               {[
                 { value: "woman", label: "Woman" },
-                { value: "man", label: "Man" },
-                { value: "other", label: "Prefer not to say / Other" },
+                { value: "other", label: "Other" },
               ].map((opt) => (
                 <label
                   key={opt.value}
@@ -478,86 +458,61 @@ function AuthFormContent() {
         </form>
       )}
 
-      {mode === "signup" && step === "country" && (
-        <form onSubmit={handleCountrySubmit} className="space-y-4">
+      {mode === "signup" && step === "city" && (
+        <form onSubmit={handleCitySubmit} className="space-y-4">
           <div>
-            <label htmlFor="country" className="block text-sm font-medium text-gray-400 mb-1.5">
-              Where are you based?
+            <label htmlFor="city" className="block text-sm font-medium text-gray-400 mb-1.5">
+              Where in Hyderabad are you?
             </label>
             <p className="text-[11px] text-gray-500 leading-relaxed mb-3">
-              Sisters in Dua is currently open to sisters in India only. We use your country only for this cluster — never your address, coordinates, or anything more specific.
+              Sisters in Dua is currently open to sisters in <span className="text-gray-300">Hyderabad and the surrounding metro</span>. We use only this answer for the cluster — never your address, your coordinates, or anything more specific.
             </p>
 
-            {/* Lead with consent-based GPS — privacy-preserving option first */}
-            {gpsConsent === "unknown" && !country && (
-              <button
-                type="button"
-                onClick={handleUseGps}
-                className="w-full mb-3 px-4 py-2.5 rounded-lg border border-emerald-700/50
-                           bg-emerald-900/20 hover:bg-emerald-900/40 text-sm
-                           text-emerald-300 transition-colors flex items-center justify-center gap-2"
-                disabled={detectingCountry}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {detectingCountry ? "Detecting from your location..." : "Use my location to detect country"}
-              </button>
-            )}
-
             <select
-              id="country"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
+              id="city"
+              value={citySelection}
+              onChange={(e) => setCitySelection(e.target.value)}
               required
               className={`w-full px-4 py-3 rounded-lg border bg-[#11140f]
                          focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent
                          text-white ${
-                           country && !isIndia(country)
+                           citySelection && !isMetroSelection
                              ? "border-amber-700/60"
                              : "border-gray-700"
                          }`}
             >
               <option value="" disabled>
-                {detectingCountry ? "Detecting..." : "Or pick from the list"}
+                Pick the closest match
               </option>
-              {COUNTRIES.map((c) => (
+              {HYDERABAD_CITY_OPTIONS.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
 
-            {gpsConsent === "denied" && (
-              <p className="mt-1.5 text-[11px] text-amber-400 leading-relaxed">
-                Couldn&apos;t detect your country from your device. This usually means location access was declined or your browser blocked it. No problem — pick from the list above.
-              </p>
-            )}
-            {gpsConsent === "granted" && country && (
-              <p className="mt-1.5 text-[11px] text-emerald-400">
-                Detected: <span className="font-medium">{country}</span>. You can change it if this isn&apos;t right.
-              </p>
-            )}
+            <p className="mt-2 text-[11px] text-gray-500 leading-relaxed">
+              If you live just outside any of these — Madhapur, Gachibowli, Kukatpally, LB Nagar and so on — pick the closest one. They&apos;re all part of the metro for our purposes.
+            </p>
           </div>
 
-          {/* Inline geo-block — visible AS the user selects, not after submit */}
-          {country && !isIndia(country) && (
+          {/* Inline non-fit notice — visible AS the user selects */}
+          {citySelection && !isMetroSelection && (
             <div className="p-4 rounded-lg bg-[#11140f] border border-amber-700/50">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-amber-400">🌍</span>
+                <span className="text-amber-400">📍</span>
                 <span className="text-amber-300 text-sm font-semibold">
-                  Coming to {country} soon
+                  Coming to {citySelection.toLowerCase()} soon
                 </span>
               </div>
               <p className="text-gray-400 text-xs leading-relaxed">
-                Sisters in Dua is open to sisters in India only for now. Continue to add{" "}
-                <span className="text-gray-300">{email}</span> to our waitlist — we&apos;ll write back when a space opens for {country}.
+                Sisters in Dua is currently open to sisters in Hyderabad only. Continue to add{" "}
+                <span className="text-gray-300">{email}</span> to our waitlist — we&apos;ll write back when a space opens that fits.
               </p>
             </div>
           )}
 
           <button
             type="submit"
-            disabled={!country || state === "loading"}
+            disabled={!citySelection || state === "loading"}
             className="w-full py-3 px-4 rounded-lg font-medium text-white
                        bg-emerald-700 hover:bg-emerald-600
                        disabled:opacity-50 disabled:cursor-not-allowed
@@ -568,7 +523,7 @@ function AuthFormContent() {
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Sending link...
               </span>
-            ) : country && !isIndia(country) ? (
+            ) : citySelection && !isMetroSelection ? (
               "Join the waitlist"
             ) : (
               "Enter Sisters in Dua"
@@ -581,66 +536,28 @@ function AuthFormContent() {
         </form>
       )}
 
-      {/* ── GEO BLOCK — non-India users ───────────────────────────────── */}
+      {/* ── GEO BLOCK — outside Hyderabad metro ─────────────────────── */}
       {mode === "signup" && step === "geo_block" && (
         <div className="space-y-4">
           <div className="p-6 rounded-xl bg-[#11140f] border border-amber-700/50">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-amber-400 text-lg">🌍</span>
-              <span className="font-semibold text-amber-300 text-sm">Coming to your region soon</span>
+              <span className="text-amber-400 text-lg">📍</span>
+              <span className="font-semibold text-amber-300 text-sm">Coming to your area soon</span>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed mb-3">
-              Sisters in Dua is currently open to sisters in India only. We&apos;re focused on serving this region well before opening to others.
+              Sisters in Dua is currently open to sisters in <span className="text-gray-200">Hyderabad and the surrounding metro</span>. We&apos;re focused on serving this city well before opening to others.
             </p>
             <p className="text-gray-400 text-sm leading-relaxed mb-4">
-              We&apos;ve added <span className="text-gray-300 font-medium">{email}</span> to our waitlist. We&apos;ll write back when a Sisters in Dua space opens for {country || "your region"}.
+              We&apos;ve added <span className="text-gray-300 font-medium">{email}</span> to our waitlist. We&apos;ll write back when a Sisters in Dua space opens for {cityForCopy}.
             </p>
             <button
               type="button"
-              onClick={() => setStep("country")}
+              onClick={() => setStep("city")}
               className="w-full text-sm text-gray-500 hover:text-gray-400"
             >
-              Choose a different country
+              Choose a different area
             </button>
           </div>
-        </div>
-      )}
-
-      {mode === "signup" && step === "beta_disclosure" && (
-        <div className="space-y-4">
-          <div className="p-6 rounded-xl bg-[#11140f] border border-amber-700/50">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-amber-400 text-lg">⚠</span>
-              <span className="font-semibold text-amber-300 text-sm">Beta community</span>
-            </div>
-            <p className="text-gray-300 text-sm leading-relaxed mb-3">
-              Sisters in Dua is in early beta. The community is small and growing. Features evolve in real time.
-            </p>
-            <p className="text-gray-400 text-sm leading-relaxed mb-4">
-              By joining, you understand this is a work in progress. Your patience and feedback shape the space for sisters who come after you.
-            </p>
-            <button
-              onClick={() => sendOtp()}
-              disabled={state === "loading"}
-              className="w-full py-3 px-4 rounded-lg font-medium text-white
-                         bg-emerald-700 hover:bg-emerald-600
-                         disabled:opacity-50 disabled:cursor-not-allowed
-                         transition-colors duration-200"
-            >
-              {state === "loading" ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Sending link...
-                </span>
-              ) : (
-                "I understand — let me in"
-              )}
-            </button>
-            <button onClick={() => setStep("country")} className="w-full mt-2 text-sm text-gray-500 hover:text-gray-400">
-              Back
-            </button>
-          </div>
-          {errorMsg && <p className="text-red-400 text-sm text-center">{errorMsg}</p>}
         </div>
       )}
 

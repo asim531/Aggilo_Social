@@ -5,7 +5,7 @@
  *
  * One Clio. Two lenses.
  *
- *   Tab "Just between us"  (default inside a cluster)
+ *   Tab "Just Clio · forgets"  (default inside a cluster)
  *     - Private to the user. Clio knows nothing but what is said here.
  *     - Storage class: NON-PII. Content lives in browser sessionStorage,
  *       clears at 12h. The platform retains only session metadata
@@ -13,7 +13,7 @@
  *     - Endpoint: /api/clio/ephemeral  (no cluster context)
  *     - This is where Sage→Clio soft handoff greetings land.
  *
- *   Tab "Ask me anything"  (AMA — opt-in via tab switch)
+ *   Tab "Just Clio · remembers"  (AMA — opt-in via tab switch)
  *     - Private to the cluster, but Clio is reading the room AND
  *       remembers what you tell her so she can serve you better next
  *       time. Cluster-aware suggestions grounded in what is actually
@@ -75,9 +75,9 @@ const TYPING_DOTS_DELAY_MS = 300;
 // Privacy is the load-bearing distinction between the two tabs. We name
 // it explicitly in storage so the boundary is impossible to forget.
 //
-//   "Just between us"  → NON-PII   → sessionStorage, 12h TTL, never on server
-//   "Ask me anything"  → PII       → localStorage,   persistent, syncs to server
-//                                     (server persistence is post-MVP)
+ //   "Just Clio · forgets"   → NON-PII   → sessionStorage, 12h TTL, never on server
+//   "Just Clio · remembers" → PII       → localStorage,   persistent, syncs to server
+//                                          (server persistence is post-MVP)
 //
 // MVP behavior: the AMA tab persists across browser sessions on this device
 // via localStorage. When the server-side `clio_conversations` worker ships
@@ -131,7 +131,7 @@ export default function ClioFab({
   inCluster = false,
 }: ClioFabProps) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<ClioTab>("private"); // default = Just between us
+  const [tab, setTab] = useState<ClioTab>("private"); // default = Just Clio · forgets
   const [thinking, setThinking] = useState(false);
   const [showDots, setShowDots] = useState(false);
   const [thinkingPhrase, setThinkingPhrase] = useState("");
@@ -144,38 +144,12 @@ export default function ClioFab({
   // source of truth, no duplicate copy.
   const [tourIndex, setTourIndex] = useState<number | null>(null);
 
-  // First-open tab explainer — surfaced once per device. The user has
-  // historically been confused by which tab is private (both are).
-  // We make the storage-class distinction explicit on first open.
-  const TAB_EXPLAINER_KEY = "aggilo:clio_tab_explainer_seen";
-  const [showTabExplainer, setShowTabExplainer] = useState(false);
-
-  useEffect(() => {
-    if (!open || !inCluster) return;
-    if (typeof window === "undefined") return;
-    try {
-      const seen = localStorage.getItem(TAB_EXPLAINER_KEY);
-      if (!seen) setShowTabExplainer(true);
-    } catch {
-      // localStorage unavailable — silent
-    }
-  }, [open, inCluster]);
-
-  function dismissTabExplainer() {
-    setShowTabExplainer(false);
-    try {
-      localStorage.setItem(TAB_EXPLAINER_KEY, "1");
-    } catch {
-      // ignore
-    }
-  }
-
   // Separate message threads per tab — they are different relationships.
   const [privateMessages, setPrivateMessages] = useState<ClioMessage[]>([
     {
       role: "clio",
       content:
-        "Private to you. Words stay in your browser only — they clear in 12 hours and nothing is saved on the platform. What's on your mind?",
+        "Private to you. This conversation auto-deletes after 12 hours and nothing reaches the platform. What's on your mind?",
       timestamp: Date.now(),
     },
   ]);
@@ -551,7 +525,7 @@ export default function ClioFab({
             <div className="flex-1 min-w-0">
               <div className="text-white font-semibold text-sm leading-tight">Clio</div>
               <div className="text-white/70 text-[11px] leading-tight truncate">
-                {isPrivate ? "Just between us · ephemeral" : "Private Chat · I remember"}
+                {isPrivate ? "Forgets after 12 hours" : "Remembers our conversations"}
               </div>
             </div>
             <button
@@ -577,7 +551,7 @@ export default function ClioFab({
                 <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <span className="truncate">Just between us</span>
+                <span className="truncate">Just Clio · forgets</span>
                 {hasUnreadHandoff && (
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
                 )}
@@ -593,7 +567,7 @@ export default function ClioFab({
                 <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                <span className="truncate">Private Chat</span>
+                <span className="truncate">Just Clio · remembers</span>
               </button>
             </div>
           )}
@@ -618,32 +592,10 @@ export default function ClioFab({
             </svg>
             <span className="leading-tight">
               {isPrivate
-                ? "Private. Words stay in your browser only — they clear in 12h. Nothing saved."
-                : "Private to you. I remember our conversations so I can serve you better next time."}
+                ? "Private to you. Auto-deletes after 12 hours. Nothing reaches the platform."
+                : "Private to you. Clio remembers what helps so she can serve you better next time."}
             </span>
           </div>
-
-          {/* First-open tab explainer — only shown the very first time
-              this user opens the panel inside a cluster. Makes it
-              unmistakable that BOTH tabs are private; the difference is
-              memory, not exposure. */}
-          {showTabExplainer && inCluster && (
-            <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-[11px] text-gray-600 flex items-start gap-2">
-              <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="flex-1 leading-snug">
-                Both tabs are private to you. The first forgets after 12 hours; the second remembers.
-              </span>
-              <button
-                onClick={dismissTabExplainer}
-                className="text-gray-400 hover:text-gray-600 text-base leading-none px-1 shrink-0"
-                aria-label="Dismiss"
-              >
-                &times;
-              </button>
-            </div>
-          )}
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[160px]">

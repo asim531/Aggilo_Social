@@ -43,7 +43,7 @@ function formatTime(timestamp: string): string {
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h ago`;
 
-  // Beyond 24h: India Standard Time (cluster is India-only for MVP).
+  // Beyond 24h: Hyderabad-only MVP — render in IST.
   return then.toLocaleDateString("en-IN", {
     month: "short",
     day: "numeric",
