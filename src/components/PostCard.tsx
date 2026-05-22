@@ -360,13 +360,50 @@ export default function PostCard({
     replies.some((r) => r.is_sage) ||
     allPosts.some((p) => p.parent_id === post.id && p.is_sage);
   const isOptimistic = post.id.startsWith("optimistic-");
+
+  // ── In-flight Sage indicator (B3 fix) ─────────────────────────────
+  // Previously: indicator only fired for optimistic posts, so members
+  // who waited for a real-time @Sage reply saw nothing during the
+  // 5–15s background processing window.
+  //
+  // Now: fires whenever a non-optimistic member post mentions @Sage,
+  // Sage hasn't replied yet, AND the post is recent (<60s old).
+  // Genuine silence after 60s is valid — the indicator times out
+  // naturally so we never show "thinking" forever.
+  //
+  // The `tick` state is bumped every 5s while the indicator is showing
+  // to force a re-render of the age check.
+  const [tick, setTick] = useState(0);
+  const postAgeMs = Date.now() - new Date(post.created_at).getTime();
+  const isRecentEnoughToWaitForSage = postAgeMs < 60_000;
+
   // Glow/typing indicator before a Sage post lands.
   // Fires on:
-  //   1. Member post that mentions @Sage and has no Sage reply yet (existing behaviour)
-  //   2. Any optimistic Sage post that's still in flight (extended behaviour —
-  //      gives members a beat to anticipate Sage's contribution before it lands)
+  //   1. Member post that mentions @Sage and has no Sage reply yet,
+  //      either still optimistic OR <60s old (real-time waiting state)
+  //   2. Any optimistic Sage post that's still in flight (gives members
+  //      a beat to anticipate Sage's contribution before it lands)
   const showSageConsidering =
-    (mentionsSage && !hasSageReply && isOptimistic) || (isSage && isOptimistic);
+    (mentionsSage &&
+      !hasSageReply &&
+      (isOptimistic || isRecentEnoughToWaitForSage)) ||
+    (isSage && isOptimistic);
+
+  // Re-render every 5s while the considering indicator is showing so
+  // the age check naturally times out at the 60s mark. The `tick`
+  // dependency on the interval body forces React to re-evaluate
+  // showSageConsidering each tick.
+  useEffect(() => {
+    if (!showSageConsidering) return;
+    if (isOptimistic) return; // optimistic state already updates fast
+    const id = setInterval(() => setTick((t) => t + 1), 5_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSageConsidering, isOptimistic]);
+
+  // Reference `tick` so eslint sees the value is read; the actual
+  // re-render trigger is the state update itself.
+  void tick;
 
   const isOwnPost = !!currentUserId && post.author_id === currentUserId;
   const isMemberPost = !isSage && !!post.author_id;

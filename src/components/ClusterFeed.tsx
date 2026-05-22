@@ -212,11 +212,13 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
        * Sits at the top because it's the room's identity, not an agent artefact.
        */}
       {pinnedAnchor && (
-        <PinnedAnchor
-          post={pinnedAnchor}
-          collapsed={anchorCollapsed}
-          onToggle={toggleAnchor}
-        />
+        <div id="aggilo-pinned-anchor">
+          <PinnedAnchor
+            post={pinnedAnchor}
+            collapsed={anchorCollapsed}
+            onToggle={toggleAnchor}
+          />
+        </div>
       )}
 
       {/* feedTopRef: scroll target after user posts */}
@@ -262,7 +264,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
        * Immediately visible after the pinned anchor.
        * No agent surfaces between here and the compose bar.
        */}
-      <div className="bg-white">
+      <div className="bg-white" id="aggilo-cluster-timeline">
         <div className="max-w-4xl mx-auto">
           {threads.length === 0 ? (
             <div className="text-center py-16 px-4">
@@ -307,7 +309,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
        * — not "the conversation" — so members understand what they're
        * looking at if they do scroll down.
        */}
-      <div className="bg-slate-50 border-t border-slate-200 border-b border-b-slate-200">
+      <div className="bg-slate-50 border-t border-slate-200 border-b border-b-slate-200" id="aggilo-room-workshop">
         <AgentChatbox clusterName="Sisters in Dua" clusterId="the_single_source" />
       </div>
 
@@ -315,7 +317,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
        * Compose bar — sticky at the bottom, always reachable.
        * The most important interactive surface in the room.
        */}
-      <div className="sticky bottom-0 z-40">
+      <div className="sticky bottom-0 z-40" id="aggilo-compose-bar">
         <TypingIndicator />
         <PostComposer
           userId={userId}

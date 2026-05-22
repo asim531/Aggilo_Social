@@ -23,6 +23,51 @@ const ACTIVE_CADENCE_MS = 60 * 60 * 1000;
 const COLD_THRESHOLD_POSTS = 20;
 const COLD_THRESHOLD_MEMBERS = 20;
 
+// ── Member-blame validator (B2) ──────────────────────────────────
+// Server-side regex check on sage_message and clio_message after the
+// LLM returns. The prompt is hardened with rejection examples but the
+// model still slips. This is the belt-and-braces second layer.
+//
+// On match: retry the call once with a hardened reminder system message.
+// If second attempt also matches: degrade to observe_mode with a generic
+// neutral line, and log the failure for offline review.
+const FORBIDDEN_SUBJECT_PATTERNS: RegExp[] = [
+  /\bmembers?\s+(have|are|seem|tend|keep|appear)\b/i,
+  /\bthe\s+room\s+(has|seems|feels|appears|wants|wanted)\b/i,
+  /\b(repeatedly|frequently|recently|consistently)\s+(requesting|asking|posting|sharing|wanting)\b/i,
+  /\bindicating\s+a\s+need\b/i,
+  /\b(sisters?|brothers?)\s+(have|are|seem|tend|keep)\b/i,
+  /\bwe(\s+have)?\s+noticed\s+(the\s+room|members|sisters|brothers|the\s+conversation|engagement)\b/i,
+  /\bengagement\s+(has|is|seems)\s+been\b/i,
+  /\bthe\s+conversation\s+has\s+been\s+(about|around|focused)\b/i,
+];
+
+function hasForbiddenFraming(text: string | undefined | null): {
+  matched: boolean;
+  pattern: string | null;
+} {
+  if (!text) return { matched: false, pattern: null };
+  for (const re of FORBIDDEN_SUBJECT_PATTERNS) {
+    if (re.test(text)) return { matched: true, pattern: re.source };
+  }
+  return { matched: false, pattern: null };
+}
+
+const VALIDATOR_RETRY_REMINDER = `Your previous draft contained member-blame framing — phrases like "members have…", "the room has been requesting…", "engagement has been…", or "indicating a need for…". This is forbidden.
+
+Rewrite the exchange. The subject of every sentence is the room's capability, an agent's own work, or a tool we can ship. Never an observation about what members are doing, feeling, or asking. If you cannot find a service-framed observation that meets this rule, set observe_mode = true and produce a generic neutral acknowledgement.
+
+Output JSON in the same shape as before.`;
+
+const FALLBACK_OBSERVE_TEXT = {
+  trigger_context:
+    "Our current tools are doing their job — nothing new to ship right now.",
+  sage_message:
+    "The room has what it needs from us this cycle. Verified references and the workshop are running as designed.",
+  clio_message:
+    "Agreed. Better to wait than to add capability for capability's sake.",
+};
+
 const PROMPT = `You are generating a single short dialogue exchange between Sage (the cluster Anchor) and Clio (the cluster orchestrator and personal guide). They are working together on the Room Workshop — the surface where members see what the agents are building for the room.
 
 ## Frame: members see service, never surveillance
@@ -30,6 +75,23 @@ const PROMPT = `You are generating a single short dialogue exchange between Sage
 The agents work *for* the room. They never observe members. Every exchange is about the room's capabilities — what tools the room could gain, what features could help members, what's already serving the room well. The agents are infrastructure that members see working in their service. They are not commentators on member behaviour.
 
 This is non-negotiable. If you find yourself writing "members are…" or "the sisters here seem to…" or "we noticed the room is…", stop and rewrite. The subject of every sentence is the room itself, the room's capabilities, or the agents' own work. Never the members.
+
+## Bad examples that have shipped before — do not produce these
+
+These exact phrasings (or anything semantically equivalent) have leaked into past exchanges and been retracted. They violate the service-frame. Recognise the pattern and reject it before you generate.
+
+- "The room has been repeatedly requesting new duas and asking about spiritual practices like tahajjud, indicating a need for comprehensive guidance and reliance on Allah."
+  ↳ Subject is "the room" but the verb describes members ("requesting", "asking"). Banned.
+- "Members seem to be struggling with consistency around fajr."
+  ↳ Direct member-subject framing. Banned.
+- "The sisters here have been quiet this week — we should re-engage them."
+  ↳ Members as subject, engagement framing. Banned.
+- "Indicating a need for…" / "We've noticed the room…" / "The conversation has been about…"
+  ↳ Surveillance vocabulary regardless of subject. Banned.
+- "Repeatedly requesting…" / "Frequently posting…" / "Recently asking…"
+  ↳ Member-behaviour framing. Banned.
+
+If your draft contains any of these patterns, rewrite. The subject is always the room's capability, an agent's own work, or what the agents will ship — never an observation about what members are doing or feeling.
 
 Examples of what NOT to say:
 - "Most posts this week are about consistency."  ← describes members
@@ -228,6 +290,93 @@ export async function POST() {
       parsed = JSON.parse(result.content);
     } catch {
       return NextResponse.json({ error: "Malformed exchange JSON" }, { status: 502 });
+    }
+
+    // ── B2 server-side validator: member-blame framing check ────────
+    // Runs against sage_message, clio_message and trigger_context after
+    // parse. On match: retry once with a hardened reminder. If second
+    // attempt also fails, degrade to a fixed neutral observe_mode line
+    // and log the failure to behavioural_events for offline review.
+    {
+      const sageHit = hasForbiddenFraming(parsed.sage_message);
+      const clioHit = hasForbiddenFraming(parsed.clio_message);
+      const triggerHit = hasForbiddenFraming(parsed.trigger_context);
+      const validatorHit =
+        sageHit.matched || clioHit.matched || triggerHit.matched;
+
+      if (validatorHit) {
+        const firstAttemptPatterns = [
+          sageHit.pattern,
+          clioHit.pattern,
+          triggerHit.pattern,
+        ].filter(Boolean) as string[];
+
+        const retryResult = await llmCall(
+          {
+            agent: "cadence",
+            operationKey: "cadence_exchange_retry",
+            userId: user.id,
+            clusterId,
+          },
+          {
+            messages: [
+              { role: "system", content: PROMPT },
+              { role: "user", content: userContext },
+              { role: "assistant", content: result.content },
+              { role: "system", content: VALIDATOR_RETRY_REMINDER },
+            ],
+            temperature: 0.5,
+            maxTokens: 350,
+            responseFormat: { type: "json_object" },
+          },
+          supabase
+        );
+
+        let retryAccepted = false;
+        if (retryResult.status === "ok" && retryResult.content) {
+          try {
+            const retryParsed = JSON.parse(retryResult.content);
+            const retryHit =
+              hasForbiddenFraming(retryParsed.sage_message).matched ||
+              hasForbiddenFraming(retryParsed.clio_message).matched ||
+              hasForbiddenFraming(retryParsed.trigger_context).matched;
+            if (!retryHit) {
+              parsed = retryParsed;
+              retryAccepted = true;
+            }
+          } catch {
+            // Malformed retry JSON — fall through to degraded path
+          }
+        }
+
+        if (!retryAccepted) {
+          // Belt-and-braces failed twice. Don't ship the offending
+          // draft. Degrade to a fixed safe observe_mode line and log
+          // the failure for offline review.
+          parsed = {
+            trigger_context: FALLBACK_OBSERVE_TEXT.trigger_context,
+            sage_message: FALLBACK_OBSERVE_TEXT.sage_message,
+            clio_message: FALLBACK_OBSERVE_TEXT.clio_message,
+            observe_mode: true,
+            proposed_capability: null,
+          };
+
+          // Diagnostic only — patterns only, never the verbatim text.
+          try {
+            await supabase.from("behavioural_events").insert({
+              event_type: "cadence_validator_fallback",
+              user_id: user.id,
+              cluster_id: clusterId,
+              event_data: {
+                first_attempt_patterns: firstAttemptPatterns,
+                retry_status: retryResult.status,
+              },
+            });
+          } catch {
+            // Silent — telemetry only
+          }
+        }
+      }
     }
 
     const exchangeNumber = (lastExchange?.exchange_number || 0) + 1;

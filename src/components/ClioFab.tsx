@@ -137,19 +137,45 @@ export default function ClioFab({
   const [showTakingMoment, setShowTakingMoment] = useState(false);
   const [hasUnreadHandoff, setHasUnreadHandoff] = useState(false);
 
+  // First-open tab explainer — surfaced once per device. The user has
+  // historically been confused by which tab is private (both are).
+  // We make the storage-class distinction explicit on first open.
+  const TAB_EXPLAINER_KEY = "aggilo:clio_tab_explainer_seen";
+  const [showTabExplainer, setShowTabExplainer] = useState(false);
+
+  useEffect(() => {
+    if (!open || !inCluster) return;
+    if (typeof window === "undefined") return;
+    try {
+      const seen = localStorage.getItem(TAB_EXPLAINER_KEY);
+      if (!seen) setShowTabExplainer(true);
+    } catch {
+      // localStorage unavailable — silent
+    }
+  }, [open, inCluster]);
+
+  function dismissTabExplainer() {
+    setShowTabExplainer(false);
+    try {
+      localStorage.setItem(TAB_EXPLAINER_KEY, "1");
+    } catch {
+      // ignore
+    }
+  }
+
   // Separate message threads per tab — they are different relationships.
   const [privateMessages, setPrivateMessages] = useState<ClioMessage[]>([
     {
       role: "clio",
       content:
-        "This is private. Nothing said here is visible to the cluster, to Sage, or to other members. The conversation lives in your browser only and clears in 12 hours. The platform records that we spoke and how many turns — never the words. What's on your mind?",
+        "Private to you. Words stay in your browser only — they clear in 12 hours and nothing is saved on the platform. What's on your mind?",
       timestamp: Date.now(),
     },
   ]);
   const [clusterMessages, setClusterMessages] = useState<ClioMessage[]>([
     {
       role: "clio",
-      content: `Assalamu Alaikum. Ask me anything about ${clusterName} — what Sage meant, how this space works, or whether something has been discussed before. I'm reading the room with you, and I'll remember what you share here so I can serve you better over time. Whatever I share with you stays between us.`,
+      content: `Assalamu Alaikum. Private to you, and I remember our conversations so I can serve you better next time. Ask me anything about ${clusterName} — what Sage meant, how this space works, whether something has been discussed before.`,
       timestamp: Date.now(),
     },
   ]);
@@ -518,7 +544,7 @@ export default function ClioFab({
             <div className="flex-1 min-w-0">
               <div className="text-white font-semibold text-sm leading-tight">Clio</div>
               <div className="text-white/70 text-[11px] leading-tight truncate">
-                {isPrivate ? "Just between us · private" : "Ask me anything · about this room"}
+                {isPrivate ? "Just between us · ephemeral" : "Private Chat · I remember"}
               </div>
             </div>
             <button
@@ -560,13 +586,15 @@ export default function ClioFab({
                 <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                <span className="truncate">Ask me anything</span>
+                <span className="truncate">Private Chat</span>
               </button>
             </div>
           )}
 
           {/* Privacy banner — different per tab. Storage class is the
-              key UX distinction between the two tabs, named explicitly. */}
+              key UX distinction between the two tabs, named explicitly.
+              Both tabs are private to the user; the difference is what
+              the platform remembers, not who else can see. */}
           <div
             className={`px-3 py-1.5 border-b text-[11px] flex items-center gap-1.5 ${
               isPrivate
@@ -583,13 +611,44 @@ export default function ClioFab({
             </svg>
             <span className="leading-tight">
               {isPrivate
-                ? "Private. Words stay in your browser, clear in 12h. Platform sees that we spoke, never what."
-                : "Private to you. I'll remember this to help you better next time."}
+                ? "Private. Words stay in your browser only — they clear in 12h. Nothing saved."
+                : "Private to you. I remember our conversations so I can serve you better next time."}
             </span>
           </div>
 
+          {/* First-open tab explainer — only shown the very first time
+              this user opens the panel inside a cluster. Makes it
+              unmistakable that BOTH tabs are private; the difference is
+              memory, not exposure. */}
+          {showTabExplainer && inCluster && (
+            <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-[11px] text-gray-600 flex items-start gap-2">
+              <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="flex-1 leading-snug">
+                Both tabs are private to you. The first forgets after 12 hours; the second remembers.
+              </span>
+              <button
+                onClick={dismissTabExplainer}
+                className="text-gray-400 hover:text-gray-600 text-base leading-none px-1 shrink-0"
+                aria-label="Dismiss"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[160px]">
+            {/* Help section — Private Chat tab only, inside a cluster.
+                Collapsible "What's on this page?" with buttons that
+                scroll to the corresponding surface and flash-highlight
+                it. Members new to a cluster get a guided tour of every
+                surface without leaving the panel. */}
+            {!isPrivate && inCluster && (
+              <ClusterHelpSection onJump={() => setOpen(false)} />
+            )}
+
             {messages.map((msg, i) => {
               const handoffOpen =
                 msg.isHandoffGreeting && !msg.handoffClosed;
@@ -676,7 +735,7 @@ export default function ClioFab({
                   handleSend();
                 }
               }}
-              placeholder={isPrivate ? "This stays between us..." : "Ask me anything about this room..."}
+              placeholder={isPrivate ? "This stays between us..." : "Ask me anything — I'll remember..."}
               className={`flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-1 ${inputRing}`}
               disabled={thinking}
             />
@@ -691,5 +750,147 @@ export default function ClioFab({
         </div>
       )}
     </>
+  );
+}
+
+// ── ClusterHelpSection ──────────────────────────────────────────────
+//
+// Collapsible "What's on this page?" guide. Lives at the top of the
+// Private Chat tab when the panel is open inside a cluster. Each
+// button scrolls to the corresponding surface on the cluster page and
+// flashes a brief highlight ring so members can find it visually.
+//
+// Platform-baseline list — every cluster gets these. Workshop-driven
+// items are NOT added here; this is the floor that ships with every
+// room. (See SESSION_A_CONFIGURABILITY.md §3 step 5.)
+
+interface HelpItem {
+  label: string;
+  /** Element selector to scroll to */
+  selector: string;
+  /** Short description of what the surface does */
+  description: string;
+}
+
+const PLATFORM_HELP_ITEMS: HelpItem[] = [
+  {
+    label: "Live presence",
+    selector: "#aggilo-cluster-presence",
+    description:
+      "Who's online now and how many sisters have joined this week.",
+  },
+  {
+    label: "Cluster restrictions",
+    selector: "#aggilo-cluster-chips",
+    description:
+      "Who this room is for — age, gender, location, language.",
+  },
+  {
+    label: "Pinned anchor",
+    selector: "#aggilo-pinned-anchor",
+    description: "The room's founding statement at the top.",
+  },
+  {
+    label: "Posts & timeline",
+    selector: "#aggilo-cluster-timeline",
+    description:
+      "The conversation. Long-press any post to react, share, or report.",
+  },
+  {
+    label: "Compose bar",
+    selector: "#aggilo-compose-bar",
+    description: "Where you share what's on your heart.",
+  },
+  {
+    label: "@Sage feature",
+    selector: "#aggilo-compose-bar",
+    description:
+      "Type @Sage in the compose bar and ask a question — she replies when she has something verified.",
+  },
+  {
+    label: "Sage's posts",
+    selector: ".sage-post",
+    description:
+      "Sage anchors the room and shares verified references from Quran and authentic Sunnah.",
+  },
+  {
+    label: "Room Workshop",
+    selector: "#aggilo-room-workshop",
+    description: "What Clio and I are building for this room.",
+  },
+  {
+    label: "Myself (Clio)",
+    selector: ".clio-fab, .clio-fab-cluster",
+    description: "I'm always here. Tap the avatar to chat anytime.",
+  },
+];
+
+function ClusterHelpSection({ onJump }: { onJump?: () => void }) {
+  function handleJump(selector: string) {
+    if (typeof document === "undefined") return;
+    // Close the panel first so the user can see the highlight on the
+    // cluster page. Without this the panel obscures the target.
+    onJump?.();
+    // Defer the scroll so the close animation has a beat to play.
+    requestAnimationFrame(() => {
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Brief highlight ring so the surface is visually identified.
+      const previous = el.style.boxShadow;
+      const previousTransition = el.style.transition;
+      el.style.transition = "box-shadow 200ms ease";
+      el.style.boxShadow = "0 0 0 3px rgb(16 185 129 / 0.5)";
+      setTimeout(() => {
+        el.style.boxShadow = previous;
+        // Restore transition on the next tick so we don't strip
+        // pre-existing transitions the element relies on.
+        setTimeout(() => {
+          el.style.transition = previousTransition;
+        }, 250);
+      }, 1500);
+    });
+  }
+
+  return (
+    <details className="rounded-lg border border-amber-200 bg-amber-50/60 group">
+      <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold text-amber-800 flex items-center gap-2 list-none">
+        <svg
+          className="w-3.5 h-3.5 shrink-0 transition-transform group-open:rotate-90"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+        <span>What&apos;s on this page?</span>
+        <span className="ml-auto text-[10px] font-normal text-amber-700/70">
+          Tap to open
+        </span>
+      </summary>
+      <div className="px-2 pb-2 pt-1 space-y-1">
+        {PLATFORM_HELP_ITEMS.map((item) => (
+          <button
+            key={item.label + item.selector}
+            type="button"
+            onClick={() => handleJump(item.selector)}
+            className="w-full text-left px-2 py-1.5 rounded-md hover:bg-amber-100/80 transition-colors flex flex-col gap-0.5"
+            title={item.description}
+          >
+            <span className="text-xs font-medium text-amber-900">
+              {item.label}
+            </span>
+            <span className="text-[11px] text-amber-700/80 leading-snug">
+              {item.description}
+            </span>
+          </button>
+        ))}
+      </div>
+    </details>
   );
 }

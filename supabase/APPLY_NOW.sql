@@ -1375,3 +1375,272 @@ CREATE TRIGGER tool_invocation_count_trigger
   FOR EACH ROW EXECUTE FUNCTION public.refresh_tool_invocation_count();
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║  v1.8 — Premium Cluster Configurability                          ║
+-- ║                                                                  ║
+-- ║  Adds: agent involvement slider, free-text admin guidance,       ║
+-- ║  agent skill registry, platform_admin role, audit trail.         ║
+-- ║                                                                  ║
+-- ║  See architecture/premium_cluster_requirements.md §10 for the   ║
+-- ║  behavioural matrix that maps slider levels to agent behaviour. ║
+-- ║                                                                  ║
+-- ║  Idempotent. Safe to re-run.                                    ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+-- ── 27) Extend role enum: platform_admin ─────────────────────────
+-- profiles.role currently has CHECK (role IN ('member','manager','founder')).
+-- We extend it to include 'platform_admin' — the cross-cluster authority
+-- whose actions are audited in cluster_admin_actions.
+DO $$
+BEGIN
+  -- Drop the old CHECK constraint (any name pattern Postgres assigned)
+  IF EXISTS (
+    SELECT 1 FROM information_schema.constraint_column_usage
+    WHERE table_name = 'profiles' AND column_name = 'role'
+      AND constraint_name = 'profiles_role_check'
+  ) THEN
+    ALTER TABLE public.profiles DROP CONSTRAINT profiles_role_check;
+  END IF;
+
+  -- Re-add with platform_admin included
+  ALTER TABLE public.profiles
+    ADD CONSTRAINT profiles_role_check
+    CHECK (role IN ('member', 'manager', 'founder', 'platform_admin'));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN check_violation  THEN NULL;
+END $$;
+
+-- ── 28) cluster_config — per-cluster admin settings ──────────────
+-- One row per cluster. Holds the slider value, free-text guidance,
+-- enabled skills, and pending custom skill requests. Founder/manager
+-- write; platform_admin can write any row.
+CREATE TABLE IF NOT EXISTS public.cluster_config (
+  cluster_id TEXT PRIMARY KEY,
+  agent_involvement VARCHAR(8) NOT NULL DEFAULT 'medium',
+    -- 'min' | 'medium' | 'high'
+  agent_disabled BOOLEAN NOT NULL DEFAULT FALSE,
+    -- min + this checkbox = silent agents (welfare/character floor still runs)
+  free_text_guidance TEXT,
+    -- raw admin input. Stored verbatim for audit; parsed_directives is what
+    -- the platform actually obeys.
+  parsed_directives JSONB NOT NULL DEFAULT '{}'::jsonb,
+    -- Clio-validated structured form of free_text_guidance. Populated by
+    -- the free-text validator skill when guidance is saved.
+  enabled_skills JSONB NOT NULL DEFAULT '[]'::jsonb,
+    -- array of skill_registry.id values currently enabled for this cluster
+  custom_skill_requests JSONB NOT NULL DEFAULT '[]'::jsonb,
+    -- free-text skill descriptions awaiting Workshop debate.
+    -- Each item: {id, description, requested_by, requested_at, status}
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by UUID REFERENCES public.profiles(id),
+  CONSTRAINT cluster_config_involvement_check
+    CHECK (agent_involvement IN ('min', 'medium', 'high'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_cluster_config_updated
+  ON public.cluster_config(updated_at DESC);
+
+ALTER TABLE public.cluster_config ENABLE ROW LEVEL SECURITY;
+
+-- All authenticated users can read their cluster's config (for slider
+-- visibility, skill list, etc). Phase 0 is single-cluster so RLS is
+-- permissive on read; Phase 1 will scope per cluster membership.
+DROP POLICY IF EXISTS "Authenticated users read cluster config" ON public.cluster_config;
+CREATE POLICY "Authenticated users read cluster config"
+  ON public.cluster_config FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Only founder/manager (cluster admins) and platform_admin can write.
+DROP POLICY IF EXISTS "Cluster admins write cluster config" ON public.cluster_config;
+CREATE POLICY "Cluster admins write cluster config"
+  ON public.cluster_config FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role IN ('founder', 'manager', 'platform_admin')
+    )
+  );
+
+DROP POLICY IF EXISTS "Cluster admins update cluster config" ON public.cluster_config;
+CREATE POLICY "Cluster admins update cluster config"
+  ON public.cluster_config FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role IN ('founder', 'manager', 'platform_admin')
+    )
+  );
+
+-- ── 29) cluster_admin_actions — audit trail ──────────────────────
+-- Every config change, override, or veto by a cluster admin or
+-- platform_admin lands here. Append-only — no row-level DELETE.
+CREATE TABLE IF NOT EXISTS public.cluster_admin_actions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id TEXT NOT NULL,
+  actor_id UUID NOT NULL REFERENCES public.profiles(id),
+  actor_role VARCHAR(16) NOT NULL,
+    -- 'founder' | 'manager' | 'platform_admin'
+  action_type VARCHAR(48) NOT NULL,
+    -- 'config_changed' | 'platform_override' | 'tool_vetoed' |
+    -- 'skill_enabled' | 'skill_disabled' | 'guidance_updated' | etc.
+  before_state JSONB,
+  after_state JSONB,
+  rationale TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cluster_admin_actions_cluster
+  ON public.cluster_admin_actions(cluster_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_cluster_admin_actions_actor
+  ON public.cluster_admin_actions(actor_id, created_at DESC);
+
+ALTER TABLE public.cluster_admin_actions ENABLE ROW LEVEL SECURITY;
+
+-- Cluster admins can read actions for their cluster; platform_admin can
+-- read all.
+DROP POLICY IF EXISTS "Admins read admin actions" ON public.cluster_admin_actions;
+CREATE POLICY "Admins read admin actions"
+  ON public.cluster_admin_actions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role IN ('founder', 'manager', 'platform_admin')
+    )
+  );
+
+-- System inserts are open (server-side route writes); manual inserts
+-- still need a real actor_id, so the row is traceable.
+DROP POLICY IF EXISTS "System inserts admin actions" ON public.cluster_admin_actions;
+CREATE POLICY "System inserts admin actions"
+  ON public.cluster_admin_actions FOR INSERT
+  WITH CHECK (true);
+
+-- ── 30) skill_registry — platform-wide catalogue ─────────────────
+-- The list of agent skills available to enable per-cluster. Curated
+-- centrally; Phase 0 is seeded with the small set Sage/Clio currently
+-- ship. New skills get added as the workshop pipeline produces them.
+CREATE TABLE IF NOT EXISTS public.skill_registry (
+  id VARCHAR(64) PRIMARY KEY,
+    -- e.g. 'verified-reference-curation', 'tajweed-formatter'
+  display_name VARCHAR(128) NOT NULL,
+  description TEXT NOT NULL,
+  agent VARCHAR(16) NOT NULL,
+    -- 'sage' | 'clio' | 'atlas' | 'scout' | 'observer' | 'system'
+  default_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    -- whether new clusters get this skill turned on by default
+  premium_only BOOLEAN NOT NULL DEFAULT FALSE,
+  cost_per_invocation_estimate NUMERIC(10, 6),
+    -- USD; null if cost is structural (e.g. a UI feature)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.skill_registry ENABLE ROW LEVEL SECURITY;
+
+-- Skill registry is platform-wide and publicly readable to any
+-- authenticated user (so admins can see the catalogue when configuring).
+DROP POLICY IF EXISTS "Authenticated users read skill registry" ON public.skill_registry;
+CREATE POLICY "Authenticated users read skill registry"
+  ON public.skill_registry FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Only platform_admin can mutate the catalogue.
+DROP POLICY IF EXISTS "Platform admin writes skill registry" ON public.skill_registry;
+CREATE POLICY "Platform admin writes skill registry"
+  ON public.skill_registry FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role = 'platform_admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+       WHERE id = auth.uid()
+         AND role = 'platform_admin'
+    )
+  );
+
+-- Seed the initial skill catalogue. Idempotent via ON CONFLICT DO NOTHING.
+INSERT INTO public.skill_registry
+  (id, display_name, description, agent, default_enabled, premium_only)
+VALUES
+  ('verified-reference-curation',
+   'Verified reference curation',
+   'Sage surfaces duas, hadith, and Quranic citations from the verified vault when relevant.',
+   'sage', TRUE, FALSE),
+  ('vault-gap-detection',
+   'Vault gap detection',
+   'Sage notices when a recurring topic has no verified reference and queues it for admin attention.',
+   'sage', TRUE, FALSE),
+  ('cadence-workshop-dialogue',
+   'Workshop dialogue cadence',
+   'Sage and Clio collaborate publicly on what the room could gain. Members read and upvote.',
+   'system', TRUE, FALSE),
+  ('welfare-detection',
+   'Welfare detection (immutable safety floor)',
+   'Sage detects welfare patterns and routes care signals to admins. Cannot be disabled.',
+   'sage', TRUE, FALSE),
+  ('character-protocol',
+   'Good-character protocol (immutable safety floor)',
+   'Sage witnesses anti-monotheism, mocking of faith, or coercion against practice. Cannot be disabled.',
+   'sage', TRUE, FALSE),
+  ('clio-private-chat',
+   'Clio private chat',
+   'Members can ask Clio anything. Two tabs: ephemeral (12h) and persistent.',
+   'clio', TRUE, FALSE),
+  ('sage-clio-handoff',
+   'Sage to Clio soft handoff (immutable safety floor)',
+   'Sage stays public-silent on tender disclosures; Clio reaches out privately on her behalf.',
+   'system', TRUE, FALSE),
+  ('link-on-topic-evaluation',
+   'Link on-topic evaluation',
+   'Sage evaluates shared links and badges them on-topic, off-topic, or unsure.',
+   'sage', TRUE, FALSE),
+  ('introspection-cycle',
+   'Introspection cycle',
+   'Clio reads telemetry and surfaces one concrete proposal for admin review.',
+   'clio', TRUE, FALSE),
+  ('typing-indicator-broadcast',
+   'Typing indicator broadcast',
+   'Members see when others are composing. Builds presence without revealing content.',
+   'system', TRUE, FALSE),
+  ('presence-acknowledgment',
+   'Presence acknowledgement',
+   'Live online indicator next to member avatars. Off when at min involvement.',
+   'system', TRUE, FALSE),
+  ('current-events-fallback',
+   'Current-events fallback (Sage)',
+   'Sage acknowledges honestly when a member asks about live news or current events outside the verified vault.',
+   'sage', TRUE, FALSE)
+ON CONFLICT (id) DO NOTHING;
+
+-- ── 31) Backfill the MVP cluster ─────────────────────────────────
+-- Sisters in Dua gets a default config row at medium involvement.
+-- All default-enabled skills are pre-applied so behaviour stays
+-- exactly as it is today after this migration runs.
+INSERT INTO public.cluster_config
+  (cluster_id, agent_involvement, agent_disabled, enabled_skills)
+SELECT
+  'the_single_source',
+  'medium',
+  FALSE,
+  COALESCE(
+    (SELECT jsonb_agg(id ORDER BY id)
+       FROM public.skill_registry
+      WHERE default_enabled = TRUE),
+    '[]'::jsonb
+  )
+ON CONFLICT (cluster_id) DO NOTHING;
+
+NOTIFY pgrst, 'reload schema';

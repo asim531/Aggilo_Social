@@ -40,7 +40,7 @@ const chips = CLUSTER_CHIPS.length > 0 ? CLUSTER_CHIPS : [GLOBAL_CHIP];
 
 export default function ClusterHeader() {
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-6">
+    <div className="bg-white border-b border-gray-200 px-4 py-6" id="aggilo-cluster-header">
       <div className="max-w-4xl mx-auto">
         {/* ── Cluster icon + name ──────────────────────────────── */}
         <div className="flex items-start justify-between mb-1">
@@ -58,7 +58,7 @@ export default function ClusterHeader() {
         </p>
 
         {/* ── Demographic chips — only active restrictions ─────── */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
+        <div className="flex flex-wrap gap-1.5 mb-3" id="aggilo-cluster-chips">
           {chips.map((chip) => (
             <span
               key={chip.label}
@@ -76,7 +76,7 @@ export default function ClusterHeader() {
         </p>
 
         {/* ── Live presence + members ──────────────────────────── */}
-        <div className="mt-3">
+        <div className="mt-3" id="aggilo-cluster-presence">
           <ClusterPresence />
         </div>
 
