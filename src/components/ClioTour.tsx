@@ -80,8 +80,18 @@ export default function ClioTour({ steps, activeIndex, onChange }: ClioTourProps
     const el = document.querySelector(active.selector) as HTMLElement | null;
     if (!el) {
       // Target not in the DOM — close the tour rather than show a floating popover.
-      onChange(null);
-      return;
+      // This can happen if the target is conditionally rendered (e.g. the
+      // help section closing the panel before the surface re-mounts). Defer
+      // a single retry on the next animation frame before giving up.
+      const retry = window.requestAnimationFrame(() => {
+        const retryEl = document.querySelector(active.selector) as HTMLElement | null;
+        if (!retryEl) {
+          // eslint-disable-next-line no-console
+          console.warn(`[ClioTour] target not found for selector: ${active.selector}`);
+          onChange(null);
+        }
+      });
+      return () => window.cancelAnimationFrame(retry);
     }
 
     targetRef.current = el;
@@ -94,8 +104,11 @@ export default function ClioTour({ steps, activeIndex, onChange }: ClioTourProps
 
     el.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    // Position recalculation. We compute on RAF so the smooth scroll has
-    // a beat to settle before we anchor; then we update on scroll/resize.
+    // Position recalculation. Run a fast first pass immediately so the
+    // popover never sits in a "computing…" void (the prior 280ms-only
+    // strategy left a visible gap on slow devices and could fail
+    // silently if the timer was cleared mid-scroll). Then run a second
+    // refinement pass after the smooth-scroll has settled.
     let cancelled = false;
 
     const compute = () => {
@@ -124,15 +137,21 @@ export default function ClioTour({ steps, activeIndex, onChange }: ClioTourProps
       setPos({ top, left, side, arrowLeft });
     };
 
-    // First pass after the smooth-scroll has had a chance to land.
-    const initial = window.setTimeout(compute, 280);
+    // Immediate first pass — popover renders right away based on the
+    // pre-scroll target rect. On a long smooth scroll the visual lands
+    // close to the target before scroll settles.
+    const immediate = window.requestAnimationFrame(compute);
+    // Refinement pass after smooth scroll settles.
+    const refine = window.setTimeout(compute, 320);
+
     const onScrollOrResize = () => compute();
     window.addEventListener("scroll", onScrollOrResize, true);
     window.addEventListener("resize", onScrollOrResize);
 
     return () => {
       cancelled = true;
-      window.clearTimeout(initial);
+      window.cancelAnimationFrame(immediate);
+      window.clearTimeout(refine);
       window.removeEventListener("scroll", onScrollOrResize, true);
       window.removeEventListener("resize", onScrollOrResize);
       // Release the highlight when the active step changes or the tour closes.

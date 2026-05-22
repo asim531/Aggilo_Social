@@ -773,7 +773,8 @@ export default function ClioFab({
       {/* Anchored tour — portal-rendered. Survives panel close so the
           member can step through surfaces without the chat panel
           obscuring the popover. Driven by tourIndex; help section
-          opens / advances it; popover Close / Done resets it. */}
+          opens / advances it; popover Close (× / Esc / click-outside)
+          resets it. */}
       {inCluster && (
         <ClioTour
           steps={PLATFORM_HELP_ITEMS}
