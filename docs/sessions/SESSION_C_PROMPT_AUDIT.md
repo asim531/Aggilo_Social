@@ -1,5 +1,7 @@
 # Session C — Comprehensive Prompt Audit
 
+> **Status:** Closed on 2026-05-22. V3.8 changelog in [`docs/MASTER_INSTRUCTIONS.md`](../MASTER_INSTRUCTIONS.md). Deliverables landed in [`docs/AGGILO_SUPER_PROMPT.md`](../AGGILO_SUPER_PROMPT.md), [`docs/AGENT_VOICES.md`](../AGENT_VOICES.md), [`docs/PROMPT_AUDIT_RESULTS.md`](../PROMPT_AUDIT_RESULTS.md), [`docs/PROMPT_TEST_CASES.md`](../PROMPT_TEST_CASES.md). The medium-priority refactor sprint that converts the audit findings into prompt-file edits is the V3.9 / Session D scope.
+>
 > **Mode:** Deep work. Audit all 21 prompts in the system against a consistent rubric. Empower each agent — Sage, Clio, Atlas, Scout, Observer — with the right register, the right empathy, the right judgement, and the right efficiency.
 >
 > **Estimated duration:** 3–4 hours of focused work. Not a quick session. Block uninterrupted time.
@@ -244,14 +246,14 @@ Document each ordered fix with the proposed diff and the test case it must pass.
 
 ## 7. Done criteria
 
-- [ ] `docs/AGGILO_SUPER_PROMPT.md` written and reviewed
-- [ ] `docs/AGENT_VOICES.md` written and reviewed
-- [ ] All 21 prompts audited against C1–C12 with scored output in `PROMPT_AUDIT_RESULTS.md`
-- [ ] At least 3 test cases per Tier 1 prompt in `PROMPT_TEST_CASES.md`
-- [ ] All "Critical" fixes shipped (any prompt failing C1/C2/C3)
-- [ ] All "High" fixes scheduled with named owner and target date
-- [ ] V3.7 changelog written
-- [ ] All committed and pushed
+- [x] `docs/AGGILO_SUPER_PROMPT.md` written and reviewed
+- [x] `docs/AGENT_VOICES.md` written and reviewed
+- [x] All 21 prompts audited against C1–C12 with scored output in `PROMPT_AUDIT_RESULTS.md` (14 implemented prompts in depth; 7 spec-only prompts scaffolded with first-build rubric checks)
+- [x] At least 3 test cases per Tier 1 prompt in `PROMPT_TEST_CASES.md`
+- [x] All "Critical" fixes shipped — n/a, no prompt failed C1/C2/C3
+- [x] All "High" fixes scheduled — n/a, no prompt failed C4–C7
+- [x] V3.8 changelog written
+- [x] All committed and pushed
 
 ## 8. Notes for picking this up cold
 

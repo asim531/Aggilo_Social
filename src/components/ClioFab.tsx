@@ -42,6 +42,7 @@ import {
   toneColorForReason,
   type HandoffReason,
 } from "@/lib/handoff-greetings";
+import ClioTour, { type TourStep } from "./ClioTour";
 
 type ClioTab = "private" | "cluster";
 type ToneColor = "rose" | "amber" | "indigo";
@@ -136,6 +137,12 @@ export default function ClioFab({
   const [thinkingPhrase, setThinkingPhrase] = useState("");
   const [showTakingMoment, setShowTakingMoment] = useState(false);
   const [hasUnreadHandoff, setHasUnreadHandoff] = useState(false);
+  // Anchored tour state. null = closed; numeric index = active step.
+  // Owned at the FAB level (not inside the help section) so that tour
+  // navigation persists across panel close/reopen, and so the same list
+  // of surfaces feeds both the help section and the tour — single
+  // source of truth, no duplicate copy.
+  const [tourIndex, setTourIndex] = useState<number | null>(null);
 
   // First-open tab explainer — surfaced once per device. The user has
   // historically been confused by which tab is private (both are).
@@ -642,11 +649,24 @@ export default function ClioFab({
           <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[160px]">
             {/* Help section — Private Chat tab only, inside a cluster.
                 Collapsible "What's on this page?" with buttons that
-                scroll to the corresponding surface and flash-highlight
-                it. Members new to a cluster get a guided tour of every
-                surface without leaving the panel. */}
+                start an anchored tour: page scrolls, Clio pops out a
+                brief popover beside the surface, member can step
+                Prev/Next or close and reopen any time from this list.
+                Single source of truth for the items lives at the
+                bottom of this file (PLATFORM_HELP_ITEMS) and feeds
+                both the help section and the popover. */}
             {!isPrivate && inCluster && (
-              <ClusterHelpSection onJump={() => setOpen(false)} />
+              <ClusterHelpSection
+                activeIndex={tourIndex}
+                onJump={(idx) => {
+                  // Close the panel so the popover can land on the
+                  // target without being obscured. Tour state survives
+                  // panel close — opening the panel again shows which
+                  // step is currently active.
+                  setOpen(false);
+                  setTourIndex(idx);
+                }}
+              />
             )}
 
             {messages.map((msg, i) => {
@@ -749,6 +769,18 @@ export default function ClioFab({
           </div>
         </div>
       )}
+
+      {/* Anchored tour — portal-rendered. Survives panel close so the
+          member can step through surfaces without the chat panel
+          obscuring the popover. Driven by tourIndex; help section
+          opens / advances it; popover Close / Done resets it. */}
+      {inCluster && (
+        <ClioTour
+          steps={PLATFORM_HELP_ITEMS}
+          activeIndex={tourIndex}
+          onChange={setTourIndex}
+        />
+      )}
     </>
   );
 }
@@ -757,22 +789,20 @@ export default function ClioFab({
 //
 // Collapsible "What's on this page?" guide. Lives at the top of the
 // Private Chat tab when the panel is open inside a cluster. Each
-// button scrolls to the corresponding surface on the cluster page and
-// flashes a brief highlight ring so members can find it visually.
+// button starts (or re-opens) the anchored Clio tour at the chosen
+// step. The tour itself is rendered by <ClioTour /> at the FAB root,
+// portal-mounted so it survives panel close.
 //
 // Platform-baseline list — every cluster gets these. Workshop-driven
 // items are NOT added here; this is the floor that ships with every
 // room. (See SESSION_A_CONFIGURABILITY.md §3 step 5.)
+//
+// Single source of truth: PLATFORM_HELP_ITEMS (below) is the only
+// place the surface list, selectors, and explanations live. Both the
+// help section and the popover read from it. To add a surface, edit
+// the list — both views update.
 
-interface HelpItem {
-  label: string;
-  /** Element selector to scroll to */
-  selector: string;
-  /** Short description of what the surface does */
-  description: string;
-}
-
-const PLATFORM_HELP_ITEMS: HelpItem[] = [
+const PLATFORM_HELP_ITEMS: TourStep[] = [
   {
     label: "Live presence",
     selector: "#aggilo-cluster-presence",
@@ -825,35 +855,19 @@ const PLATFORM_HELP_ITEMS: HelpItem[] = [
   },
 ];
 
-function ClusterHelpSection({ onJump }: { onJump?: () => void }) {
-  function handleJump(selector: string) {
-    if (typeof document === "undefined") return;
-    // Close the panel first so the user can see the highlight on the
-    // cluster page. Without this the panel obscures the target.
-    onJump?.();
-    // Defer the scroll so the close animation has a beat to play.
-    requestAnimationFrame(() => {
-      const el = document.querySelector(selector) as HTMLElement | null;
-      if (!el) return;
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Brief highlight ring so the surface is visually identified.
-      const previous = el.style.boxShadow;
-      const previousTransition = el.style.transition;
-      el.style.transition = "box-shadow 200ms ease";
-      el.style.boxShadow = "0 0 0 3px rgb(16 185 129 / 0.5)";
-      setTimeout(() => {
-        el.style.boxShadow = previous;
-        // Restore transition on the next tick so we don't strip
-        // pre-existing transitions the element relies on.
-        setTimeout(() => {
-          el.style.transition = previousTransition;
-        }, 250);
-      }, 1500);
-    });
-  }
+interface ClusterHelpSectionProps {
+  /** Which step (if any) is currently being narrated by the tour. */
+  activeIndex: number | null;
+  /** Open the tour at this step. The FAB owns tour state. */
+  onJump: (index: number) => void;
+}
 
+function ClusterHelpSection({ activeIndex, onJump }: ClusterHelpSectionProps) {
   return (
-    <details className="rounded-lg border border-amber-200 bg-amber-50/60 group">
+    <details
+      className="rounded-lg border border-amber-200 bg-amber-50/60 group"
+      open={activeIndex !== null}
+    >
       <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold text-amber-800 flex items-center gap-2 list-none">
         <svg
           className="w-3.5 h-3.5 shrink-0 transition-transform group-open:rotate-90"
@@ -870,26 +884,47 @@ function ClusterHelpSection({ onJump }: { onJump?: () => void }) {
         </svg>
         <span>What&apos;s on this page?</span>
         <span className="ml-auto text-[10px] font-normal text-amber-700/70">
-          Tap to open
+          {activeIndex !== null ? "Tour open" : "Tap a topic"}
         </span>
       </summary>
       <div className="px-2 pb-2 pt-1 space-y-1">
-        {PLATFORM_HELP_ITEMS.map((item) => (
-          <button
-            key={item.label + item.selector}
-            type="button"
-            onClick={() => handleJump(item.selector)}
-            className="w-full text-left px-2 py-1.5 rounded-md hover:bg-amber-100/80 transition-colors flex flex-col gap-0.5"
-            title={item.description}
-          >
-            <span className="text-xs font-medium text-amber-900">
-              {item.label}
-            </span>
-            <span className="text-[11px] text-amber-700/80 leading-snug">
-              {item.description}
-            </span>
-          </button>
-        ))}
+        {PLATFORM_HELP_ITEMS.map((item, idx) => {
+          const isActive = activeIndex === idx;
+          return (
+            <button
+              key={item.label + item.selector}
+              type="button"
+              onClick={() => onJump(idx)}
+              className={`w-full text-left px-2 py-1.5 rounded-md transition-colors flex flex-col gap-0.5 ${
+                isActive
+                  ? "bg-emerald-100/80 ring-1 ring-emerald-300"
+                  : "hover:bg-amber-100/80"
+              }`}
+              title={item.description}
+              aria-current={isActive ? "true" : undefined}
+            >
+              <span
+                className={`text-xs font-medium ${
+                  isActive ? "text-emerald-900" : "text-amber-900"
+                }`}
+              >
+                {item.label}
+                {isActive && (
+                  <span className="ml-1.5 text-[10px] font-normal text-emerald-700">
+                    showing now
+                  </span>
+                )}
+              </span>
+              <span
+                className={`text-[11px] leading-snug ${
+                  isActive ? "text-emerald-800/80" : "text-amber-700/80"
+                }`}
+              >
+                {item.description}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </details>
   );

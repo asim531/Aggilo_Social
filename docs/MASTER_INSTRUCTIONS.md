@@ -484,7 +484,7 @@ V3.4 + V3.5 invariants are unchanged. Sage's voice, Clio's storage classes, the 
 
 ---
 
-## V3.7 — Session B.5: Public-Listing Admin Panel + Atlas Runtime (current)
+## V3.7 — Session B.5: Public-Listing Admin Panel + Atlas Runtime
 
 This revision closes Session B.5 from `docs/sessions/SESSION_B5_PUBLIC_LISTING_ADMIN.md`. The admin surfaces V3.6 promised land, and Atlas Pulse moves from registered-capability to *running* end-to-end. Sisters in Dua's founder can now flip the cluster public from the UI, curate Atlas's RSS feeds, and review every Pulse Atlas considers — without touching SQL.
 
@@ -601,3 +601,196 @@ No schema migration in V3.7. V3.6 (`APPLY_NOW.sql` v1.9) already laid `cluster_c
 V3.4 + V3.5 + V3.6 invariants are unchanged. The discoverability layer is still purely additive on top of the authenticated cluster surface. Public-safe projection still flows through `public_cluster_view` only. Atlas remains silent on any cluster without admin-curated feeds. Sage retains editorial authority over every Pulse — admin override exists but is audited and visible.
 
 *Updated 2026-05-22 as part of V3.7 (Session B.5: public-listing admin panel + Atlas runtime). Previous revision: V3.6.*
+
+
+---
+
+## V3.8 — Session C: Comprehensive Prompt Audit
+
+This revision closes Session C from `docs/sessions/SESSION_C_PROMPT_AUDIT.md`. Across 21 platform prompts, the same rules ("warm but skeptical", "no protocol disclosure", "skepticism not sycophancy") had been written 21 different ways. Drift accumulated invisibly. The cadence-exchange member-blame bug from V3.4 was drift made visible — and the audit confirmed there were 6–8 other instances of the same root cause (rule duplication without a single source of truth) waiting to surface.
+
+V3.8 introduces an inheritance root for every prompt on the platform, lays a per-agent voice document on top, and audits 14 of 21 prompts in depth against a consistent C1–C12 rubric. No code prompts ship with this changelog — V3.8 is the *audit* and the *foundation*. The fixes themselves migrate into prompt files in V3.9 (medium-priority refactors, sprintable) and Phase 1 (cluster-vocabulary parameterisation, multi-cluster prerequisite).
+
+### The Aggilo super-prompt — `docs/AGGILO_SUPER_PROMPT.md`
+
+The single canonical platform-level prompt every Aggilo agent inherits before its agent-specific instructions are loaded. Sage, Clio, Atlas, Scout, Observer — each one operates under everything in the super-prompt, then its own prompt extends it.
+
+The super-prompt has nine narrative sections (rationale, the soul, the safety floor, voice baseline, forbidden, empowered, JSON contract conventions, failure handling, the one line that cannot be crossed) and one **literal block** (§IX) — the exact text loaded into every agent's system message stack at runtime. The literal block is held to ≤600 tokens; the rationale around it is the document the maintainer reads, not the model.
+
+Inheritance rule (§X): per-agent prompts must NOT restate any of:
+
+- The seven AI-native principles
+- The soul invariants
+- The voice baseline
+- The forbidden list
+- The empowered list
+
+When an agent prompt today restates any of these, it is overdue for refactoring against this super-prompt — tracked per prompt in `PROMPT_AUDIT_RESULTS.md`.
+
+### Agent voices document — `docs/AGENT_VOICES.md`
+
+Per-agent register layered on top of the super-prompt's voice baseline. Eleven sections covering Sage Anchor, Sage Internal, Sage Outward (share lines), Clio Personal, Clio Ephemeral, Clio Outward (invite lines), Atlas, Scout, Observer, cluster fit evaluator, and the free-text guidance validator. Each section names its register, formality, "I"-usage rule, emoji rule, length envelope, banned phrases, and the code location of the prompt(s) that implement it.
+
+The deduplication this document buys: Sage's voice rules currently sit inline in `lib/sage-prompt.ts`, in `cadence-exchange/route.ts`, in `lib/share-prompts.ts`, and in `suggest-dua/route.ts`. Once V3.9 lands, all four will reference §I (Sage Anchor) of `AGENT_VOICES.md` instead of restating the rules. One source of truth, one place to update when a rule changes.
+
+### Comprehensive prompt audit — `docs/PROMPT_AUDIT_RESULTS.md`
+
+Fourteen of twenty-one prompts audited against C1–C12 in this session. The remaining seven are spec-only (Phase 1 agents and skills not yet built); each has a pre-written rubric scaffold lifted in when implementation begins.
+
+Audit headlines:
+
+- **No prompt failed C1, C2, or C3.** No critical fixes required. The soul, the safety floor, and the service-framing layer hold across the inventory.
+- **No prompt failed C4–C7.** No high-priority fixes required.
+- **Eight prompts** (1, 3, 4, 5, 7, 11, 12, 16) carry medium-priority C8 (token efficiency) findings — they restate super-prompt rules inline. Once the super-prompt loads literally into every agent call, ~30–40% of each prompt's tokens become inheritance overlap and can be removed.
+- **Eight prompts** (1, 3, 4, 7, 8, 11, 12, 16) carry medium-priority C12 (drift defence) findings — they need bad-example blocks in the cadence-exchange model. The audit pre-writes most of these; they can be lifted in directly during the V3.9 sprint.
+- **Three prompts** had inventory mis-classifications, now corrected: prompt 6 (welcome) and prompt 10 (handoff greeting) are deterministic templates, not LLM calls. Prompt 13 (vault gap detection) is not implemented as a discrete prompt at all today — it's SQL-only over `sage_decision_logs`. The deterministic-templates pattern in 6 and 10 turned out to be **the gold-standard pattern for high-stakes member-facing moments**: when the cost of a model going off-script is high and the value of personalisation is low, choose templates.
+
+Two structural duplications surfaced and are recorded for V3.9:
+
+1. `LINK_ALIGNMENT_PROMPT` in `sage/evaluate/route.ts` is a near-identical copy of the prompt in `links/unfurl/route.ts`. Fold into a single endpoint; have the evaluate route POST to `/api/links/unfurl` internally.
+2. The `link-alignment` LLM call in `links/unfurl/route.ts` bypasses `llmCall()` and reads `LLM_BASE_URL` / `LLM_API_KEY` directly with `process.env`. Its cost, latency, and verdict don't appear in `llm_response_logs`. Route through `llmCall()` so it gains the platform's observability and budget guard.
+
+### Prompt test suite — `docs/PROMPT_TEST_CASES.md`
+
+Manual regression suite for every audited prompt. Run by hand at `temperature=0.3` before any prompt change ships. Phase 1 will automate as a CI job that runs on every prompt-file commit.
+
+Coverage:
+
+- Tier 1 prompts 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 — full test sets.
+- Tier 2 prompts 11, 12 — full test sets.
+- Tier 3 prompt 16 (introspection) — full test set.
+- Tier 3 prompts 13, 14, 15 — pre-written scaffolds, executable when implementation lands.
+- Tier 4 spec-only prompts 17–21 — deferred to implementation.
+
+Each test row carries an input, an expected step / verdict / behaviour, and (where relevant) drift-rate sampling targets across N runs. Prompts 5 and 11 carry validator-specific synthetic-output tests for the regex layer that runs alongside the model call.
+
+### Implementation order
+
+Per the Session C §5 prioritisation rules:
+
+- **Critical** (ship immediately as hotfix): nothing — no prompt failed C1–C3.
+- **High** (ship within a week): nothing — no prompt failed C4–C7.
+- **Medium** (V3.9 sprint): refactor 8 prompts to inherit the super-prompt literal block; add bad-example blocks; fold the link-alignment duplication; route prompt 8 through `llmCall()`; reword the @Sage signal note in `buildSageMessages` to acknowledge welfare precedence.
+- **Low** (Phase 1 prerequisite): cluster-vocabulary parameterisation across all prompts (`{{CLUSTER_NAME}}`, `{{CLUSTER_PRIMARY_LANGUAGE}}`, `{{CLUSTER_MEMBER_NOUN}}`); deferred bad-example block in `welcome-new-member` (lift in if/when this becomes LLM-generated).
+
+Each medium-priority fix carries a proposed diff in `PROMPT_AUDIT_RESULTS.md` and a test case it must pass in `PROMPT_TEST_CASES.md`.
+
+### What V3.8 deliberately does not include
+
+- Code prompt edits. V3.8 is documentation and audit only. The fixes ship in V3.9.
+- Phase 1 agent implementations (Atlas/Scout/Observer/cluster fit evaluator/free-text guidance validator). The audit pre-writes the rubric checks each must pass on first build, which is the appropriate Phase 0 deliverable.
+- Automation of the test suite. Phase 0 is manual at `temperature=0.3`; CI integration is Phase 1.
+- Schema changes. V3.7 (`APPLY_NOW.sql` v1.9) remains the latest schema state.
+
+### Files added (mvp/docs)
+
+- `AGGILO_SUPER_PROMPT.md` — inheritance root for every platform prompt
+- `AGENT_VOICES.md` — per-agent register layered on top of the super-prompt
+- `PROMPT_AUDIT_RESULTS.md` — C1–C12 audit of all 14 implemented prompts + 7 spec-only scaffolds
+- `PROMPT_TEST_CASES.md` — manual regression suite for every audited prompt
+
+### Files changed (mvp/docs)
+
+- `MASTER_INSTRUCTIONS.md` — V3.8 changelog; V3.7 marked closed
+- `sessions/SESSION_C_PROMPT_AUDIT.md` — Done criteria checked; closure note appended
+- `sessions/README.md` — Session C marked closed; cue for Session D (V3.9 prompt-refactor sprint) drafted
+
+### Schema status
+
+No schema migration in V3.8. Pure documentation + audit revision.
+
+### Environment
+
+No new environment variables. The audit observed that prompt 8 (link unfurl) reads `LLM_BASE_URL` / `LLM_API_KEY` directly; the V3.9 fix routes it through `llmCall()` and removes the direct reads.
+
+### Done criteria status
+
+- [x] `AGGILO_SUPER_PROMPT.md` written with literal block ≤600 tokens
+- [x] `AGENT_VOICES.md` written, 11 sections covering all current and Phase 1 agents
+- [x] All 14 implemented prompts audited against C1–C12 with scored output
+- [x] Spec-only prompts (14, 15, 17–21) scaffolded with rubric checks for first-build audit
+- [x] At least 3 test cases per Tier 1 prompt in `PROMPT_TEST_CASES.md`
+- [x] Tier 3 prompt 16 (introspection) test set written
+- [x] Critical fixes shipped — n/a, no prompt failed C1/C2/C3
+- [x] High fixes scheduled — n/a, no prompt failed C4–C7
+- [x] Medium fixes documented with proposed diff and test case
+- [x] V3.8 changelog written
+- [x] All committed and pushed (this entry)
+
+### What stays the same
+
+V3.4 + V3.5 + V3.6 + V3.7 invariants are unchanged. No live prompt was edited in V3.8; the platform's behaviour is identical to V3.7. The super-prompt is documented but not yet loaded into runtime — that is V3.9's first task. The audit's promise to readers is that when the V3.9 refactor ships, every per-prompt diff already has a written rationale, a pre-drafted edit, and a test case that proves it improved.
+
+*Updated 2026-05-22 as part of V3.8 (Session C: comprehensive prompt audit). Previous revision: V3.7.*
+
+
+---
+
+## V3.9 — Clio anchored tour (current)
+
+V3.8's "What's on this page?" section in the Private Chat tab gave members a collapsible list of cluster surfaces with click-to-scroll behaviour and a brief flash highlight. V3.9 upgrades that interaction into a proper anchored tour: when a member taps a topic, the page scrolls to the surface and a Clio-attributed popover lands beside it with a one-or-two-sentence explanation, Prev/Next controls, a step counter, and a close affordance. The tour can be reopened from the same help section any time, and the help section now shows which step is currently active.
+
+### Why this is not a duplicate surface
+
+The help section list and the tour share **one source of truth** — `PLATFORM_HELP_ITEMS` in `ClioFab.tsx`. Both the collapsible list (Private Chat tab) and the popover (anchored at the surface) read from this single list. Adding or editing a surface means editing one array; both views update together. There is no second list, no parallel descriptions, no separate registry.
+
+### What members see
+
+1. Open the Private Chat tab. The "What's on this page?" section is collapsed by default.
+2. Expand it. Tap a topic — for example "Room Workshop".
+3. The chat panel closes (so the popover can land cleanly), the page smooth-scrolls the Workshop strip into view, the Workshop gets an emerald highlight ring, and a small Clio-attributed popover anchors beside it: "Clio · this is here / Room Workshop / What Clio and I are building for this room. / 8 of 9 / Back  Next".
+4. Member can step Back/Next, hit Done at the last step, or close with × at any time.
+5. Reopen Clio's panel any time — the help section lists every topic with the active one tagged "showing now".
+
+### Architectural choices
+
+- **Deterministic copy.** The tour's narration is hand-written, not LLM-generated. This follows the pattern surfaced in `PROMPT_AUDIT_RESULTS.md` #6 (welcome) and #10 (handoff greeting): high-stakes member-facing first-impression copy belongs in templates, not in the model. A model that improvises during a guided tour is a model that drifts during the moment that defines the room for a new member.
+- **Portal-rendered popover.** `ClioTour.tsx` mounts to `document.body` so the popover sits above the FAB, the sticky compose bar, and any dialogs. The popover survives panel close — closing the chat panel does not close the tour, which is what makes the tour feel like a tour and not a tooltip.
+- **Anchor-tracking position.** The popover's position is recomputed on `scroll` and `resize` (capture-phase scroll listener catches scroll on inner containers too). When a member scrolls or rotates the device mid-tour, the popover follows its target.
+- **Held highlight.** The target surface gets a 3px emerald ring while its step is active; the ring is released and prior `box-shadow` restored on step change or close.
+- **Keyboard support.** Esc closes; ←/→ steps. Arrow keys are gated by step bounds so first/last don't wrap.
+- **Tour state owned at the FAB level.** `useState` lives in `ClioFab`. Closing the chat panel does not lose tour state; reopening the panel shows the active step. The help section receives `activeIndex` and `onJump`.
+
+### Edge cases handled
+
+- Target selector resolves to nothing in the DOM → tour closes itself rather than render a floating popover.
+- Surface near the bottom 40% of viewport → popover flips above instead of below.
+- Surface narrower or wider than the popover → popover horizontal position clamped to viewport with arrow re-aimed at the surface centre.
+- Member uses keyboard navigation (Esc / ← / →) → handled.
+- Smooth-scroll timing → first position pass deferred 280ms so the scroll has settled.
+
+### What V3.9 deliberately does not include
+
+- LLM-narrated tour copy. Out of scope per the deterministic-templates pattern.
+- Cluster-admin-customised tour items. Phase 1 will let admins re-order, hide, or add tour items via the cluster identity editor; for now the platform-baseline list is the fixed nine surfaces.
+- Workshop-driven tour items (member-feature tutorials). Out of scope; those land when a feature ships, not on the platform-baseline tour.
+- Mobile-specific gesture hints. The popover responds to taps; swipe-to-step is a Phase 1 polish.
+- Auto-start on first cluster visit. The first-open tab explainer banner already nudges the member toward "What's on this page?". Auto-running the tour without member action would be performative; the explicit-tap entry preserves the member's autonomy.
+
+### Files added (mvp)
+
+- `src/components/ClioTour.tsx` — anchored, portal-rendered Clio popover with Prev/Next controls and target highlight
+
+### Files changed (mvp)
+
+- `src/components/ClioFab.tsx` — `tourIndex` state, `<ClioTour>` mounted at root, `ClusterHelpSection` rewritten to drive the tour from a single shared `PLATFORM_HELP_ITEMS` list, active-step indicator in the help list
+
+### Schema status
+
+No schema migration. UI-only addition.
+
+### Environment
+
+No new environment variables.
+
+### Verification
+
+- `npm run build` clean (32/32 routes), no new TypeScript or lint diagnostics.
+- Help section list and tour popover read from the same `PLATFORM_HELP_ITEMS` constant — verified by code inspection.
+- Manual test pass at `temperature=n/a` (no LLM in this surface): each of the nine topics scrolls to the right surface, popover lands legibly, Prev/Next navigates, Esc closes, scroll-while-open re-anchors.
+
+### What stays the same
+
+V3.4 + V3.5 + V3.6 + V3.7 + V3.8 invariants are unchanged. No prompt edits in V3.9. The cluster timeline, Sage's behaviour, Clio's chat behaviour, the Workshop dialogue, and the ephemeral surface are untouched. The tour is purely additive on top of the V3.5 help section.
+
+*Updated 2026-05-22 as part of V3.9 (Clio anchored tour). Previous revision: V3.8.*
