@@ -1,14 +1,19 @@
-# Premium Cluster Admin Dashboard — Implementation Spec
+# Cluster Admin Console — Implementation Spec
 
-> **Scope:** The cluster-scoped admin dashboard. Used by the cluster's
-> Founder (the human Admin) and Managers. Cluster-bounded — no
-> cross-cluster reads.
+> **Scope:** The cluster-scoped admin surface used by the cluster's
+> Founder (the human Admin) and Managers. **Customer-facing surface.**
+> Cluster-bounded — no cross-cluster reads. The Aggilo team uses the
+> separate Aggilo Admin Dashboard for cross-cluster authority.
+>
+> **Naming:** "Cluster Admin Console" is the customer-facing name. In
+> internal architecture text, "the console" is acceptable shorthand.
+> The route prefix is `/admin/cluster/<slug>/*`.
 >
 > **Predecessor specs:**
 > `architecture/premium_cluster_requirements.md`,
 > `docs/AGENT_INVOLVEMENT_SLIDER_SPEC.md`,
 > `docs/SUPERPROMPT_DESIGN_INTENT.md`,
-> `docs/PLATFORM_ADMIN_DASHBOARD_SPEC.md` (companion).
+> `docs/AGGILO_ADMIN_DASHBOARD_SPEC.md` (companion).
 >
 > **Status:** Spec — implementation-ready. Built in a future session.
 
@@ -16,15 +21,39 @@
 
 ## Who this is for
 
-| Role | Sees this dashboard? |
+| Role | Sees this console? |
 |------|----------------------|
-| `platform_admin` | Yes (cross-cluster — uses platform dashboard for that) |
+| `platform_admin` (Aggilo team) | Yes — uses the Aggilo Admin Dashboard for cross-cluster authority. Can read this console for any cluster. |
 | `founder` (cluster Admin) | Yes — full access to their cluster |
 | `manager` (cluster Manager) | Yes — partial access (welfare/care queue, limited config) |
 | Member | No |
 
 Access enforced at route + RLS layer. Founders see only `cluster_id`s
 they admin; Managers see only those they manage.
+
+---
+
+## Customer-facing presentation rules
+
+The Cluster Admin Console is a customer-facing surface. The following
+presentation rules govern every screen:
+
+- **Cluster name + member count visible in the top-bar at all times.**
+  Founders running multiple clusters never lose track of which cluster
+  they are configuring. Format: `{Cluster Name} · {N} members · {Type
+  badge: Premium}`.
+- **No platform-internal jargon.** "Aggilo team" replaces
+  "platform_admin" in copy. "Cadence dialogue" stays
+  ("cadence-exchange" is internal). "Vault" stays. Workshop "tracks"
+  stay.
+- **Brand voice consistent with cluster's persona.** Console chrome
+  (navigation, headings) uses Aggilo's voice; cluster-specific copy
+  (welcome strings, system messages displayed back to admin) reflects
+  the cluster's vocabulary.
+- **No mention of agent-internal mechanics.** Surfaces show what
+  members see and what the admin can change. Do not show framework
+  step names, decision-tag fields, regex patterns, or any other
+  internal machinery.
 
 ---
 
@@ -134,8 +163,9 @@ Each row:
   - `Mark resolved` (writes `resolved = true`, `resolved_at`)
   - `Add internal note` (a free-text field for the care-handler's
     record)
-  - `Escalate to platform_admin` (creates a high-severity Observer
-    finding for cross-cluster correlation)
+  - `Escalate to the Aggilo team` (creates a high-severity Observer
+    finding for cross-cluster correlation; a member of the Aggilo team
+    will follow up)
 
 The queue is the Founder's most important screen. SLA target: every
 welfare flag is acknowledged (resolved OR escalated OR noted) within
@@ -230,7 +260,7 @@ Submission inserts into the cluster's vault table with
 
 Reads from `cluster_pulse_cards`. The cluster admin's review surface
 for Atlas content. Replicates the cross-cluster Pulse review in the
-platform admin dashboard but scoped to one cluster.
+Aggilo Admin Dashboard but scoped to one cluster.
 
 Each row:
 
@@ -244,10 +274,9 @@ Each row:
 - **Actions:**
   - `Go live` (draft → live; surfaces in cluster timeline)
   - `Retract` (live → retracted; immediate)
-  - `Override Sage's reject` (a "platform-admin-only" action — a
-    cluster Founder can challenge Sage's editorial verdict, but the
-    override goes to the platform-admin dashboard for final approval
-    rather than auto-flipping)
+  - `Override Sage's reject` (a Founder challenges Sage's editorial
+    verdict; the challenge routes to the Aggilo team for final
+    decision rather than auto-flipping)
   - `Mark not-public-safe` (excludes from any public preview)
 
 ---
@@ -389,7 +418,7 @@ Below the toggle, a side-by-side iframe preview of `/c/<slug>` (with
 
 Cluster-scoped Observer findings. Reads `observer_findings` filtered
 to `related_cluster_id = current_cluster_id`. Same shape as the
-platform admin Findings tab but scoped.
+Aggilo Admin Findings tab but scoped to this cluster.
 
 Founder can:
 
@@ -398,9 +427,9 @@ Founder can:
 - Reject
 - Add a rationale-note (admin internal)
 
-Findings that require platform-admin authority (e.g.
+Findings that require Aggilo-team authority (e.g.
 `expand_atlas_source_list`) are visible but not approvable here —
-they show as "Awaiting platform admin".
+they show as "Awaiting Aggilo team review".
 
 ---
 
@@ -409,7 +438,7 @@ they show as "Awaiting platform admin".
 Reads `cluster_admin_actions` filtered to current cluster. Append-
 only. Filterable by actor, action type, date range.
 
-Founder sees their own + Managers' + platform-admin actions
+Founder sees their own + Managers' + Aggilo-team actions
 affecting this cluster. Manager sees their own actions only.
 
 ---
@@ -449,7 +478,8 @@ to-cluster scope and writes a `cluster_admin_actions` row.
 - [ ] Public listing toggle with cache revalidation
 - [ ] Findings list + cluster-scoped approvals
 - [ ] Activity log read-only filterable
-- [ ] RLS verified for Founder + Manager + platform_admin
+- [ ] RLS verified for Founder + Manager + Aggilo team
+      (`profiles.role = 'platform_admin'`)
 
 ---
 

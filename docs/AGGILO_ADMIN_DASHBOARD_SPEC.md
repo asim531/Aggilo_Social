@@ -1,19 +1,24 @@
-# Platform Admin Dashboard — Implementation Spec
+# Aggilo Admin Dashboard — Implementation Spec
 
-> **Scope:** The dashboard for **platform administrators** (the Aggilo
-> team). Cross-cluster authority. Reads every cluster's data; approves
-> Observer findings; manages Scout intelligence; oversees the agent
-> runtime; tunes platform-level configuration.
+> **Scope:** The dashboard for the **Aggilo team** (`platform_admin`
+> role in the database). Cross-cluster authority. Reads every cluster's
+> data; approves Observer findings; manages Scout intelligence; oversees
+> the agent runtime; tunes platform-level configuration.
+>
+> **Naming note:** The user-facing name of this dashboard is "Aggilo
+> Admin". The DB role remains `platform_admin` (DB enums are not
+> renamed cosmetically). Internal architecture text uses "Aggilo
+> admin"; the role identifier in code stays `platform_admin`.
 >
 > **Predecessor specs:** `observer/AGGILO_OBSERVER_AGENTS.md` (the 10
 > domains), `scout/AGENTS.md` (intelligence reports),
 > `architecture/AGENT_RUNTIME.md` (runtime events),
 > `architecture/premium_cluster_requirements.md` §10 (slider matrix).
 >
-> **Companion spec:** `docs/PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md`
-> covers the cluster-scoped admin dashboard (one cluster at a time).
-> Both dashboards co-exist. Platform-admins see both; cluster-admins
-> see only the premium-cluster dashboard.
+> **Companion spec:** `docs/CLUSTER_ADMIN_CONSOLE_SPEC.md`
+> covers the cluster-scoped Founder/Manager console (one cluster at a
+> time). Both surfaces co-exist. Aggilo admins see both; cluster
+> Founders/Managers see only their cluster's console.
 >
 > **Status:** Spec — implementation-ready. Built in a future session.
 
@@ -29,28 +34,71 @@
 | Member | No |
 
 Access is enforced at the route layer (RLS + `profiles.role` check)
-and at the page layer (route guards reject non-platform-admin users).
+and at the page layer (route guards reject non-Aggilo-admin users).
 
 ---
 
 ## Top-level navigation
 
 ```
-Platform Admin
-├── Findings              (Observer's 10 domains)
-├── Demand                (Scout intelligence reports)
+Aggilo Admin
+├── Findings              (Observer's 10 domains; Phase 0 wave-status banner at top)
+├── Demand                (Scout intelligence reports — gated to Wave 2)
 ├── Tool proposals        (Cross-agent capability proposals)
 ├── Runtime               (Agent Runtime job state, queues, errors)
 ├── LLM observability     (per-call logs, cost, latency, budget)
 ├── Clusters              (cross-cluster index)
 ├── Members               (cross-cluster member directory)
 ├── Skills registry       (platform-wide skill catalog)
-├── Platform settings     (slider defaults, budget caps, source list)
+├── Platform settings     (slider defaults, budget caps, source list, wave advance)
 └── Audit                 (cluster_admin_actions across all clusters)
 ```
 
-Default landing page is **Findings**. Most platform-admin work routes
+Default landing page is **Findings**. Most Aggilo admin work routes
 through findings → approval → action.
+
+---
+
+## Phase 0 wave status (top of Findings tab; visible on landing)
+
+A small banner-strip rendered at the top of the Findings tab that
+reflects which waves of the agent rollout are live, per
+`docs/PHASE_0_AGENT_SEQUENCING.md`. This is the dashboard's surface
+for the wave-rollout state — it tells the Aggilo team at a glance
+which capabilities are active and how close the next wave is.
+
+```
+Wave 1 — Observer:  ✅ Live (since 2026-XX-XX)
+Wave 2 — Scout:     🚧 In progress  (Wave 1 observed 8 of 14 days)
+Wave 3 — Atlas:     ⏳ Not started
+```
+
+Per-wave row carries:
+
+- **Status icon:** ✅ live / 🚧 in progress / ⏳ not started.
+- **Wave name and component.**
+- **Activation date** (live waves) OR **observation progress** (the
+  in-progress wave) OR **next-eligible-date** (not-started waves).
+- **Tap-to-detail:** opens a panel showing the wave's done-criteria
+  checklist and behavioural-validation telemetry.
+
+When a wave is `not started`, the dashboard tabs gated to that wave
+render as "Coming in Wave N" with a brief explanation. Specifically:
+
+- **Demand** tab is gated to Wave 2 (Scout).
+- **Pulse** review section in cluster pages is gated to Wave 3 (Atlas).
+- **Domain 9** and **Domain 10** of Findings are gated to their
+  respective waves (Domain 9 = Wave 2; Domain 10 = Wave 3 + Wave 1).
+
+Wave-status state is read from a new platform setting:
+
+| Setting | Type | Values |
+|---------|------|--------|
+| `phase_0_wave_status` | JSON | `{ wave_1: {status, since}, wave_2: {status, since|observation_started_at}, wave_3: {status, since} }` |
+
+The Aggilo admin dashboard's Settings tab (§Platform settings) lets
+the team advance a wave once its done-criteria checklist passes and
+the observation gate clears.
 
 ---
 
@@ -260,7 +308,7 @@ is the human-facing one.
 ## LLM observability
 
 Reads from `llm_response_logs`. The most detailed surface for
-platform-admin debugging.
+Aggilo-admin debugging.
 
 ### Top-level KPIs
 
@@ -309,7 +357,7 @@ Sortable by any column; filterable by type / status.
 ## Members
 
 Platform-wide member directory. Used sparingly — most member work
-happens at cluster scope. Platform-admin scope exists for:
+happens at cluster scope. Aggilo-admin scope exists for:
 
 - Welfare cross-cluster correlation (a member with welfare flags in
   multiple clusters)
@@ -345,7 +393,7 @@ Actions:
 
 ## Platform settings
 
-The platform-admin-only configuration surface:
+The Aggilo-admin-only configuration surface:
 
 - `LLM_DAILY_BUDGET_USD`
 - Default `agent_involvement` per cluster type
@@ -400,7 +448,7 @@ Wave 2, Atlas = Wave 3).
 
 ## RLS
 
-Platform-admin RLS is straightforward: every read on every table is
+Aggilo-admin RLS is straightforward: every read on every table is
 allowed for `profiles.role = 'platform_admin'`. Writes are constrained
 to the actions described in this spec (approvals, settings updates,
 manual job triggers). All writes pass through API routes that
@@ -414,7 +462,7 @@ validate role + log to `cluster_admin_actions`.
   existing accent-colour budget (six accents, see
   `mobile_screen_prompts_phase1.md` §G). Specific layout, typography,
   and motion belong in a UI-design pass after the spec is approved.
-- **Mobile-specific dashboard.** Platform admin is desktop-first.
+- **Mobile-specific dashboard.** Aggilo admin is desktop-first.
   Mobile is read-only viewing of the daily digest; full management
   workflow stays desktop.
 - **Real-time member-content moderation.** This dashboard observes;
@@ -424,8 +472,8 @@ validate role + log to `cluster_admin_actions`.
 
 ## Done criteria
 
-The platform admin dashboard ships as a single Next.js app section
-under `/admin/platform/*`. Done when:
+The Aggilo admin dashboard ships as a single Next.js app section
+under `/admin/aggilo/*`. Done when:
 
 - [ ] All 10 navigation sections render correctly
 - [ ] Findings tab supports filter, approval, and rejection end-to-end
@@ -437,7 +485,7 @@ under `/admin/platform/*`. Done when:
 - [ ] Clusters index links to per-cluster dashboards
 - [ ] Audit log is append-only and queryable
 - [ ] Settings changes write to `cluster_admin_actions`
-- [ ] RLS verified — non-platform-admin users get 403 on every route
+- [ ] RLS verified — non-Aggilo-admin users get 403 on every route
 
 ---
 

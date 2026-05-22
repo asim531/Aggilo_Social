@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Communication Contract — Aggilo Architecture</title>
+<style>
+  :root {
+    --aggilo-deep: #0f3a3a;
+    --aggilo-mid: #1f5a5a;
+    --aggilo-sage: #2a7a6a;
+    --aggilo-accent: #d4a574;
+    --bg: #faf9f6;
+    --surface: #ffffff;
+    --text: #1a2628;
+    --text-muted: #5b6b6e;
+    --border: #e3dfd6;
+    --code-bg: #f3eedf;
+    --emerald: #10b981;
+    --amber: #d97706;
+    --rose: #be4569;
+    --indigo: #4338ca;
+    --sky: #0284c7;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--aggilo-deep);
+    color: white;
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  header .wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  header .meta {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+  }
+
+  .layout {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 32px;
+  }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: static; max-height: none; }
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 96px;
+    align-self: start;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    font-size: 13px;
+    border-right: 1px solid var(--border);
+    padding-right: 16px;
+  }
+
+  nav.toc h3 {
+    margin: 0 0 12px 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  nav.toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  nav.toc li {
+    margin: 0;
+    padding: 0;
+  }
+
+  nav.toc a {
+    display: block;
+    padding: 6px 8px;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 4px;
+    line-height: 1.4;
+  }
+
+  nav.toc a:hover {
+    background: rgba(15, 58, 58, 0.05);
+    color: var(--aggilo-deep);
+  }
+
+  main { min-width: 0; }
+
+  main h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+    color: var(--aggilo-deep);
+  }
+
+  main > p.lead {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin: 0 0 32px 0;
+    border-left: 3px solid var(--aggilo-sage);
+    padding-left: 16px;
+  }
+
+  main h2 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 48px 0 16px 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--aggilo-deep);
+  }
+
+  main h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  main h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 24px 0 8px 0;
+    color: var(--aggilo-mid);
+  }
+
+  main p { margin: 0 0 12px 0; }
+
+  main ul, main ol {
+    margin: 0 0 16px 0;
+    padding-left: 24px;
+  }
+
+  main li { margin: 4px 0; }
+
+  pre {
+    background: var(--code-bg);
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.5;
+    border: 1px solid var(--border);
+  }
+
+  code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+
+  pre code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0 24px 0;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--surface);
+    border-bottom: 2px solid var(--aggilo-deep);
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--aggilo-deep);
+    letter-spacing: 0.02em;
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td { background: rgba(243, 238, 223, 0.3); }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  details[open] { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+
+  summary {
+    padding: 14px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--aggilo-deep);
+    background: rgba(243, 238, 223, 0.4);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+
+  summary::before {
+    content: '▸';
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: transform 0.15s ease;
+    width: 12px;
+    display: inline-block;
+  }
+
+  details[open] summary::before { transform: rotate(90deg); }
+
+  details > div.body {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .pattern-num {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    background: var(--aggilo-deep);
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .hierarchy-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+
+  .hierarchy-diagram pre {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
+    color: var(--aggilo-deep);
+    text-align: left;
+    display: inline-block;
+    line-height: 1.4;
+  }
+
+  .callout {
+    background: rgba(212, 165, 116, 0.12);
+    border-left: 3px solid var(--aggilo-accent);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 4px;
+    font-size: 13.5px;
+  }
+
+  .callout strong { color: var(--aggilo-deep); }
+
+  footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 32px;
+    border-top: 1px solid var(--border);
+    margin-top: 64px;
+  }
+
+  blockquote {
+    margin: 16px 0;
+    padding: 12px 16px;
+    background: rgba(15, 58, 58, 0.04);
+    border-left: 3px solid var(--aggilo-deep);
+    color: var(--text-muted);
+    font-size: 13.5px;
+    border-radius: 4px;
+  }
+
+  blockquote p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Agent Communication Contract</h1>
+    <span class="meta">Aggilo Architecture · v3.14 · 2026-05-22</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#why">Why this exists</a></li>
+      <li><a href="#hierarchy">The agent hierarchy</a></li>
+      <li><a href="#relationships">Key relationships</a></li>
+      <li><a href="#patterns">The five patterns</a>
+        <ol style="padding-left: 16px; margin-top: 4px;">
+          <li><a href="#p1">1. Brief-and-iterate</a></li>
+          <li><a href="#p2">2. Directed job</a></li>
+          <li><a href="#p3">3. Soft handoff</a></li>
+          <li><a href="#p4">4. Finding-and-approve</a></li>
+          <li><a href="#p5">5. Tool proposal</a></li>
+        </ol>
+      </li>
+      <li><a href="#substrate">The shared substrate</a></li>
+      <li><a href="#new-agent">Adding a new agent</a></li>
+      <li><a href="#out-of-scope">Out of scope</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <h1>Agent Communication Contract</h1>
+    <p class="lead">
+      Consolidates inter-agent communication patterns scattered across
+      per-agent <code>AGENTS.md</code> files into one normative contract.
+      Subordinate to <code>system_implementation_prompt_part1..6.md</code>
+      and to the per-agent SOULs and AGENTS files. This document does not
+      override any agent's behaviour; it makes the runtime communication
+      explicit so engineers and partner readers can read one document
+      instead of five.
+    </p>
+
+    <h2 id="why">Why this document exists</h2>
+    <p>
+      Per the senior-UX/behavioural review, the agent-to-agent
+      communication architecture was scattered across:
+    </p>
+    <ul>
+      <li><code>clio/AGENTS.md</code> (Clio orchestration)</li>
+      <li><code>sage/AGENTS.md</code> (Sage operations)</li>
+      <li><code>atlas/AGENTS.md</code> (Atlas as Sage's content layer)</li>
+      <li><code>scout/AGENTS.md</code> (Scout as Clio's intelligence layer)</li>
+      <li><code>observer/AGGILO_OBSERVER_AGENTS.md</code> (Observer as platform mirror)</li>
+    </ul>
+    <p>
+      Each file documents its own pairwise contract. None captured the
+      system shape: who talks to whom, in what direction, with what
+      output type, and what governance applies.
+    </p>
+    <p>This document is that system shape.</p>
+
+    <h2 id="hierarchy">The agent hierarchy</h2>
+
+    <div class="hierarchy-diagram">
+<pre>            Platform Rules + Admin-designated LLM
+                            │
+                       proposes tools for
+                            ▼
+                         Observer  (platform mirror, 10 domains)
+                            │
+                    proposes tools for / triggers
+                            ▼
+                          Clio  (orchestrator + member voice)
+                            │
+                   briefs / introduces
+                       ┌────┴────┐
+                       ▼         ▼
+                     Sage      Scout
+                (cluster        (community
+                  anchor)       intelligence)
+                       │
+                   briefs
+                       ▼
+                     Atlas
+                (content layer)</pre>
+    </div>
+
+    <h2 id="relationships">Key relationships</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Pair</th>
+          <th>Direction</th>
+          <th>Output type</th>
+          <th>Governance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Observer → Clio</td>
+          <td>Tool proposals (Domain 10)</td>
+          <td>Markdown drafts in <code>maintenance/</code></td>
+          <td>Aggilo team approval before activation</td>
+        </tr>
+        <tr>
+          <td>Observer → Aggilo team</td>
+          <td>Findings (10 domains)</td>
+          <td>Structured rows in <code>observer_findings</code></td>
+          <td>Approval gates job triggers</td>
+        </tr>
+        <tr>
+          <td>Clio → Sage</td>
+          <td>Cluster context, member arc state</td>
+          <td>Conversation handoff metadata</td>
+          <td>Soul invariants + cluster config</td>
+        </tr>
+        <tr>
+          <td>Clio → Scout</td>
+          <td>Directed discovery jobs</td>
+          <td>Structured <code>ScoutDirectedJob</code> payload</td>
+          <td>Geographic + interest scoping</td>
+        </tr>
+        <tr>
+          <td>Clio → Member</td>
+          <td>Member-facing speech</td>
+          <td>Persona-keyed prompt builds</td>
+          <td>Persona governance + welfare floor</td>
+        </tr>
+        <tr>
+          <td>Sage → Clio</td>
+          <td>Soft handoff (welfare/disclosure/fiqh)</td>
+          <td>INSERT into <code>clio_handoff_greetings</code></td>
+          <td>Deterministic templates only</td>
+        </tr>
+        <tr>
+          <td>Sage → Atlas</td>
+          <td>Content brief</td>
+          <td>Structured JSON brief</td>
+          <td>Iterative dialogue, max 3 rounds</td>
+        </tr>
+        <tr>
+          <td>Sage → Member</td>
+          <td>Cluster-facing speech</td>
+          <td>Decision-tag-bounded LLM output</td>
+          <td>7-step framework + super-prompt</td>
+        </tr>
+        <tr>
+          <td>Atlas → Sage</td>
+          <td>Content card batch</td>
+          <td><code>cluster_content_card[]</code></td>
+          <td>Quality gates + synthesis-mode flagging</td>
+        </tr>
+        <tr>
+          <td>Scout → Clio</td>
+          <td>Intelligence reports</td>
+          <td>Structured rows in <code>scout_intelligence_reports</code></td>
+          <td>PII rules + 20-post rule</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="patterns">The five communication patterns</h2>
+    <p>
+      Every inter-agent communication on the platform is one of these
+      five patterns. New communication paths must be classified before
+      they ship.
+    </p>
+
+    <details id="p1" open>
+      <summary><span class="pattern-num">1</span> Brief-and-iterate</summary>
+      <div class="body">
+        <p><strong>Used by:</strong> Sage ↔ Atlas</p>
+        <h3>Shape</h3>
+        <ul>
+          <li>Superior agent issues a structured JSON brief.</li>
+          <li>Subordinate agent returns a structured response.</li>
+          <li>Superior reviews and may issue refinement feedback.</li>
+          <li>Iterate up to N rounds (Sage ↔ Atlas: max 3).</li>
+          <li>After N rounds, superior makes final editorial decision.</li>
+        </ul>
+        <h3>Why this pattern</h3>
+        <p>
+          Content fetch is non-deterministic; iteration catches what one
+          round cannot. The bounded-rounds rule prevents runaway dialogue.
+        </p>
+      </div>
+    </details>
+
+    <details id="p2">
+      <summary><span class="pattern-num">2</span> Directed job</summary>
+      <div class="body">
+        <p><strong>Used by:</strong> Clio → Scout</p>
+        <h3>Shape</h3>
+        <ul>
+          <li>Calling agent submits a structured job payload to a queue.</li>
+          <li>Worker agent runs the job in background, writes structured rows.</li>
+          <li>Calling agent polls / subscribes to results.</li>
+        </ul>
+        <h3>Why this pattern</h3>
+        <p>
+          Discovery is asynchronous; results are not needed in the
+          immediate conversation turn. Decoupling avoids blocking the
+          caller's surface.
+        </p>
+      </div>
+    </details>
+
+    <details id="p3">
+      <summary><span class="pattern-num">3</span> Soft handoff</summary>
+      <div class="body">
+        <p><strong>Used by:</strong> Sage → Clio (welfare / disclosure / fiqh-with-distress)</p>
+        <h3>Shape</h3>
+        <ul>
+          <li>Triggering condition fires (welfare regex, character regex,
+            fiqh pattern with emotional weight).</li>
+          <li>Triggering agent stays silent on the public surface (or
+            replies in a tightly-bounded shape).</li>
+          <li>Triggering agent INSERTs a deterministic-template greeting
+            into a per-user channel.</li>
+          <li>Receiving agent renders the greeting in a private surface.</li>
+        </ul>
+        <h3>Why this pattern</h3>
+        <p>
+          The highest-stakes member moments deserve deterministic
+          handling. No iteration, no dialogue, no LLM-improvised copy.
+          The handoff is a state transition, not a conversation.
+        </p>
+      </div>
+    </details>
+
+    <details id="p4">
+      <summary><span class="pattern-num">4</span> Finding-and-approve</summary>
+      <div class="body">
+        <p><strong>Used by:</strong> Observer → Aggilo team → (Clio | Sage | Scout | Atlas)</p>
+        <h3>Shape</h3>
+        <ul>
+          <li>Observer detects a pattern across a domain.</li>
+          <li>Observer writes a structured finding to <code>observer_findings</code>.</li>
+          <li>Finding surfaces in the Aggilo Admin Dashboard with severity + suggested action.</li>
+          <li>The Aggilo team approves or rejects.</li>
+          <li>On approval, the corresponding job (or downstream agent's analysis) is triggered.</li>
+        </ul>
+        <h3>Why this pattern</h3>
+        <p>
+          The platform mirror's findings touch live cluster behaviour.
+          Human approval is the gate that prevents runaway autonomous
+          action. Per Principle 5 ("no human middleware"), the gate is
+          binary and quick — not a multi-step review.
+        </p>
+      </div>
+    </details>
+
+    <details id="p5">
+      <summary><span class="pattern-num">5</span> Tool proposal</summary>
+      <div class="body">
+        <p>
+          <strong>Used by:</strong> Observer → Clio (Observer self-proposes);
+          Clio → Sage, Clio → Scout, Sage → Atlas (each agent proposes for
+          its immediate subordinate)
+        </p>
+        <h3>Shape</h3>
+        <ul>
+          <li>Trigger detected (Observer Domain 10, or downstream gap signal).</li>
+          <li>Proposing agent runs analysis under Platform Rules + admin-
+            designated LLM op (<code>tool_proposal_analysis</code>).</li>
+          <li>Proposal written as a Markdown doc to <code>maintenance/[YYYY-MM]/</code>.</li>
+          <li>Row inserted in <code>tool_proposals</code>.</li>
+          <li>Aggilo team approves or rejects.</li>
+          <li>On approval, tool is activated for the target agent / cluster.</li>
+        </ul>
+        <h3>Why this pattern</h3>
+        <p>
+          Capability extension is the most consequential inter-agent
+          action. It changes what an agent <em>can</em> do, not just what
+          it does today. The proposal-document layer makes the change
+          auditable.
+        </p>
+      </div>
+    </details>
+
+    <h2 id="substrate">The substrate every communication inherits</h2>
+    <p>
+      Regardless of pattern, every inter-agent communication inherits:
+    </p>
+    <ol>
+      <li>
+        <strong>The super-prompt's safety floor.</strong> Welfare and
+        character signals take precedence over any communication. An
+        Atlas brief will be refused if it asks Atlas to retrieve content
+        that violates the safety floor.
+      </li>
+      <li>
+        <strong>The dignity invariants.</strong> Subjects of agent
+        dialogue are: the room, the room's capabilities, and the agents
+        themselves. Never member behaviour. This rule applies to inter-
+        agent surfaces visible to members (Workshop dialogue) AND to
+        internal-only surfaces (briefs, findings, proposals).
+      </li>
+      <li>
+        <strong>The observability layer.</strong> Every LLM call routes
+        through <code>llmCall()</code>. Every cost, latency, and decision
+        lands in <code>llm_response_logs</code>.
+      </li>
+      <li>
+        <strong>The protocol-disclosure rule.</strong> Even in internal
+        surfaces, agents do not disclose member-protocol mechanics in
+        language a leak would expose. Tool proposals describe capability
+        needs, not member behavioural triggers.
+      </li>
+    </ol>
+
+    <h2 id="new-agent">Adding a new agent</h2>
+    <p>When a new agent is proposed, the proposer answers five questions:</p>
+    <ol>
+      <li>
+        <strong>Classify its principal.</strong> Which agent is its
+        immediate superior? The hierarchy diagram is the answer.
+      </li>
+      <li>
+        <strong>Classify its primary communication pattern.</strong>
+        Brief-and-iterate? Directed job? Soft handoff? Finding-and-
+        approve? Tool proposal? Most agents have a primary pattern and a
+        secondary.
+      </li>
+      <li>
+        <strong>Document its output type.</strong> Structured row, JSON
+        payload, queue message, deterministic-template insertion?
+      </li>
+      <li>
+        <strong>Document its governance.</strong> What rule set governs
+        its decisions (super-prompt, soul, AGENTS, agent-specific
+        platform rules)?
+      </li>
+      <li>
+        <strong>Document its observability path.</strong> Which
+        <code>llm_response_logs</code> <code>agent</code> value? Which
+        <code>operation_key</code>?
+      </li>
+    </ol>
+    <div class="callout">
+      <strong>Five answers, one paragraph each.</strong> If the agent
+      cannot be cleanly classified into one of the five communication
+      patterns, the agent's spec is not ready.
+    </div>
+
+    <h2 id="out-of-scope">What this document does not include</h2>
+    <ul>
+      <li>
+        <strong>The agent SOULs.</strong> Each agent's character lives in
+        <code>&lt;agent&gt;/SOUL.md</code>. This document does not
+        duplicate them.
+      </li>
+      <li>
+        <strong>Per-agent decision frameworks.</strong> Each agent's
+        framework lives in <code>&lt;agent&gt;/AGENTS.md</code>. This
+        document references them.
+      </li>
+      <li>
+        <strong>The runtime layer.</strong> How jobs are queued,
+        scheduled, and retried lives in
+        <code>architecture/AGENT_RUNTIME.md</code>.
+      </li>
+    </ul>
+
+  </main>
+</div>
+
+<footer>
+  Agent Communication Contract · Aggilo Architecture · 2026-05-22 · Authoritative for inter-agent communication.<br>
+  Subordinate to per-agent SOULs and to the super-prompt.
+</footer>
+
+</body>
+</html>

@@ -93,8 +93,8 @@ All 10 domains shipped to the admin dashboard:
 - [ ] `tool_proposals` table live
 - [ ] `runtime_events` table live (per `architecture/AGENT_RUNTIME.md`)
 - [ ] All 10 Observer jobs scheduled per the AGENTS.md cadence table
-- [ ] Findings surface in the platform admin dashboard (per
-      `docs/PLATFORM_ADMIN_DASHBOARD_SPEC.md`)
+- [ ] Findings surface in the Aggilo Admin Dashboard (per
+      `docs/AGGILO_ADMIN_DASHBOARD_SPEC.md`)
 - [ ] Daily digest job produces a single summary email/notification at
       07:00
 - [ ] Approval flow works end-to-end for at least one finding type per
@@ -137,8 +137,8 @@ Both modes shipped:
       attributable individuals)
 - [ ] 20-post rule enforced — communities below threshold marked
       `insufficient_data`
-- [ ] Reports surface in the admin dashboard (Demand Signals tab — see
-      `docs/PLATFORM_ADMIN_DASHBOARD_SPEC.md`)
+- [ ] Reports surface in the Aggilo Admin Dashboard (Demand tab — see
+      `docs/AGGILO_ADMIN_DASHBOARD_SPEC.md`)
 - [ ] Observer Domain 9 (Scout Prospect Pipeline) starts producing
       findings
 

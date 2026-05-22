@@ -1097,7 +1097,7 @@ The phrase "the platform's character has not changed; its rules now live in one 
 
 ---
 
-## V3.14 — Senior-review follow-up: spec docs for slider, super-prompt intent, agent communication, real-time layer, runtime rename, agent sequencing, two dashboards (current)
+## V3.14 — Senior-review follow-up: spec docs for slider, super-prompt intent, agent communication, real-time layer, runtime rename, agent sequencing, two dashboards
 
 V3.13 reorganised docs/architecture into a clean Phase 0 / Phase 1 separation. V3.14 takes the four follow-up directives from the senior-UX/behavioural review and lands implementation-ready specifications for each, so a future build session has paper-ready instructions to start from.
 
@@ -1133,12 +1133,14 @@ Hard gates between waves: 14-day Wave 1 observation, 30-day Wave 2 observation. 
 
 Members never see Atlas/Scout/Observer named. Internal-only naming until ship; then "Pulse" framing for Atlas-content cards (the work, not the worker).
 
-**7. Two dashboards — `docs/PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md` and `docs/PLATFORM_ADMIN_DASHBOARD_SPEC.md`.**
-The cluster-scoped admin dashboard (Founder + Manager) and the platform-wide admin dashboard (platform_admin). Both implementation-ready. Each covers navigation, per-section detail, RLS, action triggers, and done-criteria checklists. The two dashboards co-exist and complement each other; platform-admins see both, cluster-admins see only their cluster's surface.
+**7. Two dashboards — `docs/CLUSTER_ADMIN_CONSOLE_SPEC.md` and `docs/AGGILO_ADMIN_DASHBOARD_SPEC.md`.**
+The customer-facing Cluster Admin Console (Founder + Manager) and the Aggilo team's Aggilo Admin Dashboard (`platform_admin`). Both implementation-ready. Each covers navigation, per-section detail, RLS, action triggers, and done-criteria checklists. The two surfaces co-exist; the Aggilo team can read both, cluster Founders/Managers see only their cluster's console.
 
-The platform admin dashboard's Findings tab is the single most-used surface — the Observer findings queue is where platform admin work routes. The Premium dashboard's Care queue is the equivalent for cluster admins.
+The Aggilo Admin Dashboard's Findings tab is the single most-used surface — the Observer findings queue is where Aggilo-team work routes. The Cluster Admin Console's Care queue is the equivalent for cluster Founders.
 
 Both specs are sized for one focused build session each (~3 weeks of dev work for the full surfaces; subset MVPs are smaller).
+
+> *Renamed from `PLATFORM_ADMIN_DASHBOARD_SPEC.md` and `PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md` in V3.15.*
 
 ### What V3.14 does NOT cover
 
@@ -1152,8 +1154,8 @@ Both specs are sized for one focused build session each (~3 weeks of dev work fo
 - `docs/AGENT_INVOLVEMENT_SLIDER_SPEC.md`
 - `docs/SUPERPROMPT_DESIGN_INTENT.md`
 - `docs/PHASE_0_AGENT_SEQUENCING.md`
-- `docs/PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md`
-- `docs/PLATFORM_ADMIN_DASHBOARD_SPEC.md`
+- `docs/CLUSTER_ADMIN_CONSOLE_SPEC.md` *(originally `PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md`; renamed in V3.15)*
+- `docs/AGGILO_ADMIN_DASHBOARD_SPEC.md` *(originally `PLATFORM_ADMIN_DASHBOARD_SPEC.md`; renamed in V3.15)*
 
 ### Files added (architecture)
 
@@ -1182,3 +1184,117 @@ V3.4–V3.13 invariants are unchanged. No prompt edits in V3.14. Cluster behavio
 The platform's character has not changed. V3.14 documents *seven implementation paths* for capabilities the platform's character implies, so a future builder reads paper instead of guessing.
 
 *Updated 2026-05-22 as part of V3.14 (senior-review follow-up: seven implementation-ready specs). Previous revision: V3.13.*
+
+
+---
+
+## V3.15 — Dashboard renaming, customer-facing presentation, wave-status surface, HTML reference page (current)
+
+A targeted clarity pass on V3.14's dashboard specs and a couple of the
+specs around them. Founder direction:
+
+- *"Platform admin should be changed to Aggilo admin dashboard for
+  better clarity."*
+- *"Premium cluster admin dashboard will be for the customers, right?
+  So it will have a different view."*
+- *"Phase 0 agent sequencing needs to reflect in the Phase 0 admin
+  dashboard."*
+- *"Agent communication contract will need an HTML page for easy
+  reference, so create a corresponding HTML with all details."*
+
+All four directives addressed. Zero code, zero schema, no behavioural
+change.
+
+### Renamed dashboards
+
+- **`PLATFORM_ADMIN_DASHBOARD_SPEC.md` → `AGGILO_ADMIN_DASHBOARD_SPEC.md`.** The dashboard for the Aggilo team, now named for clarity. The DB role identifier (`platform_admin`) is unchanged — only the user-facing name. Internal copy in the spec converted from "platform admin" to "Aggilo admin" / "the Aggilo team" throughout. Route prefix moves from `/admin/platform/*` to `/admin/aggilo/*` in the implementation pass.
+- **`PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md` → `CLUSTER_ADMIN_CONSOLE_SPEC.md`.** The customer-facing surface, now named "Cluster Admin Console" — a name that travels well with partners, isn't internal jargon, and signals the customer relationship clearly. Route prefix moves to `/admin/cluster/<slug>/*`.
+
+### Cluster Admin Console — customer-facing presentation rules
+
+The renamed Cluster Admin Console picks up an explicit customer-facing
+presentation section:
+
+- Cluster name + member count visible in the top-bar at all times (so a Founder running multiple clusters never loses track).
+- No platform-internal jargon (e.g. "Aggilo team" replaces "platform_admin" in copy; "cadence-exchange" stays internal-only and becomes "the Workshop dialogue" customer-side).
+- Brand voice consistent with cluster's persona for cluster-specific copy; Aggilo's voice for console chrome.
+- No mention of agent-internal mechanics in customer-facing surfaces.
+
+### Aggilo Admin Dashboard — Phase 0 wave-status surface
+
+A new section appended to the Aggilo Admin Dashboard spec — `Phase 0 wave status` — rendered as a banner at the top of the Findings tab. Visible on landing. Reflects which agent waves are live per `docs/PHASE_0_AGENT_SEQUENCING.md`:
+
+```
+Wave 1 — Observer:  ✅ Live (since 2026-XX-XX)
+Wave 2 — Scout:     🚧 In progress  (Wave 1 observed 8 of 14 days)
+Wave 3 — Atlas:     ⏳ Not started
+```
+
+Wave-gated tabs (Demand, Pulse) render as "Coming in Wave N" until
+their wave is live. Aggilo team advances waves from the Settings tab
+once done-criteria pass and the observation gate clears. New
+platform setting: `phase_0_wave_status` (JSON).
+
+### HTML reference for the agent communication contract
+
+`docs/AGENT_COMMUNICATION_CONTRACT.html` ships alongside the markdown
+source. Single-file, inline CSS, zero JS dependencies. Renders:
+
+- Agent hierarchy diagram inline (preformatted ASCII tree, monospaced).
+- Sticky table of contents with anchor links to every section.
+- Five communication patterns as collapsible `<details>` blocks (the first one open by default).
+- The pairwise relationships table.
+- The shared substrate every communication inherits.
+- The five-question checklist for new agents.
+- Aggilo-deep + amber + sage colour palette honouring the platform's six-accent budget.
+
+Readable in any modern browser without a server. Useful for sharing
+with partner engineers or as a quick-reference page during
+architecture reviews.
+
+### Updated cross-references
+
+- `docs/PHASE_0_AGENT_SEQUENCING.md` updated with the new dashboard
+  filename in two places.
+- `docs/MASTER_INSTRUCTIONS.md` V3.14 entry updated to reflect the
+  renamed dashboards.
+
+### Folder placement decisions confirmed
+
+Confirmed founder approval for:
+- `architecture/AGENT_COMMUNICATION_CONTRACT.md` stays in `/architecture/` (production architecture, peer to parts 1–6).
+- `architecture/AGENT_RUNTIME.md` stays in `/architecture/` (production architecture).
+- `architecture/REALTIME_ENGAGEMENT_LAYER.md` stays in `/architecture/` (production architecture — the explicit founder directive).
+- `docs/SUPERPROMPT_DESIGN_INTENT.md` stays. Records a binding founder decision; deleting it would re-open a closed architectural question on next review.
+
+### Files renamed (docs)
+
+- `docs/PLATFORM_ADMIN_DASHBOARD_SPEC.md` → `docs/AGGILO_ADMIN_DASHBOARD_SPEC.md`
+- `docs/PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md` → `docs/CLUSTER_ADMIN_CONSOLE_SPEC.md`
+
+### Files added
+
+- `docs/AGENT_COMMUNICATION_CONTRACT.html` — single-file HTML reference page
+
+### Files changed
+
+- `docs/AGGILO_ADMIN_DASHBOARD_SPEC.md` — heading + scope + body language, new Phase 0 wave-status section, navigation list updated
+- `docs/CLUSTER_ADMIN_CONSOLE_SPEC.md` — heading + scope + customer-facing presentation rules + body language scrubbed of platform-internal terminology
+- `docs/PHASE_0_AGENT_SEQUENCING.md` — cross-references updated
+- `docs/MASTER_INSTRUCTIONS.md` — V3.14 entry updated, V3.15 changelog written
+
+### Schema status
+
+No migrations in V3.15. One new platform setting documented for the
+wave-status surface (`phase_0_wave_status` JSON), to land alongside
+the wave-1 implementation.
+
+### What stays the same
+
+V3.4–V3.14 invariants are unchanged. No prompt edits in V3.15. No
+code changes. The platform's character has not changed; the renaming
+makes its surfaces clearer to the people who will read them.
+
+*Updated 2026-05-22 as part of V3.15 (dashboard renaming, customer-
+facing presentation, wave-status surface, HTML reference page).
+Previous revision: V3.14.*
