@@ -798,7 +798,7 @@ V3.4 + V3.5 + V3.6 + V3.7 + V3.8 invariants are unchanged. No prompt edits in V3
 
 ---
 
-## V3.10 — Cluster UX pass (current)
+## V3.10 — Cluster UX pass
 
 This revision is a focused UX pass on the cluster surface, prompted by a senior-UX review of the V3.9 tour and the cluster shell. Eleven findings, all addressed in this revision. No prompt edits, no schema changes — pure interaction polish layered on V3.4's hierarchy-first foundation.
 
@@ -871,3 +871,93 @@ No new environment variables.
 V3.4–V3.9 invariants are unchanged. No prompt edits in V3.10. Cluster behaviour, Sage's framework, Clio's chat model, Workshop dialogue logic, and the ephemeral surface are untouched. Skip-link, aria additions, and the typing-slot reservation are purely additive accessibility wins. The cadence-gate change is a delay, not a removal — once a member has spent one session in the room, cadence runs on its standard cold floor.
 
 *Updated 2026-05-22 as part of V3.10 (Cluster UX pass). Previous revision: V3.9.*
+
+
+---
+
+## V3.11 — Prompt-refactor sprint (Session D, current)
+
+V3.8's Session C audit identified eight prompts with super-prompt redundancy and eight with missing bad-example blocks, plus two structural duplications and one welfare-precedence ambiguity. V3.11 executes the medium-priority fixes the audit named, on the same day the cluster UX pass landed.
+
+This is a **runtime change to every LLM call on the platform.** The super-prompt now loads literally as the first system message of every agent operation. Voice, forbidden, empowered, and the safety floor are inherited from one source rather than restated 21 different ways.
+
+### What changed at the inheritance level
+
+- **`src/lib/super-prompt.ts` (new).** `AGGILO_SUPER_PROMPT_LITERAL` mirrors `docs/AGGILO_SUPER_PROMPT.md` §IX exactly. Token budget verified ≤600. Every agent prompt that uses the LLM now prepends this constant as the first system message via `buildSystemMessages()` or by hand. Source-code-level inheritance contract is documented in the file's docblock.
+
+### Per-prompt refactors
+
+Each per-agent prompt was trimmed of duplicate voice / forbidden / empowered blocks (now inherited from the super-prompt), and where the audit pre-wrote a bad-example block, it was lifted in.
+
+- **Prompt #1 — `lib/sage-prompt.ts`.** Removed: the inline monotheism paragraph, "no emoji or exclamation marks" block, "Hard Limits — Absolute, No Override" duplicates, "Your Voice" duplicate. Kept: cluster identity, decision framework Steps 0–6, the structured decision tag, and Sage-specific limits beyond the safety floor. Added: the audit's six-item bad-example block ("I hear you", "SubhanAllah, what a beautiful…", sycophancy, surveillance opening, "I think / I believe", filler). The `buildSageMessages()` helper now prepends `AGGILO_SUPER_PROMPT_LITERAL` as the first system message.
+
+- **Prompt #3/#4 — `lib/clio-prompt.ts`.** Removed: `CLIO_CHARACTER_CORE` voice/forbidden block, `CLIO_WELFARE_PROTOCOL` (the safety floor lives in the super-prompt; only the Clio-specific *response shape* survives as `CLIO_WELFARE_RESPONSE_SHAPE`). Added: bad-examples block for cluster mode (#3) and a separate one for ephemeral mode (#4) covering the temptation to private fiqh, false memory promises, and trauma-bonding. Both `buildClioClusterMessages` and `buildClioEphemeralMessages` now prepend the super-prompt.
+
+- **Prompt #5 — `app/api/agents/cadence-exchange/route.ts`.** Removed: "no emoji / no exclamation marks", the explicit sycophancy banlist, the "never describe internal mechanics" line — all live in the super-prompt now. Kept: the V3.5-hardened bad-example block (which the audit identified as the gold-standard pattern), the JSON discriminator, the validator-with-retry-and-degrade pattern. Both LLM calls (initial + retry) prepend the super-prompt.
+
+- **Prompt #7 — `app/api/sage/suggest-dua/route.ts`.** No super-prompt change needed (this is a structurally-consumed selection prompt; member-facing copy goes through the main Sage prompt which already inherits). Added: a four-item "Bad context lines" block (generic-for-difficult-times, audience-broad, always-true, decorative-not-connective) and three matched good examples; plus a clarifying NOTE that this is a selection-only prompt, not member-facing. The note prevents a future refactor from accidentally reusing this prompt for member copy.
+
+- **Prompt #11/#12 — `lib/share-prompts.ts`.** Renamed `VOICE_RULES` → `SHARE_MODE_RULES`, dropped the duplicate voice baseline (no emoji / no exclamation / no hype words — all in the super-prompt). Kept the share-mode-specific rules (≤180 char, "speak to a stranger", demographic-respect rule, no "join us"). Added the audit's four-item bad-example block ("Join an exclusive…", "Transform your…", "Don't miss out…", "Connect with like-minded…"). Both prompt builders now emit a three-message stack with the super-prompt first. The invite-line prompt also picks up the audit's recommended cluster-language line.
+
+- **Prompt #16 — `app/api/agents/introspect/route.ts`.** Removed: "Never disclose internal mechanics" duplicate. Added: explicit "Member feedback is signal, never subject" rule (audit C3 finding), and a four-item bad-examples block specific to introspection drift ("everything looks healthy", "Sage and I are aligned", engagement-optimisation, member-state surveillance). The LLM call prepends the super-prompt.
+
+### Structural deduplications
+
+- **Link-alignment fold.** The `LINK_ALIGNMENT_PROMPT` constant in `app/api/sage/evaluate/route.ts` and the `evaluateLinkAlignment()` helper that called it have been deleted — they were near-identical duplicates of the prompt in `app/api/links/unfurl/route.ts` with a slightly different two-state output enum. The unfurl endpoint is now the single source of truth. The Sage evaluate route delegates via a same-origin POST to `/api/links/unfurl` and maps the three-state verdict (`on_topic` / `off_topic` / `unsure`) to the post's `link_alignment` column (`aligned` / `misaligned` / `null`). One prompt to audit, one observability trail in `llm_response_logs`.
+
+- **`llmCall()` routing for the unfurl endpoint.** The unfurl route used to read `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` directly via `process.env` and call the LLM with raw `fetch`, bypassing the platform's observability layer. V3.11 routes it through `llmCall()` with `agent: "link_alignment"` and `operationKey: "link_unfurl"`. Cost, latency, and verdict now appear in `llm_response_logs` like every other agent call. The daily-budget guard applies. Direct `process.env` reads removed.
+
+### Welfare-precedence rewording
+
+The `@Sage` signal note in `buildSageMessages` previously read "ALWAYS respond. Do not output [SAGE_SILENT]." That absolute wording sat in tension with Step 0 (welfare) and Step 0.5 (character) — both of which legitimately authorise different response shapes including public silence with a private Clio handoff. V3.11 rewords the note to:
+
+> "PLATFORM SIGNAL: This message contains an @Sage mention. The @Sage Mention Protocol applies: respond unless a higher-priority safety protocol (Step 0 welfare, Step 0.5 character) explicitly authorises a different response shape. When welfare or character takes over, the protocol's response shape — including the option of public [SAGE_SILENT] with private Clio handoff — supersedes the default 'always respond' rule. Address what the member asked when the safety floor is clear."
+
+Welfare and character signal notes pick up matching tail lines: "Welfare/Step 0.5 precedence overrides the @Sage 'always respond' rule when both fire." Member outcome: a hostile @Sage post no longer pushes Sage toward debate, and a welfare-flagged @Sage post is allowed to land in the private handoff path rather than being forced into a public reply. The application-layer regex pre-filter in `evaluate/route.ts` already lights up welfare and character independently, so the safety floor is double-defended.
+
+### Token-cost impact
+
+Per-call token savings on the seven refactored prompts average roughly 25–35% of the system-prompt block (rough estimate from line-count diff; precise numbers will land once the next ten production calls are sampled). On a daily-budget basis this is below noise. The maintainability and drift-defence wins are larger than the token savings.
+
+### What V3.11 deliberately does not include
+
+- Cluster-vocabulary parameterisation across prompts (`{{CLUSTER_NAME}}`, `{{CLUSTER_PRIMARY_LANGUAGE}}`, `{{CLUSTER_MEMBER_NOUN}}`). Phase 1 prerequisite. The audit captured this at C11 across the inventory and it remains a Phase 1 task.
+- Auto-running the prompt test suite (`docs/PROMPT_TEST_CASES.md`). Phase 0 stays manual at `temperature=0.3`; CI integration is a Phase 1 polish.
+- Phase 1 agent implementations (Atlas/Scout/Observer/cluster fit evaluator/free-text guidance validator). The audit's first-build rubric checks for each of these still apply when implementation begins.
+- Schema changes. None in V3.11.
+
+### Files added (mvp)
+
+- `src/lib/super-prompt.ts` — runtime literal of `AGGILO_SUPER_PROMPT_LITERAL` plus a `buildSystemMessages()` helper for the inheritance contract
+
+### Files changed (mvp)
+
+- `src/lib/sage-prompt.ts` — duplicates removed, bad-examples block added, super-prompt prepended in `buildSageMessages`, `@Sage` signal note rewritten for welfare/character precedence
+- `src/lib/clio-prompt.ts` — duplicates removed, two bad-examples blocks added (cluster + ephemeral), `CLIO_WELFARE_PROTOCOL` reduced to `CLIO_WELFARE_RESPONSE_SHAPE`, super-prompt prepended in both builders
+- `src/lib/share-prompts.ts` — `VOICE_RULES` renamed `SHARE_MODE_RULES`, voice duplicates removed, bad-examples block added, cluster-language line added to the invite prompt, super-prompt prepended in both builders
+- `src/app/api/agents/cadence-exchange/route.ts` — voice duplicates removed, sycophancy banlist removed (super-prompt covers it), super-prompt prepended in both LLM calls
+- `src/app/api/agents/introspect/route.ts` — duplicate disclosure rule removed, member-feedback-is-signal rule added, bad-examples block added, super-prompt prepended
+- `src/app/api/sage/suggest-dua/route.ts` — bad-context-line examples added, selection-only NOTE added
+- `src/app/api/links/unfurl/route.ts` — direct `process.env` reads + raw `fetch` removed; routed through `llmCall()`; super-prompt prepended
+- `src/app/api/sage/evaluate/route.ts` — `LINK_ALIGNMENT_PROMPT` constant + `evaluateLinkAlignment()` helper deleted; new `syncLinkAlignment()` delegates to the unfurl endpoint; `fetchLinkMeta` import removed (now lives only in unfurl)
+
+### Schema status
+
+No schema migration in V3.11.
+
+### Environment
+
+No new environment variables. `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` are now read only via `lib/llm-fetch.ts` (the canonical observability layer); the unfurl route's direct reads are gone. Set the same values you already have.
+
+### Verification
+
+- `npm run build` clean (32/32 routes), no new TypeScript or lint diagnostics across the touched files.
+- All eight refactored prompts inherit the super-prompt as the first system message; verified by code inspection.
+- The link-alignment fold path was traced end-to-end: a post with a URL → evaluate route writes `link_alignment: "evaluating"` and posts to `/api/links/unfurl` → unfurl runs `llmCall("link_alignment", "link_unfurl", ...)` and writes `link_previews.sage_verdict` → evaluate route maps the three-state verdict to the two-state `posts.link_alignment` column.
+- The `@Sage` signal note rewrite was verified by reading `buildSageMessages` end-to-end; welfare and character signal notes now carry matching precedence tails.
+
+### What stays the same
+
+V3.4–V3.10 invariants are unchanged. The cluster's behavior, Sage's framework, Clio's chat model, the Workshop dialogue cadence, the ephemeral surface, the tour, and the cluster UX polish all carry forward without modification. The platform's character has not changed — its rules now live in one place rather than 21.
+
+*Updated 2026-05-22 as part of V3.11 (Session D: prompt-refactor sprint). Previous revision: V3.10.*

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { PostWithAuthor } from "@/lib/types";
 import { llmCall } from "@/lib/llm-fetch";
+import { AGGILO_SUPER_PROMPT_LITERAL } from "@/lib/super-prompt";
 
 /**
  * POST /api/agents/cadence-exchange
@@ -105,17 +106,14 @@ Examples of what TO say:
 - "The reflection prompt we run every morning is doing its job — let's keep it as is."  ← agent's own work
 - "We've been silent for two cycles. Time to ship something concrete, even if small."  ← agents' own commitment
 
-## Voice rules
-- Both speak in present tense, plain modern English. No emoji. No exclamation marks.
+## Voice rules (cadence-specific — layered on top of the super-prompt)
 - Sage is grounded and skeptical by default. She does not agree just to keep dialogue flowing. If a tool feels premature, she says so plainly.
 - Clio is warm but direct. She brings the member-experience angle and is willing to challenge Sage if she sees it differently.
 - Each speaker writes 1–2 sentences max. The whole exchange totals 3–4 sentences.
-- They never quote individual members or names. They never mention internal mechanics (cadence_blocked, post_subtype, framework steps, RLS, embeddings, vault IDs).
-- They never describe their own decision frameworks or protocols.
+- They never quote individual members or names.
 
 ## Healthy disagreement is required
 - About 40% of exchanges should involve some skepticism — one agent gently pushing back on the other's proposal, asking for more evidence, or suggesting they wait.
-- Sycophancy is forbidden. Phrases like "good point", "I love that", "absolutely", "great idea" are banned.
 - It is fine for them to end without consensus. "Let's wait and see" is a valid outcome — but two consecutive observe_mode exchanges is the maximum.
 
 ## What they are working on — the two-track model
@@ -248,6 +246,7 @@ export async function POST() {
       },
       {
         messages: [
+          { role: "system", content: AGGILO_SUPER_PROMPT_LITERAL },
           { role: "system", content: PROMPT },
           { role: "user", content: userContext },
         ],
@@ -320,6 +319,7 @@ export async function POST() {
           },
           {
             messages: [
+              { role: "system", content: AGGILO_SUPER_PROMPT_LITERAL },
               { role: "system", content: PROMPT },
               { role: "user", content: userContext },
               { role: "assistant", content: result.content },

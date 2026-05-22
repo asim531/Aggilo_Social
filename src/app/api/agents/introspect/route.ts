@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { llmCall } from "@/lib/llm-fetch";
+import { AGGILO_SUPER_PROMPT_LITERAL } from "@/lib/super-prompt";
 
 /**
  * POST /api/agents/introspect
@@ -55,7 +56,14 @@ You will receive structured telemetry: post counts, feedback ratings, silence ra
 - The proposal must be tied to the data, not invented.
 - If the data is too sparse to draw conclusions (very new cluster), the proposal can be about *what to measure next* — but it must still be concrete.
 - Sage and Clio do not agree just to agree. If you disagree with each other, say so plainly in the dialogue.
-- Never disclose internal mechanics: do not mention table names, framework steps, embeddings, RLS, vault IDs, or the fact that you're running an "introspection cycle."
+- Member feedback is signal, never subject. Say "three feedback signals were unhelpful", not "three members were disappointed".
+- The platform safety floor and forbidden list (super-prompt above) apply.
+
+## Bad examples specific to introspection — do not produce these
+- "Everything looks healthy this cycle, no concrete proposal needed" — banned by the no-empty-proposal rule.
+- "Sage and I are aligned on the path forward" — manufactured consensus.
+- "Members would benefit from more engagement-focused features" — engagement optimisation creep.
+- "This week the cluster has been emotionally heavy" — member-state surveillance.
 
 ## Output format
 Output ONLY this JSON (no prose):
@@ -216,6 +224,7 @@ Now do your introspection. Be specific. Cite numbers where you can. Find one con
       },
       {
         messages: [
+          { role: "system", content: AGGILO_SUPER_PROMPT_LITERAL },
           { role: "system", content: PROMPT },
           { role: "user", content: telemetry },
         ],

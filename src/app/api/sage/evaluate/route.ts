@@ -11,7 +11,7 @@ import {
   selectGreetingTemplate,
   type HandoffReason,
 } from "@/lib/handoff-greetings";
-import { fetchLinkMeta, extractFirstUrl } from "@/lib/link-preview";
+import { extractFirstUrl } from "@/lib/link-preview";
 import { llmCall, updateLogDecision } from "@/lib/llm-fetch";
 import { PostWithAuthor, DuaVaultEntry } from "@/lib/types";
 
@@ -75,14 +75,23 @@ export async function POST(request: Request) {
         .eq("id", triggeringPost.id);
     }
 
-    // ── Link detection + metadata fetch (unchanged behaviour) ───────
+    // ── Link detection + delegate to /api/links/unfurl ─────────────
+    // V3.11 fold: this route used to carry its own LINK_ALIGNMENT_PROMPT
+    // and evaluateLinkAlignment helper that bypassed llmCall() and
+    // duplicated the prompt in /api/links/unfurl. Both have been removed.
+    // The unfurl endpoint is the single source of truth for link
+    // alignment and handles caching, observability, and the three-state
+    // verdict. We simply mark the post as "evaluating" and fire a
+    // request to the unfurl endpoint; the unfurl response writes the
+    // verdict to link_previews and we sync it onto the post in a
+    // background task.
     const linkUrl = extractFirstUrl(triggeringPost.content);
     if (linkUrl) {
       await supabase
         .from("posts")
         .update({ link_url: linkUrl, link_alignment: "evaluating" })
         .eq("id", triggeringPost.id);
-      evaluateLinkAlignment(supabase, triggeringPost.id, linkUrl);
+      void syncLinkAlignment(supabase, triggeringPost.id, linkUrl, request);
     }
 
     // Fetch recent posts for conversational context (last 20)
@@ -344,84 +353,55 @@ export async function POST(request: Request) {
   }
 }
 
-// ── Link alignment helper ────────────────────────────────────────────────
+// ── Link alignment sync (delegates to /api/links/unfurl) ─────────────────
+//
+// Posts the URL to the unfurl endpoint, which owns the prompt + cache.
+// When unfurl returns a verdict, we map it onto the post's link_alignment
+// column ("aligned" | "misaligned" | null) so existing UI continues to
+// work. The unfurl verdict has three states (on_topic / off_topic /
+// unsure); we treat "unsure" as null on the post column so the badge
+// stays neutral, matching the legacy behaviour.
 
-const LINK_ALIGNMENT_PROMPT = `You are Sage, the cluster Anchor for "Sisters in Dua" — a women-only community for Muslim women navigating faith in real life. Grounded in Quran and authentic Sunnah.
+interface UnfurlResponse {
+  preview?: {
+    sage_verdict?: "on_topic" | "off_topic" | "unsure" | null;
+    sage_reason?: string | null;
+  };
+}
 
-A member has shared a link. You have been given the link's title and description. Evaluate whether this content is broadly aligned with the cluster's purpose.
-
-Aligned means: the content is about faith, Islamic practice, Quran, hadith, Muslim women's lived experience, spirituality, or topics that would genuinely serve a Muslim woman navigating faith in real life.
-
-Misaligned means: the content is clearly off-topic (entertainment, politics, unrelated news, commercial content, etc.).
-
-When in doubt, lean toward "aligned" — you are not a gatekeeper, just a signal.
-
-Output ONLY this JSON:
-{
-  "alignment": "aligned" | "misaligned",
-  "reason": "<one short phrase, e.g. 'Islamic lecture on salah' or 'unrelated entertainment content'>"
-}`;
-
-async function evaluateLinkAlignment(
+async function syncLinkAlignment(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   postId: string,
-  url: string
+  url: string,
+  request: Request
 ): Promise<void> {
-  const meta = await fetchLinkMeta(url);
-
-  if (meta) {
-    await supabase
-      .from("posts")
-      .update({ link_meta: meta })
-      .eq("id", postId);
-  }
-
-  const contentSummary = [
-    meta?.title ? `Title: ${meta.title}` : null,
-    meta?.description ? `Description: ${meta.description.substring(0, 300)}` : null,
-    meta?.site_name ? `Site: ${meta.site_name}` : null,
-    `URL: ${url}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
   try {
-    const result = await llmCall(
-      {
-        agent: "link_alignment",
-        operationKey: "link_alignment_check",
-        relatedPostId: postId,
-        clusterId: "the_single_source",
-      },
-      {
-        messages: [
-          { role: "system", content: LINK_ALIGNMENT_PROMPT },
-          { role: "user", content: contentSummary },
-        ],
-        temperature: 0.2,
-        maxTokens: 80,
-        responseFormat: { type: "json_object" },
-        timeoutMs: 15000,
-      },
-      supabase
-    );
-
-    if (result.status !== "ok" || !result.content) {
+    // Same-origin POST to the unfurl endpoint. Read the host from the
+    // incoming request so we work in dev (localhost) and prod alike.
+    const origin = new URL(request.url).origin;
+    const res = await fetch(`${origin}/api/links/unfurl`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) {
       await supabase.from("posts").update({ link_alignment: null }).eq("id", postId);
       return;
     }
-
-    const parsed: { alignment: "aligned" | "misaligned"; reason?: string } = JSON.parse(
-      result.content
-    );
-
+    const data: UnfurlResponse = await res.json();
+    const verdict = data.preview?.sage_verdict ?? null;
+    const alignment =
+      verdict === "on_topic"
+        ? "aligned"
+        : verdict === "off_topic"
+          ? "misaligned"
+          : null;
     await supabase
       .from("posts")
-      .update({ link_alignment: parsed.alignment })
+      .update({ link_alignment: alignment })
       .eq("id", postId);
-
-    await updateLogDecision(supabase, result.llmLogId, parsed.alignment);
   } catch {
     await supabase.from("posts").update({ link_alignment: null }).eq("id", postId);
   }

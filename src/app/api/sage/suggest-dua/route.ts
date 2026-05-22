@@ -43,6 +43,8 @@ interface ClioReview {
 
 const SAGE_DUA_SELECTION_PROMPT = `You are Sage. You are choosing one dua from the verified vault that fits what the cluster has been talking about right now.
 
+NOTE: This is a selection-only prompt — Sage's full character / framework prompt is NOT loaded for this call. Output is consumed structurally, not posted to members. Member-facing copy is generated separately via the main Sage prompt.
+
 Your job is to pick ONE dua that is contextually relevant — not random, not generic. The vault provided below is your ELIGIBLE POOL — it has been pre-filtered to exclude duas already surfaced in the last 14 days. Pick from this pool.
 
 The recent posts are also provided below.
@@ -59,7 +61,18 @@ Hard rules:
 - The context line MUST refer to something specific in the recent posts — never generic ("for difficult times")
 - Pick the dua whose themes most closely match what the room is actually talking about
 - Variety matters — don't pick the same kind of dua you'd pick generically
-- If nothing in the room genuinely calls for a dua, output: {"vault_id": null, "context": "no clear signal in the room right now"}`;
+- If nothing in the room genuinely calls for a dua, output: {"vault_id": null, "context": "no clear signal in the room right now"}
+
+Bad context lines — do not produce these:
+- "For difficult times in life" — no specificity, audience-broad.
+- "For any sister navigating challenges" — generic, audience-broad.
+- "When you need closeness to Allah" — always-true, says nothing about why now.
+- "A reminder of Allah's mercy" — decorative, not connective. Names a concept rather than the moment.
+
+Good context lines look like:
+- "Several threads about consistency in fajr this week — this dua is about asking for steadfastness in practice."
+- "The room has been holding a thread on grief — this is a verified prophetic dua specific to bereavement."
+- "Two members spoke about exam anxiety today — this dua is for moments of mental burden."`;
 
 export async function POST() {
   try {

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { fetchLinkMeta, extractFirstUrl } from "@/lib/link-preview";
-import { ChatCompletionResponse } from "@/lib/types";
+import { fetchLinkMeta } from "@/lib/link-preview";
+import { llmCall } from "@/lib/llm-fetch";
+import { AGGILO_SUPER_PROMPT_LITERAL } from "@/lib/super-prompt";
 
 /**
  * POST /api/links/unfurl
@@ -9,8 +10,12 @@ import { ChatCompletionResponse } from "@/lib/types";
  * Fetches metadata for a URL and runs Sage's alignment evaluation.
  * Results are cached in `link_previews` for 7 days.
  *
- * Called by LinkPreviewCard when a post contains a URL.
- * Fire-and-forget from the client — the card polls for the result.
+ * Called by LinkPreviewCard when a post contains a URL, and by the
+ * Sage evaluate route when a post contains a URL (V3.11 dedup — the
+ * evaluate route used to carry its own copy of this prompt; now it
+ * delegates here so we have one prompt to audit and one observability
+ * trail in `llm_response_logs`). Fire-and-forget from the client —
+ * the card polls for the result.
  */
 
 const ALIGNMENT_PROMPT = `You are Sage, the cluster Anchor for "Sisters in Dua" — a women-only community for Muslim women navigating faith in real life. Grounded in Quran and authentic Sunnah.
@@ -63,15 +68,11 @@ export async function POST(request: Request) {
     // Fetch metadata
     const meta = await fetchLinkMeta(url);
 
-    // Run Sage alignment
-    const llmBaseUrl = process.env.LLM_BASE_URL;
-    const llmApiKey = process.env.LLM_API_KEY;
-    const llmModel = process.env.LLM_MODEL;
-
+    // Run Sage alignment via the platform observability layer.
     let verdict: "on_topic" | "off_topic" | "unsure" | null = null;
     let reason: string | null = null;
 
-    if (llmBaseUrl && llmApiKey && llmModel && meta) {
+    if (meta) {
       const contentSummary = [
         meta.title ? `Title: ${meta.title}` : null,
         meta.description ? `Description: ${meta.description.substring(0, 300)}` : null,
@@ -82,29 +83,29 @@ export async function POST(request: Request) {
         .join("\n");
 
       try {
-        const res = await fetch(`${llmBaseUrl}/chat/completions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${llmApiKey}`,
+        const result = await llmCall(
+          {
+            agent: "link_alignment",
+            operationKey: "link_unfurl",
+            clusterId: "the_single_source",
           },
-          body: JSON.stringify({
-            model: llmModel,
+          {
             messages: [
+              { role: "system", content: AGGILO_SUPER_PROMPT_LITERAL },
               { role: "system", content: ALIGNMENT_PROMPT },
               { role: "user", content: contentSummary },
             ],
             temperature: 0.2,
-            max_tokens: 80,
-            response_format: { type: "json_object" },
-          }),
-          signal: AbortSignal.timeout(12000),
-        });
+            maxTokens: 80,
+            responseFormat: { type: "json_object" },
+            timeoutMs: 12000,
+          },
+          supabase
+        );
 
-        if (res.ok) {
-          const data: ChatCompletionResponse = await res.json();
+        if (result.status === "ok" && result.content) {
           const parsed_result: { verdict: string; reason?: string } = JSON.parse(
-            data.choices[0].message.content
+            result.content
           );
           verdict = (["on_topic", "off_topic", "unsure"].includes(parsed_result.verdict)
             ? (parsed_result.verdict as "on_topic" | "off_topic" | "unsure")
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
           reason = parsed_result.reason || null;
         }
       } catch {
-        // LLM failed — no verdict
+        // LLM failed or returned malformed JSON — no verdict
       }
     }
 
