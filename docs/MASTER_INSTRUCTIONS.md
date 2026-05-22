@@ -1093,3 +1093,92 @@ V3.4–V3.11 invariants are unchanged. Sage's behaviour, Clio's behaviour, the c
 The phrase "the platform's character has not changed; its rules now live in one place rather than 21" from V3.11 still applies — V3.12 just put those rules in well-organised drawers.
 
 *Updated 2026-05-22 as part of V3.12 (multi-cluster prompt restructure). Previous revision: V3.11.*
+
+
+---
+
+## V3.14 — Senior-review follow-up: spec docs for slider, super-prompt intent, agent communication, real-time layer, runtime rename, agent sequencing, two dashboards (current)
+
+V3.13 reorganised docs/architecture into a clean Phase 0 / Phase 1 separation. V3.14 takes the four follow-up directives from the senior-UX/behavioural review and lands implementation-ready specifications for each, so a future build session has paper-ready instructions to start from.
+
+This is **specification, not implementation.** Zero code changed. No schema changes. Seven new documents, all founder-approved, all implementation-ready.
+
+### What V3.14 covers
+
+**1. The slider — `docs/AGENT_INVOLVEMENT_SLIDER_SPEC.md`.**
+Premium-cluster admin surface for the agent-involvement slider, with the senior-UX recommendation incorporated: a per-cluster `Recommended for this cluster` label + a 3-bullet behaviour preview that re-renders on slider movement + an immutable safety-floor footnote at every level. Reference content for every level transition is captured verbatim so the runtime renders strings, not improvises them. Generic clusters do not get the slider in Phase 0.
+
+A new `cluster_config.domain_sensitivity` field (low/medium/high) drives the recommendation engine. One ALTER TABLE.
+
+**2. The cosmology layer in the super-prompt — `docs/SUPERPROMPT_DESIGN_INTENT.md`.**
+Founder decision recorded as architecturally binding. The cosmology layer (monotheism in Layer 3 of the super-prompt) stays. The "leak" the senior review flagged as a risk is reframed as design intent — the platform is not neutral about what makes a meaningful life, and the long-game purpose includes inviting member self-reflection at appropriate moments. Coding agents are forbidden from refactoring Layer 3 without explicit founder approval recorded in the document. Decision history table preserved.
+
+**3. The inter-agent communication contract — `architecture/AGENT_COMMUNICATION_CONTRACT.md`.**
+Consolidates inter-agent communication patterns scattered across per-agent AGENTS.md files into one normative contract. Five patterns named and scoped: brief-and-iterate (Sage↔Atlas), directed job (Clio→Scout), soft handoff (Sage→Clio), finding-and-approve (Observer→admin→target), tool proposal (downward through the agent hierarchy). Every inter-agent surface inherits the super-prompt safety floor, the dignity invariants, the observability layer, and the protocol-disclosure rule. Adding a new agent requires answering five classification questions before its spec is considered ready.
+
+**4. The real-time engagement layer — `architecture/REALTIME_ENGAGEMENT_LAYER.md`.**
+Names the four real-time signals already shipped (Presence, Composition, Arrival, Care reach-out) as a coherent layer, with channel ownership, sub-types, fallback contract, and privacy posture for each. The dignity ceiling is made explicit: composition is anonymous; care reach-outs are private to one user; Workshop dialogue is service-framed. New real-time signals require four answers before ship.
+
+**5. Agent Runtime — `architecture/AGENT_RUNTIME.md`.**
+Establishes the canonical name for the runtime layer (formerly "Yantra") and documents the BullMQ implementation that backs it in production. Four lanes (critical / high / medium / low) with SLA bands. Per-agent runtime profile schema. Idempotency keys. Failure-mode contract. New `runtime_events` table for the agent-runtime observability layer (separate from `llm_response_logs` and `behavioural_events`). Migration checklist for renaming "Yantra" references in Atlas/Scout/Observer/Clio/Sage AGENTS files. Documentation rename only — no code change required.
+
+**6. Phase 0 agent sequencing — `docs/PHASE_0_AGENT_SEQUENCING.md`.**
+Founder direction recorded: Atlas, Scout, and Observer are Phase 0 infrastructure, not Phase 1 deferrals. Wave order:
+
+- **Wave 1 — Observer.** All 10 domains live. Read-only. Lowest external risk. ~3 weeks.
+- **Wave 2 — Scout.** Both intelligence modes (live observation + LLM inference). Produces ≥3 actionable findings per 30 days. ~3 weeks.
+- **Wave 3 — Atlas.** Full pipeline including curated source list, Sage iterative dialogue, synthesis-mode counter, Pulse cards. ~4 weeks.
+
+Hard gates between waves: 14-day Wave 1 observation, 30-day Wave 2 observation. Total Phase 0 with all three live: ~17 weeks from V3.14.
+
+Members never see Atlas/Scout/Observer named. Internal-only naming until ship; then "Pulse" framing for Atlas-content cards (the work, not the worker).
+
+**7. Two dashboards — `docs/PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md` and `docs/PLATFORM_ADMIN_DASHBOARD_SPEC.md`.**
+The cluster-scoped admin dashboard (Founder + Manager) and the platform-wide admin dashboard (platform_admin). Both implementation-ready. Each covers navigation, per-section detail, RLS, action triggers, and done-criteria checklists. The two dashboards co-exist and complement each other; platform-admins see both, cluster-admins see only their cluster's surface.
+
+The platform admin dashboard's Findings tab is the single most-used surface — the Observer findings queue is where platform admin work routes. The Premium dashboard's Care queue is the equivalent for cluster admins.
+
+Both specs are sized for one focused build session each (~3 weeks of dev work for the full surfaces; subset MVPs are smaller).
+
+### What V3.14 does NOT cover
+
+- No code changes. The seven docs are paper-ready instructions; the build happens in subsequent sessions.
+- No schema migrations. Two new fields are documented (`cluster_config.domain_sensitivity`, `runtime_events`); the migrations land alongside the implementation work.
+- No agent ship. Atlas, Scout, Observer remain unimplemented per current state. The sequencing doc says when each ships; it does not ship them.
+- No Yantra rename in code. The architecture rename is documentation-only; the migration checklist names the files to update in a separate ~2-hour session.
+
+### Files added (docs)
+
+- `docs/AGENT_INVOLVEMENT_SLIDER_SPEC.md`
+- `docs/SUPERPROMPT_DESIGN_INTENT.md`
+- `docs/PHASE_0_AGENT_SEQUENCING.md`
+- `docs/PREMIUM_CLUSTER_ADMIN_DASHBOARD_SPEC.md`
+- `docs/PLATFORM_ADMIN_DASHBOARD_SPEC.md`
+
+### Files added (architecture)
+
+- `architecture/AGENT_COMMUNICATION_CONTRACT.md`
+- `architecture/REALTIME_ENGAGEMENT_LAYER.md`
+- `architecture/AGENT_RUNTIME.md`
+
+### Schema status
+
+No migrations in V3.14. Two fields documented for future migrations:
+
+- `cluster_config.domain_sensitivity` (VARCHAR(8) default 'medium')
+- `runtime_events` table (full DDL in `architecture/AGENT_RUNTIME.md`)
+
+### Verification
+
+- All seven documents render correctly as Markdown.
+- Cross-references resolve (each doc's predecessor / authority links point to existing files).
+- No content contradicts the super-prompt, the soul, or platform rules.
+- Founder decisions recorded with dates: cosmology layer (2026-05-22), Atlas/Scout/Observer as Phase 0 infrastructure (2026-05-22), slider design with recommendation engine (2026-05-22).
+
+### What stays the same
+
+V3.4–V3.13 invariants are unchanged. No prompt edits in V3.14. Cluster behaviour, Sage's framework, Clio's chat model, Workshop dialogue, ephemeral surface, the tour, the cluster UX polish — all carry forward without modification.
+
+The platform's character has not changed. V3.14 documents *seven implementation paths* for capabilities the platform's character implies, so a future builder reads paper instead of guessing.
+
+*Updated 2026-05-22 as part of V3.14 (senior-review follow-up: seven implementation-ready specs). Previous revision: V3.13.*
