@@ -875,7 +875,7 @@ V3.4–V3.9 invariants are unchanged. No prompt edits in V3.10. Cluster behaviou
 
 ---
 
-## V3.11 — Prompt-refactor sprint (Session D, current)
+## V3.11 — Prompt-refactor sprint (Session D)
 
 V3.8's Session C audit identified eight prompts with super-prompt redundancy and eight with missing bad-example blocks, plus two structural duplications and one welfare-precedence ambiguity. V3.11 executes the medium-priority fixes the audit named, on the same day the cluster UX pass landed.
 
@@ -961,3 +961,135 @@ No new environment variables. `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` are n
 V3.4–V3.10 invariants are unchanged. The cluster's behavior, Sage's framework, Clio's chat model, the Workshop dialogue cadence, the ephemeral surface, the tour, and the cluster UX polish all carry forward without modification. The platform's character has not changed — its rules now live in one place rather than 21.
 
 *Updated 2026-05-22 as part of V3.11 (Session D: prompt-refactor sprint). Previous revision: V3.10.*
+
+
+---
+
+## V3.12 — Multi-cluster prompt restructure (current)
+
+V3.11 placed the platform-level rules in one file and refactored seven prompts to inherit them. V3.12 takes the next step: separates **platform / cluster-type / cluster** concerns so the platform can host many clusters cleanly. Phase 0 is a multi-cluster product from day one — the MVP launches with one premium cluster (Sisters in Dua), but the structure is built for the generic test cluster, the second premium partner, and Phase 1 self-serve, all of which are imminent.
+
+This is a **structural change with zero behavioural change.** Every existing import keeps working via thin re-export shims; routes don't need migrating in this commit. The build is green, the LLM calls are identical, the on-screen experience is identical. What changed is where files live and how the inheritance order is expressed in code.
+
+### Why this was needed
+
+Up to V3.11, `lib/sage-prompt.ts` carried the Sage character framework AND the Sisters-in-Dua-specific vocabulary in a single file. Same in `lib/clio-prompt.ts`. That structure ran into three problems:
+
+1. **No path to a second cluster.** Adding even a generic test cluster meant duplicating Sage's full character — exactly the drift pattern the V3.4 cadence-exchange member-blame bug exposed.
+2. **No clear scope when reading a file.** A reader of `sage-prompt.ts` couldn't tell which lines applied to every cluster vs which described Sisters in Dua specifically.
+3. **No place for the cluster registry to land.** Phase 0's "spin up a generic cluster to verify multi-cluster behaviour" couldn't happen without a structural home.
+
+### The new layout
+
+```
+mvp/src/lib/prompts/
+├── platform/                       ← cluster-agnostic, every agent inherits
+│   ├── super-prompt.ts                   AGGILO_SUPER_PROMPT_LITERAL
+│   ├── sage-character.ts                 Generic Sage character + framework
+│   ├── clio-character.ts                 Generic Clio character + welfare shape + ephemeral frame + dua review
+│   └── share-mode.ts                     Share-line voice rules
+├── cluster-types/                  ← per-type defaults
+│   ├── generic.ts                        Stock-template defaults
+│   ├── premium.ts                        Premium-tier defaults
+│   └── types.ts                          Shared TS interfaces
+├── clusters/                       ← concrete cluster implementations
+│   └── sisters_in_dua/
+│       ├── identity.ts                   Display name, tagline, chips, seed posts
+│       ├── sage.ts                       Cluster-specific Sage prompt fragment
+│       ├── clio.ts                       Cluster-specific Clio context fragment
+│       ├── index.ts                      Module entry point
+│       └── README.md                     Per-cluster doc
+├── registry.ts                     ← cluster_id → cluster module resolver
+├── sage-builder.ts                 ← stitches platform + cluster + signals + vault for Sage
+├── clio-builder.ts                 ← stitches platform + cluster context for Clio (cluster + ephemeral)
+├── share-builder.ts                ← stitches platform + share-mode for share-line builders
+└── README.md                       ← layout overview
+```
+
+### Inheritance order (Sage, end-to-end)
+
+1. `prompts/platform/super-prompt.ts` — soul + safety floor + voice baseline (the immutable platform layer)
+2. `prompts/platform/sage-character.ts` — Sage's character + decision framework + bad-examples (Sage on every cluster)
+3. `prompts/clusters/<cluster_id>/sage.ts` — cluster identity (this cluster only)
+4. Per-call signals (welfare, character, @Sage), vault context, recent posts (runtime data)
+
+Same shape for Clio (substitute `clio-character.ts` and `clusters/<cluster_id>/clio.ts`).
+
+### The cluster registry
+
+`prompts/registry.ts` maps `cluster_id → ClusterModule`. Routes call `requireClusterModule(cluster_id)` rather than importing cluster files directly. Adding a cluster is one entry in the registry plus one new directory under `clusters/`. Removing a cluster is the inverse.
+
+`DEFAULT_CLUSTER_ID` is exposed for Phase 0 routes that haven't yet been updated to read `cluster_id` from the request — a Phase 1 prerequisite captured in the testing guide.
+
+### Backward compatibility — re-export shims
+
+The four legacy paths still work:
+
+- `@/lib/super-prompt` → forwards to `@/lib/prompts/platform/super-prompt`
+- `@/lib/sage-prompt` → forwards to the new builder + character + cluster identity
+- `@/lib/clio-prompt` → forwards to the new builder + welfare regex + dua review prompt
+- `@/lib/share-prompts` → forwards to the new share-builder
+
+Every existing route keeps working unchanged. New code should import from `@/lib/prompts/...` directly. A V3.13 follow-up will migrate routes off the shims and remove them.
+
+### Files added (mvp)
+
+Code:
+- `src/lib/prompts/README.md`
+- `src/lib/prompts/registry.ts`
+- `src/lib/prompts/sage-builder.ts`
+- `src/lib/prompts/clio-builder.ts`
+- `src/lib/prompts/share-builder.ts`
+- `src/lib/prompts/platform/super-prompt.ts`
+- `src/lib/prompts/platform/sage-character.ts`
+- `src/lib/prompts/platform/clio-character.ts`
+- `src/lib/prompts/platform/share-mode.ts`
+- `src/lib/prompts/cluster-types/types.ts`
+- `src/lib/prompts/cluster-types/generic.ts`
+- `src/lib/prompts/cluster-types/premium.ts`
+- `src/lib/prompts/clusters/sisters_in_dua/identity.ts`
+- `src/lib/prompts/clusters/sisters_in_dua/sage.ts`
+- `src/lib/prompts/clusters/sisters_in_dua/clio.ts`
+- `src/lib/prompts/clusters/sisters_in_dua/index.ts`
+- `src/lib/prompts/clusters/sisters_in_dua/README.md`
+
+Docs:
+- `docs/PHASE_0_CLUSTERS.md` — Phase 0 cluster plan, types, where things live
+- `docs/TESTING_GUIDE.md` — how to verify every visual + non-visual change from V3.8 → V3.12
+
+### Files changed (mvp)
+
+- `src/lib/super-prompt.ts` — now a re-export shim
+- `src/lib/sage-prompt.ts` — now a re-export shim (preserves `SAGE_SYSTEM_PROMPT`, `SISTERS_IN_DUA`, `SAGE_SEED_POSTS`, `buildSageMessages`, all helpers)
+- `src/lib/clio-prompt.ts` — now a re-export shim
+- `src/lib/share-prompts.ts` — now a re-export shim
+
+### Schema status
+
+No schema migration in V3.12.
+
+### Environment
+
+No new environment variables. The cluster registry is in code; cluster_id remains the database identifier.
+
+### Verification
+
+- `npm run build` clean (32/32 routes), no new TypeScript or lint diagnostics across the new files.
+- All four legacy import paths (`@/lib/super-prompt`, `@/lib/sage-prompt`, `@/lib/clio-prompt`, `@/lib/share-prompts`) continue to resolve via the shims.
+- Sisters in Dua's `cluster_id` (`the_single_source`) is preserved exactly — DB writes from the Sage / Clio routes still target the same row.
+- Inheritance order verified by code inspection: every Sage and Clio call now produces a 3-system-message stack (super-prompt + character + cluster) rather than a single combined block.
+
+### What V3.12 deliberately does not include
+
+- **Migrating routes off the shims.** The shims are a one-commit-each task per route; doing it inline would have made V3.12 a 15-file diff. V3.13 picks them up.
+- **A second concrete cluster.** The structure is ready to receive one. Spinning up a generic test cluster is V3.13 scope, alongside the route migration.
+- **Cluster-id reading from the request.** Routes still pass `DEFAULT_CLUSTER_ID` implicitly. Phase 1 prerequisite — every route accepts an explicit `cluster_id` and the default is removed.
+- **Cluster-vocabulary parameterisation in agent prompts beyond what the builders already do.** The builders already use `cluster.identity.memberNoun` etc. when constructing user-context messages. Phase 1 work extends this to the embedded literal text inside cluster-specific Sage / Clio fragments.
+
+### What stays the same
+
+V3.4–V3.11 invariants are unchanged. Sage's behaviour, Clio's behaviour, the cadence dialogue, the introspection cycle, the link-alignment fold — none of these change in V3.12. The cluster registry resolves to the same module that was previously inlined; the LLM receives the same instructions.
+
+The phrase "the platform's character has not changed; its rules now live in one place rather than 21" from V3.11 still applies — V3.12 just put those rules in well-organised drawers.
+
+*Updated 2026-05-22 as part of V3.12 (multi-cluster prompt restructure). Previous revision: V3.11.*
