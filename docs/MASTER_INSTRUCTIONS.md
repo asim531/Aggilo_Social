@@ -265,3 +265,82 @@ These deep-spec documents still reference the old "Agent Thoughts" / "Features T
 - `architecture/system_implementation_prompt_part5.md` §32 Phase E — Workshop terminology
 
 *Updated 2026-05-21 as part of V3.4 (Room Workshop + two-track capability model). Previous revision: V3.3.2.*
+
+
+---
+
+## V3.5 — Session A: Bug Fixes + Premium Configurability + Cluster Identity Decisions (current)
+
+This revision closes Session A from `docs/sessions/SESSION_A_CONFIGURABILITY.md`. Five live-product bugs are fixed, three strategic cluster-identity decisions are recorded, and the schema for premium cluster configurability ships in `APPLY_NOW.sql` v1.8.
+
+### Live-product bug fixes (B1–B5)
+
+| Bug | Symptom | Fix |
+|---|---|---|
+| **B1** | `@Sage` queries about current developments produced silence — Sage's prompt biased toward verified-vault references with no honest fallback | Added Step 6 (Current-Events Fallback) to Sage's framework. Sage now acknowledges the limit honestly in two-to-three sentences, invites the member to share what they have heard, and offers to reflect together. New decision tag step `current_events_fallback` added to `SAGE_DECISION` schema. |
+| **B2** | Cadence-exchange dialogue contained member-blame framing ("the room has been repeatedly requesting…", "indicating a need…") despite the V3.4 prompt forbidding it | Two-layer fix: (a) prompt hardened with rejection examples — exact phrasings that have shipped before are listed as banned patterns the model must recognise and refuse; (b) server-side regex validator (`hasForbiddenFraming`) runs on `sage_message`, `clio_message`, `trigger_context` after parse. On match: retry once with a hardened reminder; if second attempt also fails, degrade to fixed observe_mode line and log to `behavioural_events` (`cadence_validator_fallback`). |
+| **B3** | "Sage is considering this" indicator only fired for optimistic posts, leaving members staring at silence during real-time @Sage processing | `PostCard.tsx` extended to fire the indicator for non-optimistic posts that mention @Sage and have no Sage reply yet, gated by post age <60s. A 5s tick interval re-renders so the indicator naturally times out at the 60s mark — genuine silence after that point is valid. |
+| **B4** | Clio FAB privacy banners were misleading — both tabs are private to the user, but the AMA tab read like it was less private. Tab labels conflated privacy with storage class. | Tab labels: `Just between us · ephemeral` / `Private Chat · I remember`. Banners rewritten to make explicit: both tabs are private, the difference is what the platform remembers (12h ephemeral vs persistent). First-open tab explainer surfaces once per device with the same point in plain language. |
+| **B5** | New members had no guided way to learn what each cluster surface does (Workshop, presence header, chips, posts, compose bar, @Sage) | Collapsible "What's on this page?" section added to the Private Chat tab inside a cluster. Nine platform-baseline help items, each with a label, description, and click-to-scroll-and-flash behaviour. Anchor IDs (`#aggilo-cluster-presence`, `#aggilo-cluster-chips`, etc.) added to the corresponding components. Platform-baseline list — every cluster gets these, not Workshop-driven. |
+
+### Strategic cluster-identity decisions
+
+| ID | Decision | Where recorded |
+|---|---|---|
+| **D1** | **Defer Atlas to Phase 1.** Phase 0 cost of building Atlas (data acquisition layer + worker infrastructure + Atlas prompt) is ~1 week vs ~30 min for an honest Sage fallback. The honest fallback is the better Phase 0 answer. | Sage prompt Step 6 ships the fallback; Atlas remains in Part 1 §13 / Part 5 §22 unchanged. |
+| **D2** | **Keep "Sisters in Dua" as the formal cluster name.** The name is a poetic seed, not a content gate. Renaming costs SEO and member identity. Vocabulary expansion happens in Sage's prompt, not the cluster name. | No code change — clarification only. |
+| **D3** | **Add `platform_admin` as the 4th `profiles.role` value.** Cross-cluster authority for the Aggilo team. Every action audited via `cluster_admin_actions`. | DDL in `APPLY_NOW.sql` v1.8 §27. Architecture in `system_implementation_prompt_part1.md` §7.9. |
+| **D4** | **The slider is the ceiling for free-text guidance.** Free-text refines within the chosen level; it cannot transgress it. | `premium_cluster_requirements.md` §10.3. |
+| **D5** | **Admin-requested skills go through Workshop pipeline. No fast-track.** Phase 0 turnaround 1–4 weeks is acceptable. | `premium_cluster_requirements.md` §10.4. |
+| **D6** | **Three-level slider** (`min` / `medium` / `high`). Not a continuous 0–100. Behaviours are discrete; cognitive load is bounded; member legibility holds. | `premium_cluster_requirements.md` §10.6. |
+| **D7** | **English-only free-text guidance for V1.** Multi-lingual parsing deferred to Phase 1. | Not yet in code; documented as a V1 constraint. |
+| **D8** | **Skills opt-in to existing premium clusters when new skills ship.** Notify admin at next visit; do not auto-apply. | Behaviour deferred to skill-registry consumer code; documented in `premium_cluster_requirements.md` §10.4. |
+| **D9** | **Defer hard language gate for premium clusters to Phase 1.** Phase 0 enforces by AGGIL only. | No code change; documented. |
+
+### Premium configurability schema (APPLY_NOW.sql v1.8)
+
+Five new objects, idempotent and safe to re-run:
+
+| # | Object | Purpose |
+|---|---|---|
+| 27 | `profiles.role` CHECK extension | Adds `platform_admin` to allowed values |
+| 28 | `cluster_config` | Per-cluster admin settings: slider, agent_disabled, free_text_guidance, parsed_directives, enabled_skills, custom_skill_requests |
+| 29 | `cluster_admin_actions` | Append-only audit trail for every config change, override, or veto |
+| 30 | `skill_registry` | Platform-wide skill catalogue. Seeded with 12 skills covering current Sage/Clio capabilities (verified-reference-curation, vault-gap-detection, cadence-workshop-dialogue, welfare-detection, character-protocol, clio-private-chat, sage-clio-handoff, link-on-topic-evaluation, introspection-cycle, typing-indicator-broadcast, presence-acknowledgment, current-events-fallback) |
+| 31 | Backfill | Sisters in Dua gets a default `cluster_config` row at `medium` involvement with all default-enabled skills pre-applied — behaviour stays exactly as it is today after migration |
+
+RLS: all members read their cluster's config; only `founder` / `manager` / `platform_admin` write. `skill_registry` is platform-wide read; only `platform_admin` mutates. `cluster_admin_actions` is append-only and admin-readable.
+
+### Slider behavioural matrix recorded
+
+The full matrix mapping each agent behaviour to Min / Medium / High slider levels — including the **immutable safety floor** rows that always run regardless of slider position or `agent_disabled` flag — lives in `architecture/premium_cluster_requirements.md` §10. The platform-level summary lives in `architecture/system_implementation_prompt_part1.md` §7.9.
+
+### Files touched
+
+**Code (`mvp/`):**
+- `src/lib/sage-prompt.ts` — Step 6 current-events fallback + decision tag schema extension
+- `src/app/api/agents/cadence-exchange/route.ts` — rejection-example block, `FORBIDDEN_SUBJECT_PATTERNS`, `hasForbiddenFraming` validator with retry-and-degrade
+- `src/components/PostCard.tsx` — extended Sage indicator to non-optimistic posts <60s old with 5s tick
+- `src/components/ClioFab.tsx` — corrected tab labels, banner copy, first-open explainer, `ClusterHelpSection` collapsible
+- `src/components/ClusterFeed.tsx`, `src/components/ClusterHeader.tsx` — anchor IDs for help-section scroll targets
+- `supabase/APPLY_NOW.sql` — v1.8 schema (objects 27–31)
+
+**Architecture (`d:\Aggilo_Social\`):**
+- `architecture/premium_cluster_requirements.md` — §10 slider behavioural matrix, §10.1–§10.6
+- `architecture/system_implementation_prompt_part1.md` — §7.9 per-cluster configurability + platform_admin role
+
+### What is now invariant across ALL clusters (V3.5 update)
+
+The V3.4 invariant list extends with one operational addition:
+
+9. **Server-side validation of agent-generated text against forbidden member-blame patterns.** Two layers: prompt rejection examples + runtime regex check with retry-and-degrade. Belt-and-braces ensures the soul-level rule (no surveillance framing) survives model drift.
+
+### What stays the same
+
+V3.4 invariants 1–8 are unchanged. Cadence floor (2h cold / 4h active), 60/40 ship/observe bias, skepticism-not-sycophancy rule, no-protocol-disclosure rule all carry forward.
+
+### Pending for Session B
+
+Session A done criteria fully met. Session B (`SESSION_B_DISCOVERABILITY.md`) is now unblocked: cluster identity is settled, the slider/skill/configurability schema is in place, and the bug fixes have stabilised the live product surface that public previews will link to.
+
+*Updated 2026-05-22 as part of V3.5 (Session A: bug fixes + premium configurability + cluster identity decisions). Previous revision: V3.4.*

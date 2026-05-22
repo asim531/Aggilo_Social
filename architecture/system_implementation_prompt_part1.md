@@ -633,6 +633,40 @@ Members reading "Room Workshop" feel: *the agents are working on this room*. Mem
 
 Storage is consolidated in `cluster_features` (single table for both tracks, discriminated by `kind`) plus the new `cluster_tool_invocations` telemetry table. See Part 2 §5.1.3 (V3.4 additions) for the full DDL. Existing Phase 0 deployments apply via `mvp/supabase/APPLY_NOW.sql` v1.7.
 
+### 7.9 Per-Cluster Configurability + The platform_admin Role (V3.5)
+
+Premium clusters expose a small, discrete set of configuration controls to their admin. The full behavioural matrix (which behaviours each level enables, what is immutable safety floor, how free-text guidance is bounded by the slider) lives in [`premium_cluster_requirements.md` §10](premium_cluster_requirements.md#10-agent-involvement-slider--behavioural-matrix-v35). The platform-level summary:
+
+- **Agent involvement slider** (`min` / `medium` / `high`, default `medium`) — the ceiling for autonomous agent behaviour in the cluster
+- **`agent_disabled` flag** — when paired with `min`, silences agents entirely except for the immutable safety floor (welfare, character protocol, Sage→Clio handoff, @Sage member invitations)
+- **Free-text guidance** — admin writes intent in plain language; Clio parses it into `parsed_directives` and rejects anything that violates immutable invariants OR exceeds the slider ceiling
+- **Skill enable/disable** — per-cluster toggles drawn from a platform-wide `skill_registry`; admin requests for skills not yet in the registry route to the Workshop pipeline (no fast-track)
+
+The slider is intentionally three discrete levels, not a continuous control. The behaviours it governs (cadence intervals, daily reflection on/off, introspection cycle frequency) are themselves discrete; a 0–100 slider creates the illusion of fine-grained control where there is none, increases admin decision burden, and breaks member legibility.
+
+#### The fourth role: `platform_admin`
+
+The DB enum `profiles.role` accepts four values: `member`, `manager`, `founder`, `platform_admin`. The first three are within-cluster. The fourth (`platform_admin`) is the Aggilo team — cross-cluster authority for safety, governance, and skill catalogue stewardship.
+
+What `platform_admin` can do:
+
+- Read any cluster's `cluster_config` and `cluster_admin_actions` audit trail
+- Override any cluster's slider, skill list, or free-text guidance — every override writes a row to `cluster_admin_actions` with `actor_role = 'platform_admin'` and a `rationale`
+- Veto a cluster admin's free-text directive even if Clio's parser accepted it
+- Mutate `skill_registry` (add new skills, retire skills platform-wide)
+
+What `platform_admin` cannot do:
+
+- Bypass the immutable safety floor (welfare detection, character protocol, soft handoff). These run for every cluster regardless of any role's preference.
+- Read members' private Clio "Just between us" tab content. The privacy boundary is structural, not policy — the data does not leave the user's browser.
+- Act untraceably. Every `platform_admin` action produces a `cluster_admin_actions` row.
+
+The role exists as a structural escape hatch for the small number of cases where the platform must intervene faster than the workshop pipeline allows: an admin makes a configuration choice that violates an invariant the parser missed, a skill needs to be retired across all clusters because of a discovered issue, or a cluster goes silent and the team needs to read its config to understand why.
+
+#### Schema location
+
+The full DDL for `cluster_config`, `cluster_admin_actions`, `skill_registry`, plus the `profiles.role` CHECK constraint extension to include `platform_admin`, lives in `mvp/supabase/APPLY_NOW.sql` v1.8 (Phase 0 reference implementation). Phase 1 will re-implement against the equivalent service layer; the table shapes and RLS policies are stable.
+
 
 ---
 

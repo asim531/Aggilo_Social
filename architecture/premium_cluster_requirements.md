@@ -309,3 +309,94 @@ The compose bar is the most important interactive surface. It uses a rotating da
 The Room Workshop is below the timeline because agents are in service of the conversation, not the other way around. Members who scroll down to the Workshop are the most engaged members — a self-selection filter that improves the quality of feature feedback.
 
 This hierarchy is inherited by Phase 1 for all cluster types (premium and generic).
+
+---
+
+## 10. Agent Involvement Slider — Behavioural Matrix (V3.5)
+
+Premium cluster admins control how present the agents are in the room via a 3-level slider: **Min**, **Medium** (default), **High**. The slider value lives in `cluster_config.agent_involvement`. There is also a `cluster_config.agent_disabled` checkbox that, when paired with `min`, silences the agents entirely except for the immutable safety floor.
+
+The slider is the **ceiling** for what free-text guidance can affect. Free-text guidance from an admin can refine *how* an agent speaks at the chosen level, but it cannot lower the floor or raise the ceiling. The slider is the contract.
+
+### 10.1 The matrix
+
+The rows marked **immutable safety floor** always run regardless of slider position or `agent_disabled` flag. This is the floor below which the platform cannot fall.
+
+| Behaviour | Min | Medium (default) | High |
+|---|---|---|---|
+| Anchor seed on cluster creation | Yes (always — cluster identity) | Yes | Yes |
+| Welfare detection (regex + LLM) | **Yes (immutable safety floor)** | Yes | Yes |
+| Character detection (Step 0.5) | **Yes (immutable safety floor)** | Yes | Yes |
+| @Sage response (member-initiated) | Yes (always — invitation honoured) | Yes | Yes |
+| Cadence Workshop dialogue | Off | 2h cold / 4h active | 1h cold / 2h active |
+| Daily reflection prompt | Off | If proposed and member-voted | Auto-on |
+| Verified-reference autonomous post | Off | Every 6h | Every 4h |
+| Welcome new-member post | Quiet (single line, batched) | Standard | Warm |
+| Link evaluation (on-topic badge) | Off | On | On |
+| Vault gap detection | Off | Logged for admin | Surfaced in Workshop |
+| Description refinement proposal | Off | Quarterly | Monthly |
+| Sage→Clio soft handoff | **Yes (immutable safety floor)** | Yes | Yes |
+| Typing indicator broadcast | Off | On | On |
+| Presence acknowledgement | Off | On | On |
+| Introspection cycle | Off | Every 6h | Every 3h |
+| Current-events fallback (Sage) | On (member-initiated) | On | On |
+
+### 10.2 The "agent_disabled + min" combination
+
+When `agent_disabled = true` AND `agent_involvement = 'min'`, every Off row above stays Off. The immutable safety floor still runs silently:
+
+- Welfare patterns still trigger admin alerts in `welfare_notifications`. The room sees nothing.
+- Character protocol still triggers; if the message is hostile, Sage's standard two-to-three sentence witness still posts (this is the only case where Sage emerges from silence at this level — the floor cannot be moved).
+- Sage→Clio handoffs still queue; Clio still reaches out privately on tender disclosures.
+- @Sage mentions are still honoured — the member explicitly invited Sage in.
+
+What `agent_disabled = true` does **not** do:
+
+- Disable the immutable safety floor (welfare, character, handoff).
+- Disable @Sage (member invitation).
+- Stop the room from existing or members from posting.
+
+The combination is for clusters whose admin wants the room to feel like a quiet member-only space with the platform underneath as a safety net only.
+
+### 10.3 The slider is the ceiling for free-text
+
+`cluster_config.free_text_guidance` is a free-text field where admins can write any guidance they want for the agents (e.g. *"Stay closer to the four schools when discussing fiqh"*, *"Lean into Bengali phrasing when warmth fits"*).
+
+Clio parses this guidance and stores a structured form in `parsed_directives`. The parser:
+
+1. Rejects anything that violates the immutable invariants (welfare, character, monotheism, dignity).
+2. Rejects anything that requests behaviour above the slider ceiling. Example: at `min` involvement, an admin asking for "post a daily reflection at dawn" is rejected — daily reflection is Off at min.
+3. Accepts refinements at-or-below the ceiling. Example: at `medium`, an admin asking for "use more Urdu phrasing in the morning anchor" is accepted as a voice-style directive.
+
+If the parser rejects a directive, the admin is told why. If the admin disagrees, the only way to enable a behaviour above the ceiling is to raise the slider — not to push it through free-text.
+
+This is the contract: the slider is what members and the platform see. Free-text refines within it; it does not transgress it.
+
+### 10.4 Custom skill requests go through Workshop
+
+When an admin requests a skill that is not in `skill_registry`, the request lands in `cluster_config.custom_skill_requests` and is routed into the existing Workshop pipeline as a `proposed` capability. Sage and Clio dialogue about it; if accepted, it is built (in Phase 0, by an engineer; in Phase 1, by autonomous tooling) and added to `skill_registry`.
+
+There is no fast-track. Admin urgency does not bypass the Workshop. This is intentional: every new skill becomes platform-wide, and the Workshop is the platform's quality gate. Phase 0 will likely have a 1–4 week turnaround for accepted custom skills; this is acceptable.
+
+### 10.5 platform_admin role
+
+The 4th role, `platform_admin`, has cross-cluster authority. They can:
+
+- Read any cluster's `cluster_config` and `cluster_admin_actions`.
+- Override any cluster's slider or skill list — but every override writes a row to `cluster_admin_actions` with `actor_role = 'platform_admin'` and a rationale.
+- Veto a cluster admin's free-text directive even if the parser accepted it.
+- Add or remove items in `skill_registry`.
+
+The platform_admin role is for the Aggilo team. It exists so that the platform can intervene when a cluster admin makes a decision that violates an invariant the parser missed, or when a skill needs to be retired across all clusters. It is not a backdoor — every action is audited.
+
+In the DB, `platform_admin` is added to `profiles.role` as a 4th allowed value (v1.8 schema migration).
+
+### 10.6 Why three levels, not continuous
+
+Three discrete levels (Min/Medium/High) instead of a 0-100 slider for three reasons:
+
+1. **The behaviours are not continuous.** Cadence dialogue is either on or off; if on, it runs at a discrete cadence. Interpolating a cadence between 2h and 4h is meaningless.
+2. **Decision burden.** A 0-100 slider creates the illusion of fine-grained control where there isn't any. Admins agonise over 60 vs 65.
+3. **Member legibility.** Members can understand "this room runs at Medium involvement". They cannot understand "this room runs at 67% involvement".
+
+Three levels is the floor for meaningful difference and the ceiling for cognitive load.
