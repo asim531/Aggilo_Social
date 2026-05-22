@@ -7,8 +7,9 @@ The split is deliberate: each session has a different *cognitive mode*, and mixi
 | # | Brief | Mode | When to do |
 |---|---|---|---|
 | **A** | [`SESSION_A_CONFIGURABILITY.md`](SESSION_A_CONFIGURABILITY.md) | **Closing & shipping.** Fix in-flight bugs, ship premium configurability schema, decide cluster-identity questions. | First — has live-product bugs that need fixing |
-| **B** | [`SESSION_B_DISCOVERABILITY.md`](SESSION_B_DISCOVERABILITY.md) | **Outward-facing growth.** Public cluster cards, SEO, OG images, AI provider directory registration, share flow. | Second — depends on cluster identity being settled in A |
-| **C** | [`SESSION_C_PROMPT_AUDIT.md`](SESSION_C_PROMPT_AUDIT.md) | **Deep work.** Comprehensive audit of all 21 prompts in the system against a consistent rubric. | Third — quiet focus session, no other distractions |
+| **B** | [`SESSION_B_DISCOVERABILITY.md`](SESSION_B_DISCOVERABILITY.md) | **Outward-facing growth.** Public cluster cards, SEO, OG images, AI provider directory registration, share flow. Atlas registered as a live capability with schema in place. | Closed 2026-05-22 |
+| **B.5** | [`SESSION_B5_PUBLIC_LISTING_ADMIN.md`](SESSION_B5_PUBLIC_LISTING_ADMIN.md) | **Inward-facing tooling.** Per-cluster admin panel for public listing, Atlas RSS curation, Pulse review queue, Atlas worker runtime. | Next — depends on B's schema |
+| **C** | [`SESSION_C_PROMPT_AUDIT.md`](SESSION_C_PROMPT_AUDIT.md) | **Deep work.** Comprehensive audit of all 21 prompts in the system against a consistent rubric. | After B.5 — Atlas-related prompts can be reviewed against real output |
 
 ## Reading order
 

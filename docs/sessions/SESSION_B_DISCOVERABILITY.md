@@ -1,5 +1,9 @@
 # Session B — External Discoverability + AI Provider Distribution
 
+> **Status:** Closed (Part a) on 2026-05-22. V3.6 changelog in [`docs/MASTER_INSTRUCTIONS.md`](../MASTER_INSTRUCTIONS.md).
+>
+> Atlas runtime, admin panel, and Pulse Timeline card moved to [`SESSION_B5_PUBLIC_LISTING_ADMIN.md`](SESSION_B5_PUBLIC_LISTING_ADMIN.md).
+>
 > **Mode:** Outward-facing growth. Make Aggilo's clusters discoverable on the public internet, on social platforms, and within AI provider directories.
 >
 > **Estimated duration:** 2.5–3 hours.
