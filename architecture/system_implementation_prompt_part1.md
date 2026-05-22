@@ -667,6 +667,7 @@ The role exists as a structural escape hatch for the small number of cases where
 
 The full DDL for `cluster_config`, `cluster_admin_actions`, `skill_registry`, plus the `profiles.role` CHECK constraint extension to include `platform_admin`, lives in `mvp/supabase/APPLY_NOW.sql` v1.8 (Phase 0 reference implementation). Phase 1 will re-implement against the equivalent service layer; the table shapes and RLS policies are stable.
 
+
 ### 7.10 External Discoverability — Public Cluster Surface (V3.6)
 
 Aggilo's clusters become discoverable on the open internet — search engines, social platforms, and AI assistants — without exposing any member content. The discoverability layer is *additive*. The authenticated cluster surface is unchanged. A parallel public layer renders cluster identity, demographic chips, the room's anchor seed, and the latest contemporary signal Atlas has surfaced.

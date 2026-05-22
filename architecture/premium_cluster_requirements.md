@@ -469,4 +469,3 @@ A visitor arriving at `/c/<slug>` and clicking "Join this room" lands on the aut
 Full DDL for `cluster_config` extensions, `cluster_demand_signals`, `atlas_pulses`, `public_cluster_view`, and the V3.6 `skill_registry` additions lives in `mvp/supabase/APPLY_NOW.sql` v1.9.
 
 *v1.1 — V3.6 (Session B Part a). Public-listing controls + Atlas Pulse foundation. Admin panel, Atlas runtime, and Pulse Timeline card ship in Session B.5.*
-

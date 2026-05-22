@@ -1,5 +1,7 @@
 # Session B.5 — Public-Listing Admin Panel + Atlas Runtime
 
+> **Status:** Closed on 2026-05-22. V3.7 changelog in [`docs/MASTER_INSTRUCTIONS.md`](../MASTER_INSTRUCTIONS.md).
+>
 > **Mode:** Inward-facing tooling. Build the admin surfaces that Session B's schema demands, plus the Atlas worker process that turns Atlas from a registered capability into a running one.
 >
 > **Estimated duration:** 2.5–3 hours.
