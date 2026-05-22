@@ -502,7 +502,7 @@ The following operational documents add behavioural and integration detail to th
 | 4 | **Software factories** | Humans (founders, admin team) define what success looks like; agents generate and iterate the implementation. Sage's prompt is DB-backed via `agent_prompt_proposals` — Clio drafts refinements grounded in evidence (logs, feedback, events), admin approves, the new prompt activates. Cluster-specific personas live in `sage_personas` and adapt without code changes. Tool/feature ideation flows from agent dialogue → member polling → admin approval → development. |
 | 5 | **No human middleware** | Every layer that exists only to route information is removed. Welfare flags realtime-push to admin (no polling). Sage→Clio handoff happens autonomously when public silence is right but private follow-up serves the member. Vault gaps Sage notices auto-create curation tasks for the admin. The cluster's daily operation requires the human only at decision points the platform genuinely cannot judge. |
 | 6 | **Three archetypes** | The platform supports builder-operators (admin, managers — directly run their clusters), DRIs (a cluster's named admin owns its outcomes), and AI-led workflows (Sage and Clio operate semi-autonomously under Clio's orchestration, with admin override). No diffused accountability — every cluster has one admin, every welfare flag has one human owner. |
-| 7 | **Token-max** | Spending is bounded but generous: a daily budget cap (`LLM_DAILY_BUDGET_USD`, default $5 for MVP) prevents runaway, but inside the cap the agents are willing to call the LLM for every member message, every cadence exchange, every feature evaluation. Cost is measured per-call (`llm_response_logs.cost_estimate_usd`), surfaced per-operation in the admin LLM tab, and trades headcount (vault curators, moderators, community managers) for AI throughput. |
+| 7 | **Token-max** | Spending is bounded but generous: a daily budget cap (`LLM_DAILY_BUDGET_USD`, default $5 for pilot deployments) prevents runaway, but inside the cap the agents are willing to call the LLM for every member message, every cadence exchange, every feature evaluation. Cost is measured per-call (`llm_response_logs.cost_estimate_usd`), surfaced per-operation in the admin LLM tab, and trades headcount (vault curators, moderators, community managers) for AI throughput. |
 
 ### 7.2 What is Immutable Across All Clusters
 
@@ -631,7 +631,7 @@ Members reading "Room Workshop" feel: *the agents are working on this room*. Mem
 
 #### Schema
 
-Storage is consolidated in `cluster_features` (single table for both tracks, discriminated by `kind`) plus the new `cluster_tool_invocations` telemetry table. See Part 2 §5.1.3 (V3.4 additions) for the full DDL. Existing Phase 0 deployments apply via `mvp/supabase/APPLY_NOW.sql` v1.7.
+Storage is consolidated in `cluster_features` (single table for both tracks, discriminated by `kind`) plus the new `cluster_tool_invocations` telemetry table. See Part 2 §5.1.3 (V3.4 additions) for the full DDL. The reference DDL applies via `supabase/APPLY_NOW.sql` v1.7 in pilot deployments.
 
 ### 7.9 Per-Cluster Configurability + The platform_admin Role (V3.5)
 
@@ -665,7 +665,7 @@ The role exists as a structural escape hatch for the small number of cases where
 
 #### Schema location
 
-The full DDL for `cluster_config`, `cluster_admin_actions`, `skill_registry`, plus the `profiles.role` CHECK constraint extension to include `platform_admin`, lives in `mvp/supabase/APPLY_NOW.sql` v1.8 (Phase 0 reference implementation). Phase 1 will re-implement against the equivalent service layer; the table shapes and RLS policies are stable.
+The full DDL for `cluster_config`, `cluster_admin_actions`, `skill_registry`, plus the `profiles.role` CHECK constraint extension to include `platform_admin`, lives in `supabase/APPLY_NOW.sql` v1.8 (pilot reference implementation). Production re-implements against the equivalent service layer; the table shapes and RLS policies are stable.
 
 
 ### 7.10 External Discoverability — Public Cluster Surface (V3.6)
@@ -734,7 +734,7 @@ This applies to **every cluster** on Aggilo — generic and Premium — once its
 
 #### Schema location
 
-The full DDL for `cluster_config` extensions, `cluster_demand_signals`, `atlas_pulses`, `public_cluster_view`, and the V3.6 additions to `skill_registry`, lives in `mvp/supabase/APPLY_NOW.sql` v1.9.
+The full DDL for `cluster_config` extensions, `cluster_demand_signals`, `atlas_pulses`, `public_cluster_view`, and the V3.6 additions to `skill_registry`, lives in `supabase/APPLY_NOW.sql` v1.9.
 
 
 ---
@@ -783,8 +783,8 @@ Phase 1 readiness for a given Phase 0 deployment is signalled when:
 
 These are not hard gates — they are readiness signals. The decision to move to Phase 1 is the Admin's. Specific Phase 0 cluster transition timing lives in the cluster's own spec.
 
-### 8.4 Phase 0 Stack Isolation Rule
+### 8.4 Pilot Stack Isolation Rule
 
-A Phase 0 codebase (e.g. `/mvp/`) is its own world. It MUST NOT import from the Phase 1 `apps/api/` or use Fastify/BullMQ patterns. A Phase 0 deployment is a Next.js 14 App Router application. All agent logic runs as Next.js API routes. All queue-like behaviour is implemented as client-side timers with server-side cadence guards.
+A pilot codebase (a Next.js 14 App Router deployment running the platform's reference implementation) is its own world. It MUST NOT import from the production `apps/api/` or use Fastify/BullMQ patterns. A pilot deployment runs all agent logic as Next.js API routes. All queue-like behaviour is implemented as client-side timers with server-side cadence guards.
 
-When Phase 1 is built, the agent behaviour patterns validated in Phase 0 are re-implemented in the Node/Fastify/BullMQ stack. The Phase 0 codebase is not migrated — it is a reference implementation.
+When the production worker tier is built, the agent behaviour patterns validated in the pilot are re-implemented in the Node/Fastify/BullMQ stack. The pilot codebase is not migrated — it is a reference implementation that may be retired once production parity is reached.

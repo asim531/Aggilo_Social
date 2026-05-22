@@ -1,6 +1,6 @@
 # Premium Cluster Requirements
 
-> **Status:** Active spec for premium clusters on Aggilo. Sisters in Dua MVP is the first instantiation.
+> **Status:** Active spec for premium clusters on Aggilo.
 > **Authority:** This spec is subordinate to [`AGGILO_SOUL.md`](../AGGILO_SOUL.md), [`AGGILO_PLATFORM_RULES.md`](../AGGILO_PLATFORM_RULES.md), and the welfare protocol. Where a premium cluster wishes to deviate from Aggilo's foundation, it cannot — every customisation below is bounded by what is **immutable** in §6.
 
 A premium cluster is a cluster where a real human (the **Admin**) and up to three appointed **Managers** hold guidance authority alongside the Aggilo agents. Premium clusters serve communities where domain expertise lives outside the AI — fiqh, medical practice, legal counsel, scholarly traditions, industry mentorship — and the platform's role is to support the human authority rather than replace it.
@@ -39,7 +39,7 @@ For regular (non-premium) clusters, this terminology does not apply — Sage and
 ### 2.3 Sage configuration
 - Sage's **decision framework** (Step 0–5) is the same across all premium clusters and is **not customisable** — it carries the welfare-first, character-second invariant.
 - Sage's **register** (academic/casual/professional/community/neutral), formality, and interjection frequency are configurable per cluster via `sage_personas`. This adapts how Sage speaks without changing what she is allowed to say or refuse.
-- The specific reference vocabulary (e.g. "dua/ayah/hadith" for Sisters in Dua, "case/passage/precedent" for a different premium cluster) is configurable through cluster-specific terminology in the prompt-context layer.
+- The specific reference vocabulary (e.g. "dua/ayah/hadith" for a faith cluster, "case/passage/precedent" for a different premium cluster) is configurable through cluster-specific terminology in the prompt-context layer.
 
 ### 2.4 Features and tools
 - Approve / reject / defer features that Sage and Clio propose in the Room Workshop
@@ -49,7 +49,7 @@ For regular (non-premium) clusters, this terminology does not apply — Sage and
 
 ### 2.5 Manager appointment
 - Up to 3 Managers per premium cluster
-- Manager appointment threshold: at minimum, one Manager must be in place before active member count exceeds 25 (deferred — captured as gap in current MVP)
+- Manager appointment threshold: at minimum, one Manager must be in place before active member count exceeds 25 (machine-enforced before any second premium cluster ships; tracked as a Phase 0 expedient in `docs/PHASE_0_PILOT.md` until then)
 - Managers receive welfare and character-concern alerts on the same realtime channel as the Admin
 
 ### 2.6 Member moderation
@@ -99,10 +99,10 @@ A premium cluster Admin **cannot** override these. Any attempt to bypass them vi
 |------|-------|
 | Cluster identity, AGGIL settings | `clusters` table |
 | Sage register & formality per cluster | `sage_personas` |
-| Vault entries | `dua_vault` (cluster-scoped through `cluster_id` once we move beyond MVP single-cluster) |
+| Vault entries | `dua_vault` (cluster-scoped through `cluster_id` — every cluster receives its own vault) |
 | Vault sources | `vault_sources` |
 | Vault gaps | `vault_gap_requests` |
-| Manager appointments | `cluster_members.is_manager` (deferred — current MVP uses `profiles.role`) |
+| Manager appointments | `cluster_members.is_manager` (planned — current pilot deployments use `profiles.role`; see `docs/PHASE_0_PILOT.md`) |
 | Admin actions audit | `cluster_admin_actions` |
 | Welfare queue | `welfare_notifications` |
 | Character concerns | `character_concerns` |
@@ -115,22 +115,26 @@ A premium cluster Admin **cannot** override these. Any attempt to bypass them vi
 
 ---
 
-## 6. Sisters in Dua — the first premium cluster
+## 6. Cluster profile — required fields per premium cluster
 
-Sisters in Dua applies this spec with these specific choices:
+Every premium cluster, when created, fills in this profile. The platform team verifies the profile against §3 (immutables) before activation.
 
-| Premium-cluster setting | Sisters in Dua value |
-|-------------------------|----------------------|
-| Domain | Faith — Muslim women navigating Islam in real life |
-| Sage register | `community` — warm, present-tense, no emoji |
-| Reference vocabulary | dua / ayah / hadith |
-| Vault grading rules | Sahih / Hasan only; Da'if flagged with explanation; Mawdu rejected |
-| Authority redirects | "The Admin or a scholar you trust" |
-| Geographic gate (MVP) | India only |
-| Beta disclosure | Shown to non-S/SE-Asia members; Sisters in Dua MVP currently India-only |
-| Manager profile | Practitioners and scholars from South and Southeast Asia (display); 0–3 in MVP |
+| Field | Description | Examples |
+|-------|-------------|----------|
+| Domain | The cluster's subject matter | Faith / medical practice / legal aid / scholarly tradition / industry mentorship |
+| Sage register | Voice register for the cluster's anchor | `academic` / `casual` / `professional` / `community` / `neutral` |
+| Reference vocabulary | What the cluster's "vault" contains and what its entries are called | duas / case studies / precedents / passages / primary sources |
+| Vault grading rules | What is verified, what is rejected, what is flagged with caveat | Cluster-specific (e.g. "primary-source citations only; secondary sources flagged") |
+| Authority redirect language | Who is "the right person" for ruling-type questions | "The Admin or a scholar you trust" / "Your supervising clinician" / "Your legal counsel" |
+| Geographic gate | If any | Country, region, or none |
+| Beta disclosure | Copy shown to members outside the geographic / demographic gate | Cluster-specific |
+| Manager profile | Who Managers are appointed from | Domain-specific (e.g. practitioners, scholars, certified specialists) |
+| Demographic restrictions | Surfaced as chips on the cluster header | Age range, gender, language, etc. |
+| Primary language | ISO 639-1 code | `en`, `ur`, `bn`, etc. |
 
-Cluster-specific spec: [`mvp/Sisters In Dua/sisters_in_dua_cluster_spec_v3.1.md`](../mvp/Sisters%20In%20Dua/sisters_in_dua_cluster_spec_v3.1.md).
+The cluster's identity file (`src/lib/prompts/clusters/<id>/identity.ts`) carries these as structured fields; the cluster's per-agent prompt fragments (`sage.ts`, `clio.ts`) inherit them.
+
+For the current pilot's filled-in profile, see `docs/PHASE_0_PILOT.md`.
 
 ---
 
@@ -151,14 +155,14 @@ The platform team verifies the profile against §3 (immutables) before activatio
 
 ---
 
-*v1.0 — created as part of the 7-principles audit. Subject to revision as Sisters in Dua collects real user feedback and additional premium clusters come online.*
+*v1.1 — generic premium-cluster profile template. Specific cluster instantiations live as their own modules under `src/lib/prompts/clusters/<id>/`; the current pilot's profile lives in `docs/PHASE_0_PILOT.md`.*
 
 
 ---
 
 ## 8. Phase-1 UX invariants (V3.2)
 
-These rules apply to every premium cluster. They emerged from observing the Sisters-in-Dua MVP and are designed to keep the cluster feeling alive without overwhelming new members.
+These rules apply to every premium cluster. They emerged from the platform's first cluster validation runs and are designed to keep clusters feeling alive without overwhelming new members.
 
 ### 8.1 First-visit cognitive load budget
 
@@ -248,49 +252,9 @@ This closes the loop: members shape what the agents prioritize, the agents shape
 
 ---
 
-## 9. Phase 0 — Sisters in Dua as the First Premium Cluster
+## 9. Hierarchy-First UX (validated and inherited platform-wide)
 
-Sisters in Dua is Phase 0 of the Aggilo platform. It is the first live premium cluster and the validation environment for every agent behaviour, UX pattern, and closed-loop mechanism described in this document.
-
-### 9.1 What Phase 0 Proves
-
-| Behaviour | How it's validated in Phase 0 |
-|---|---|
-| Sage's decision framework | Every member post triggers `sage/evaluate`. Decision logged to `sage_decision_logs`. Admin reviews in Workshop dashboard. |
-| Welfare protocol | Regex + LLM Step 0. Welfare queue in admin dashboard. Admin resolves. |
-| Good-character protocol | Regex + LLM Step 0.5. Care queue in admin dashboard. |
-| Dua repetition guard | Vault-ID dedup across both cadence and evaluate paths. Pointer behaviour when dua already posted. |
-| Workshop pipeline | Workshop → `cluster_features` (kind=member_feature) → member upvote/comment → admin approval. Tools (kind=agent_tool) deploy autonomously when `deployable_now`. |
-| Introspection cycle | Clio reads 7-day telemetry every 6h. Produces self-critique + concrete proposal. |
-| Hierarchy-first UX | Members first, agents in service. Compose bar as primary surface. Room Workshop below timeline. |
-| Closed-loop telemetry | `llm_response_logs`, `sage_decision_logs`, `agent_feedback`, `behavioural_events`. |
-| Admin dashboard | Welfare, care, LLM observability, vault curator, features, events. |
-
-### 9.2 Phase 0 Constraints (Sisters in Dua specific)
-
-These constraints apply to Phase 0 only. They are lifted when Phase 1 launches.
-
-- **India-only geographic gate** — enforced at onboarding (country selection).
-- **Women-only gender gate** — enforced at onboarding (gender selection).
-- **Vault-only references** — no Atlas, no external source crawling. All references come from `dua_vault`.
-- **Single cluster** — no generic cluster creation, no AGGIL engine, no Scout.
-- **Hand-curated vault** — Admin adds duas via Supabase SQL Editor. Vault curation UI is roadmap.
-- **Manual admin elevation** — Admin promotes themselves via SQL. Auto-elevation via `ADMIN_EMAILS` env is available but optional.
-
-### 9.3 Dua Repetition Protocol (Phase 0 specific)
-
-The vault is small (10–60 entries at Phase 0 launch). Repetition is a real risk. The protocol:
-
-1. **14-day exclusion window** — a vault entry posted in the last 14 days is excluded from the eligible pool in `suggest-dua`.
-2. **Cross-path dedup** — `sage/evaluate` checks whether the vault entry Sage wants to surface was already posted in the last 14 days. If yes, posts a reply-style pointer instead.
-3. **Pointer behaviour** — "We've shared this reference before — it may be relevant here. [scroll to it]" — directed at the member as a reply, not a standalone post.
-4. **Jaccard similarity guard** — application-layer check (threshold 0.55) catches near-duplicate free-text responses even without a vault marker.
-
-As the vault grows (60+ entries), the exclusion window can be shortened. At 180+ entries (pre-Ramadan target), repetition becomes rare enough that the window can be reduced to 7 days.
-
-### 9.4 Hierarchy-First UX (Phase 0 validated, Phase 1 inherited)
-
-The layout hierarchy validated in Phase 0:
+The layout hierarchy applied to every premium cluster:
 
 ```
 Navbar (sticky top)
@@ -308,7 +272,7 @@ The compose bar is the most important interactive surface. It uses a rotating da
 
 The Room Workshop is below the timeline because agents are in service of the conversation, not the other way around. Members who scroll down to the Workshop are the most engaged members — a self-selection filter that improves the quality of feature feedback.
 
-This hierarchy is inherited by Phase 1 for all cluster types (premium and generic).
+This hierarchy is invariant across cluster types (premium and generic). Pilot validation history and pilot-specific constraints (geographic gates, member-base demographic gates, vault size, etc.) live in `docs/PHASE_0_PILOT.md`.
 
 ---
 
@@ -374,9 +338,9 @@ This is the contract: the slider is what members and the platform see. Free-text
 
 ### 10.4 Custom skill requests go through Workshop
 
-When an admin requests a skill that is not in `skill_registry`, the request lands in `cluster_config.custom_skill_requests` and is routed into the existing Workshop pipeline as a `proposed` capability. Sage and Clio dialogue about it; if accepted, it is built (in Phase 0, by an engineer; in Phase 1, by autonomous tooling) and added to `skill_registry`.
+When an admin requests a skill that is not in `skill_registry`, the request lands in `cluster_config.custom_skill_requests` and is routed into the existing Workshop pipeline as a `proposed` capability. Sage and Clio dialogue about it; if accepted, it is built and added to `skill_registry`.
 
-There is no fast-track. Admin urgency does not bypass the Workshop. This is intentional: every new skill becomes platform-wide, and the Workshop is the platform's quality gate. Phase 0 will likely have a 1–4 week turnaround for accepted custom skills; this is acceptable.
+There is no fast-track. Admin urgency does not bypass the Workshop. This is intentional: every new skill becomes platform-wide, and the Workshop is the platform's quality gate. The expected turnaround for accepted custom skills is 1–4 weeks.
 
 ### 10.5 platform_admin role
 
@@ -466,6 +430,6 @@ A visitor arriving at `/c/<slug>` and clicking "Join this room" lands on the aut
 
 ### 11.7 Schema location
 
-Full DDL for `cluster_config` extensions, `cluster_demand_signals`, `atlas_pulses`, `public_cluster_view`, and the V3.6 `skill_registry` additions lives in `mvp/supabase/APPLY_NOW.sql` v1.9.
+Full DDL for `cluster_config` extensions, `cluster_demand_signals`, `atlas_pulses`, `public_cluster_view`, and the V3.6 `skill_registry` additions lives in `supabase/APPLY_NOW.sql` v1.9.
 
 *v1.1 — V3.6 (Session B Part a). Public-listing controls + Atlas Pulse foundation. Admin panel, Atlas runtime, and Pulse Timeline card ship in Session B.5.*

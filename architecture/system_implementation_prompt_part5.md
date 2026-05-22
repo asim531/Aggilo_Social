@@ -496,7 +496,7 @@ Adds the dual-tab Clio surface and the soft handoff mechanism. Spec: `clio/CLIO_
 
 **Frontend:**
 - `ClioFab` becomes a dual-tab surface (default: Just between us; opt-in: About this room)
-- Per-tab thread storage in sessionStorage; visual differentiation (deep teal vs amber)
+- Per-tab thread storage in the storage class appropriate to each tab (server-side ephemeral for non-PII, server-persistent for PII); visual differentiation (deep teal vs amber)
 - First-time tooltip explains the tabs (`localStorage.aggilo:clio_tabs_tip_dismissed`)
 - `PostCard` renders the cluster-visible inline note ("Clio is following up privately.") when `sage_handoff_to_clio_at` is set
 - Pending handoff greetings render with `FROM SAGE` label and rose-50 bubble in the private tab
@@ -511,7 +511,7 @@ Adds the dual-tab Clio surface and the soft handoff mechanism. Spec: `clio/CLIO_
 6. Post a non-welfare message. No handoff queued. No cluster note rendered.
 7. Open the cluster in two browser tabs as the same user. Trigger a handoff in tab A. The greeting and rose dot appear in tab B within ~1s without action.
 
-### Phase H — Future (post-MVP)
+### Phase H — Future enhancements
 
 - Member opt-out setting: "Don't have Clio reach out to me privately" → suppresses `clio_handoff_greetings` insertion
 - Sage-authored handoff context (gated): when Founder explicitly enables, Sage may pass a single context line into the templated greeting
@@ -520,7 +520,7 @@ Adds the dual-tab Clio surface and the soft handoff mechanism. Spec: `clio/CLIO_
 
 ---
 
-## 33. Vault-Entry Repetition Protocol (V3.2 — Phase 0 validated)
+## 33. Vault-Entry Repetition Protocol
 
 > Generic protocol. The "vault" is the cluster-specific knowledge base — duas in a faith cluster, case studies in a legal cluster, precedents in a clinical cluster, etc. The protocol applies wherever Sage surfaces vault entries to a Timeline.
 
@@ -563,14 +563,8 @@ In addition to the vault-ID check, a Jaccard word-set similarity check (`isSageP
 
 When the similarity check fires, the response is suppressed and replaced with `[SAGE_SILENT]`. Logged as `step_matched = 'silent'` in `sage_decision_logs`.
 
-### 33.5 Reference Implementation (Phase 0)
+### 33.5 Reference Implementation
 
-The protocol above was first implemented and validated in the Phase 0 deployment. Phase 0 reference paths:
+The protocol applies across the platform. The platform's prompt utilities (`src/lib/prompts/sage-builder.ts`) export `shallowSimilarity()` and `isSagePostRepetitive()`; the Sage evaluate route runs the vault-ID dedup map and the pointer-reply path; the cadence endpoint runs the eligible-pool exclusion and the standalone pointer post.
 
-| File | What it does |
-|---|---|
-| `mvp/src/app/api/sage/evaluate/route.ts` | Vault-ID dedup map, pointer reply, Jaccard guard |
-| `mvp/src/app/api/sage/suggest-*` (cadence endpoints, cluster-specific) | Eligible pool exclusion, standalone pointer post |
-| `mvp/src/lib/sage-prompt.ts` | `isSagePostRepetitive()`, `shallowSimilarity()`, prompt-level repetition rule, `vault_id_used` instruction |
-
-The Phase 1 implementation (Node/Fastify) re-implements the same protocol against the equivalent service layer.
+When pilot deployments use this protocol, the file paths follow the pilot's local layout — see `docs/PHASE_0_PILOT.md` for the current pilot map.
