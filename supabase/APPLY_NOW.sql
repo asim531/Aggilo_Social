@@ -2032,3 +2032,76 @@ UPDATE public.cluster_config
  WHERE cluster_id = 'the_single_source';
 
 NOTIFY pgrst, 'reload schema';
+
+
+-- ╔══════════════════════════════════════════════════════════════════╗
+-- ║  Agent locks — concurrent-request dedupe (2026-05-23)            ║
+-- ╠══════════════════════════════════════════════════════════════════╣
+-- ║  Source migration: migrations/2026-05-23_agent_locks.sql         ║
+-- ║                                                                  ║
+-- ║  Fixes a duplicate-Sage-post race in the autonomous routes:      ║
+-- ║    - /api/sage/suggest-dua                                       ║
+-- ║    - /api/agents/welcome-new-member                              ║
+-- ║    - /api/agents/cadence-exchange                                ║
+-- ║                                                                  ║
+-- ║  Two simultaneous requests could both pass an application-level  ║
+-- ║  cadence/idempotency check because neither had inserted yet,     ║
+-- ║  producing duplicate Sage posts. We use a small lock table with  ║
+-- ║  INSERT ... ON CONFLICT DO NOTHING semantics — pgbouncer-safe,   ║
+-- ║  TTL-bounded, self-expiring on crash.                            ║
+-- ╚══════════════════════════════════════════════════════════════════╝
+
+CREATE TABLE IF NOT EXISTS public.agent_locks (
+  lock_key text PRIMARY KEY,
+  acquired_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL
+);
+
+ALTER TABLE public.agent_locks ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION public.try_acquire_agent_lock(
+  p_key text,
+  p_ttl_seconds int
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_inserted int;
+BEGIN
+  DELETE FROM public.agent_locks
+   WHERE lock_key = p_key
+     AND expires_at <= now();
+
+  INSERT INTO public.agent_locks (lock_key, acquired_at, expires_at)
+  VALUES (
+    p_key,
+    now(),
+    now() + make_interval(secs => p_ttl_seconds)
+  )
+  ON CONFLICT (lock_key) DO NOTHING;
+
+  GET DIAGNOSTICS v_inserted = ROW_COUNT;
+  RETURN v_inserted > 0;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.release_agent_lock(p_key text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM public.agent_locks WHERE lock_key = p_key;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.try_acquire_agent_lock(text, int)
+  TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.release_agent_lock(text)
+  TO anon, authenticated, service_role;
+
+NOTIFY pgrst, 'reload schema';

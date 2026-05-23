@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 import { PostWithAuthor } from "@/lib/types";
 import { llmCall } from "@/lib/llm-fetch";
 import { AGGILO_SUPER_PROMPT_LITERAL } from "@/lib/super-prompt";
+import { tryAcquireAgentLock, releaseAgentLock } from "@/lib/agent-lock";
 
 /**
  * POST /api/agents/cadence-exchange
@@ -182,6 +183,37 @@ export async function POST() {
 
     const clusterId = "the_single_source";
 
+    // ── Concurrent-request guard ────────────────────────────────────
+    // Two simultaneous requests would both pass the cadence floor
+    // below and both insert an exchange row, doubling the Sage↔Clio
+    // dialogue strip. Cluster-scoped lock for the duration of the
+    // LLM exchange (which can take 5-15s end-to-end with the
+    // validator retry path).
+    const LOCK_KEY = `cadence_exchange:${clusterId}`;
+    const acquired = await tryAcquireAgentLock(supabase, LOCK_KEY, 90);
+    if (!acquired) {
+      return NextResponse.json({
+        outcome: "in_flight",
+        sage_note: "Another cadence-exchange request is in flight for this cluster.",
+      });
+    }
+
+    try {
+      return await runCadenceExchange(supabase, clusterId, user.id);
+    } finally {
+      await releaseAgentLock(supabase, LOCK_KEY);
+    }
+  } catch (error) {
+    console.error("Cadence-exchange error:", error);
+    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
+  }
+}
+
+async function runCadenceExchange(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  clusterId: string,
+  userId: string
+) {
     const [{ count: memberCount }, { count: postCount }] = await Promise.all([
       supabase.from("profiles").select("*", { count: "exact", head: true }),
       supabase.from("posts").select("*", { count: "exact", head: true }),
@@ -241,7 +273,7 @@ export async function POST() {
       {
         agent: "cadence",
         operationKey: "cadence_exchange",
-        userId: user.id,
+        userId: userId,
         clusterId,
       },
       {
@@ -314,7 +346,7 @@ export async function POST() {
           {
             agent: "cadence",
             operationKey: "cadence_exchange_retry",
-            userId: user.id,
+            userId: userId,
             clusterId,
           },
           {
@@ -365,7 +397,7 @@ export async function POST() {
           try {
             await supabase.from("behavioural_events").insert({
               event_type: "cadence_validator_fallback",
-              user_id: user.id,
+              user_id: userId,
               cluster_id: clusterId,
               event_data: {
                 first_attempt_patterns: firstAttemptPatterns,
@@ -467,8 +499,4 @@ export async function POST() {
       exchange_number: exchangeNumber,
       feature_id: featureRowId,
     });
-  } catch (err) {
-    console.error("Cadence exchange unexpected error:", err);
-    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
-  }
 }

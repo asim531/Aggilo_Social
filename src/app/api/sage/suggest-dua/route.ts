@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 import { DuaVaultEntry, PostWithAuthor } from "@/lib/types";
 import { CLIO_DUA_REVIEW_PROMPT } from "@/lib/clio-prompt";
 import { llmCall } from "@/lib/llm-fetch";
+import { tryAcquireAgentLock, releaseAgentLock } from "@/lib/agent-lock";
 
 /**
  * POST /api/sage/suggest-dua
@@ -82,6 +83,42 @@ export async function POST() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    // ── Concurrent-request guard ────────────────────────────────────
+    // Two browser tabs / a refresh during ClusterShell's 5s timer can
+    // fire this route twice within milliseconds. Both requests would
+    // pass the 6h cadence check below because neither has inserted
+    // yet, and both would post the same dua. We hold a cluster-scoped
+    // lock for the duration of selection + Clio review + insert.
+    //
+    // TTL = 60s — comfortably larger than the slowest two-LLM-call
+    // path, well under the 6h cadence so a crashed request still
+    // unblocks the next legitimate window quickly.
+    const LOCK_KEY = "sage_dua:the_single_source";
+    const acquired = await tryAcquireAgentLock(supabase, LOCK_KEY, 60);
+    if (!acquired) {
+      return NextResponse.json({
+        outcome: "in_flight",
+        sage_note: "Another suggest-dua request is in flight for this cluster.",
+      });
+    }
+
+    try {
+      return await runSuggestDua(supabase, user.id);
+    } finally {
+      // Best-effort early release so the next eligible window opens
+      // promptly on success. Self-expiry covers the crash path.
+      await releaseAgentLock(supabase, LOCK_KEY);
+    }
+  } catch (error) {
+    console.error("Suggest-dua error:", error);
+    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
+  }
+}
+
+async function runSuggestDua(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+) {
     const sixHoursAgo = new Date(
       Date.now() - MIN_HOURS_BETWEEN_DUAS * 60 * 60 * 1000
     ).toISOString();
@@ -190,7 +227,7 @@ export async function POST() {
       {
         agent: "sage_dua_select",
         operationKey: "sage_dua_select",
-        userId: user.id,
+        userId: userId,
         clusterId: "the_single_source",
       },
       {
@@ -297,7 +334,7 @@ export async function POST() {
       {
         agent: "clio_dua_review",
         operationKey: "clio_dua_review",
-        userId: user.id,
+        userId: userId,
         clusterId: "the_single_source",
       },
       {
@@ -409,8 +446,4 @@ export async function POST() {
       proposal,
       clio_review: clioReview,
     });
-  } catch (error) {
-    console.error("Suggest-dua error:", error);
-    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
-  }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { adminClient } from "@/lib/supabase-admin";
+import { tryAcquireAgentLock, releaseAgentLock } from "@/lib/agent-lock";
 
 /**
  * POST /api/agents/welcome-new-member
@@ -48,12 +49,39 @@ export async function POST(request: Request) {
       return NextResponse.json({ skipped: "service_role_not_configured" });
     }
 
+    // ── Concurrent-request guard ────────────────────────────────────
+    // ClusterShell fires this 8s after mount. A refresh, a second tab,
+    // or React StrictMode double-mount would otherwise cause two
+    // requests to both pass the "already welcomed" check (because
+    // neither has inserted the behavioural_event yet) and post two
+    // welcomes for the same member. Per-user lock with a short TTL.
+    const LOCK_KEY = `welcome:${user.id}`;
+    const acquired = await tryAcquireAgentLock(supabase, LOCK_KEY, 30);
+    if (!acquired) {
+      return NextResponse.json({ skipped: "in_flight" });
+    }
+
+    try {
+      return await runWelcome(admin, user.id);
+    } finally {
+      await releaseAgentLock(supabase, LOCK_KEY);
+    }
+  } catch (err) {
+    console.error("[welcome-new-member] error:", err);
+    return NextResponse.json({ error: "unexpected" }, { status: 500 });
+  }
+}
+
+async function runWelcome(
+  admin: ReturnType<typeof adminClient>,
+  userId: string
+) {
     // Already welcomed? Check behavioural_events for a 'welcome_posted' row
     // for this user.
     const { data: existing } = await admin
       .from("behavioural_events")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("event_type", "session_started")
       .eq("event_data->>welcome_posted", "true")
       .limit(1);
@@ -67,7 +95,7 @@ export async function POST(request: Request) {
     const { count: theirPostCount } = await admin
       .from("posts")
       .select("id", { count: "exact", head: true })
-      .eq("author_id", user.id);
+      .eq("author_id", userId);
 
     if ((theirPostCount ?? 0) > 0) {
       return NextResponse.json({ skipped: "already_posting" });
@@ -90,7 +118,7 @@ export async function POST(request: Request) {
       // Mark this user as welcomed (the existing card covers them) without
       // posting another.
       await admin.from("behavioural_events").insert({
-        user_id: user.id,
+        user_id: userId,
         event_type: "session_started",
         cluster_id: "the_single_source",
         event_data: { welcome_posted: true, batched_with: recentWelcomes[0].id },
@@ -121,15 +149,11 @@ export async function POST(request: Request) {
     }
 
     await admin.from("behavioural_events").insert({
-      user_id: user.id,
+      user_id: userId,
       event_type: "session_started",
       cluster_id: "the_single_source",
       event_data: { welcome_posted: true, post_id: post.id },
     });
 
     return NextResponse.json({ posted: true, post_id: post.id });
-  } catch (err) {
-    console.error("[welcome-new-member] error:", err);
-    return NextResponse.json({ error: "unexpected" }, { status: 500 });
-  }
 }
