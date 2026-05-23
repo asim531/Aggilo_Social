@@ -30,7 +30,7 @@
  * Spec: clio/CLIO_UNIFIED_CLUSTER_PRESENCE.md (v1.1 Two-Lens addendum)
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import Image from "next/image";
 import {
   CLIO_THINKING_CLUSTER,
@@ -42,6 +42,7 @@ import {
   toneColorForReason,
   type HandoffReason,
 } from "@/lib/handoff-greetings";
+import { SHOW_AROUND_REPLAY_EVENT } from "./ClioShowAround";
 
 type ClioTab = "private" | "cluster";
 type ToneColor = "rose" | "amber" | "indigo";
@@ -149,7 +150,7 @@ export default function ClioFab({
   const [clusterMessages, setClusterMessages] = useState<ClioMessage[]>([
     {
       role: "clio",
-      content: `Assalamu Alaikum. Private to you, and I remember our conversations so I can serve you better next time. Ask me anything about ${clusterName} — what Sage meant, how this space works, whether something has been discussed before.`,
+      content: `Assalamu Alaikum. Private to you, and I remember our conversations so I can serve you better next time. Ask me anything about ${clusterName} — what Sage meant, how this space works, whether something has been discussed before.\n\nWant a quick tour? {{show-me-around}}`,
       timestamp: Date.now(),
     },
   ]);
@@ -166,7 +167,15 @@ export default function ClioFab({
     if (storedPrivate.length > 0) setPrivateMessages(storedPrivate);
 
     const storedCluster = loadClusterMessages();
-    if (storedCluster.length > 0) setClusterMessages(storedCluster);
+    // If the persisted thread is just an older single Clio greeting
+    // (no user messages yet, no handoff state), keep the freshly seeded
+    // greeting from initial state — this lets seed copy updates reach
+    // returning members who haven't actually started a conversation.
+    // Members with a real conversation history are unaffected.
+    const persistedHasConversation =
+      storedCluster.length > 1 ||
+      (storedCluster.length === 1 && storedCluster[0].role === "user");
+    if (persistedHasConversation) setClusterMessages(storedCluster);
   }, [inCluster]);
 
   // Persist threads
@@ -618,7 +627,7 @@ export default function ClioFab({
                         From Sage · private
                       </div>
                     )}
-                    {msg.content}
+                    {renderClioMessageContent(msg.content)}
                     {handoffOpen && (
                       <div className="mt-2 pt-2 border-t border-current/10 flex items-center justify-between gap-2 text-[11px]">
                         <span className="text-gray-500">
@@ -699,4 +708,46 @@ export default function ClioFab({
           concern with its own affordance. */}
     </>
   );
+}
+
+
+// ── Inline token renderer ────────────────────────────────────────────
+//
+// Clio's seed messages can embed tokens that render as inline elements.
+// Today there is one token: `{{show-me-around}}`, which renders as a
+// "Show me around the room" link that fires the SHOW_AROUND_REPLAY_EVENT.
+// This is how members recover the first-visit tour after they've
+// dismissed the bubble — Option A from the UX review (recovery via a
+// quiet link inside Clio's chat, no persistent header surface).
+//
+// The renderer keeps the message body as plain text wherever no token
+// matches. We deliberately don't ship a generic markdown renderer here:
+// tokens are explicit, deterministic, audit-friendly. If we ever need
+// more inline affordances we add them here, named, one at a time.
+
+const SHOW_AROUND_TOKEN = "{{show-me-around}}";
+
+function renderClioMessageContent(content: string): React.ReactNode {
+  if (!content.includes(SHOW_AROUND_TOKEN)) {
+    return content;
+  }
+  const parts = content.split(SHOW_AROUND_TOKEN);
+  return parts.map((part, i) => (
+    <span key={i}>
+      {part}
+      {i < parts.length - 1 && (
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event(SHOW_AROUND_REPLAY_EVENT));
+            }
+          }}
+          className="text-amber-700 underline underline-offset-2 hover:text-amber-900 transition-colors font-medium"
+        >
+          Show me around the room
+        </button>
+      )}
+    </span>
+  ));
 }

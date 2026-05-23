@@ -32,6 +32,17 @@ import { useEffect, useState } from "react";
 import ClioTour from "./ClioTour";
 import { PLATFORM_HELP_ITEMS } from "@/lib/cluster-help-items";
 
+/**
+ * Custom event name dispatched when a user wants to replay the
+ * "show me around" tour after they've already dismissed the
+ * first-visit bubble. <ClioShowAround /> listens for this on `window`
+ * and reopens the tour at step 0 regardless of the seen flag.
+ *
+ * Exported so anywhere in the app (e.g. Clio's chat welcome message)
+ * can offer a recovery affordance without coupling to the component.
+ */
+export const SHOW_AROUND_REPLAY_EVENT = "aggilo:show-around-replay";
+
 const SEEN_KEY = "aggilo:show_around_seen";
 
 export default function ClioShowAround() {
@@ -51,6 +62,20 @@ export default function ClioShowAround() {
       // discoverability is right for the first-visit affordance.
       setShowBubble(true);
     }
+  }, []);
+
+  // Replay channel: any "Show me around the room" link or button
+  // anywhere in the app can fire window.dispatchEvent(new Event(
+  // SHOW_AROUND_REPLAY_EVENT)) to reopen the tour at step 0. The
+  // first-visit dismiss flag is preserved — replay is a separate
+  // intent ("I want to see it again right now") from first-visit.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    function onReplay() {
+      setTourIndex(0);
+    }
+    window.addEventListener(SHOW_AROUND_REPLAY_EVENT, onReplay);
+    return () => window.removeEventListener(SHOW_AROUND_REPLAY_EVENT, onReplay);
   }, []);
 
   function dismiss() {
