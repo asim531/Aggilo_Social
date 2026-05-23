@@ -42,7 +42,6 @@ import {
   toneColorForReason,
   type HandoffReason,
 } from "@/lib/handoff-greetings";
-import ClioTour, { type TourStep } from "./ClioTour";
 
 type ClioTab = "private" | "cluster";
 type ToneColor = "rose" | "amber" | "indigo";
@@ -137,12 +136,6 @@ export default function ClioFab({
   const [thinkingPhrase, setThinkingPhrase] = useState("");
   const [showTakingMoment, setShowTakingMoment] = useState(false);
   const [hasUnreadHandoff, setHasUnreadHandoff] = useState(false);
-  // Anchored tour state. null = closed; numeric index = active step.
-  // Owned at the FAB level (not inside the help section) so that tour
-  // navigation persists across panel close/reopen, and so the same list
-  // of surfaces feeds both the help section and the tour — single
-  // source of truth, no duplicate copy.
-  const [tourIndex, setTourIndex] = useState<number | null>(null);
 
   // Separate message threads per tab — they are different relationships.
   const [privateMessages, setPrivateMessages] = useState<ClioMessage[]>([
@@ -599,28 +592,6 @@ export default function ClioFab({
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[160px]">
-            {/* Help section — Private Chat tab only, inside a cluster.
-                Collapsible "What's on this page?" with buttons that
-                start an anchored tour: page scrolls, Clio pops out a
-                brief popover beside the surface, member can step
-                Prev/Next or close and reopen any time from this list.
-                Single source of truth for the items lives at the
-                bottom of this file (PLATFORM_HELP_ITEMS) and feeds
-                both the help section and the popover. */}
-            {!isPrivate && inCluster && (
-              <ClusterHelpSection
-                activeIndex={tourIndex}
-                onJump={(idx) => {
-                  // Close the panel so the popover can land on the
-                  // target without being obscured. Tour state survives
-                  // panel close — opening the panel again shows which
-                  // step is currently active.
-                  setOpen(false);
-                  setTourIndex(idx);
-                }}
-              />
-            )}
-
             {messages.map((msg, i) => {
               const handoffOpen =
                 msg.isHandoffGreeting && !msg.handoffClosed;
@@ -722,163 +693,10 @@ export default function ClioFab({
         </div>
       )}
 
-      {/* Anchored tour — portal-rendered. Survives panel close so the
-          member can step through surfaces without the chat panel
-          obscuring the popover. Driven by tourIndex; help section
-          opens / advances it; popover Close (× / Esc / click-outside)
-          resets it. */}
-      {inCluster && (
-        <ClioTour
-          steps={PLATFORM_HELP_ITEMS}
-          activeIndex={tourIndex}
-          onChange={setTourIndex}
-        />
-      )}
+      {/* Anchored tour and the first-visit "show me around" bubble are
+          owned by <ClioShowAround /> mounted at the cluster shell. The
+          FAB itself is now a chat surface only — discovery is its own
+          concern with its own affordance. */}
     </>
-  );
-}
-
-// ── ClusterHelpSection ──────────────────────────────────────────────
-//
-// Collapsible "What's on this page?" guide. Lives at the top of the
-// Private Chat tab when the panel is open inside a cluster. Each
-// button starts (or re-opens) the anchored Clio tour at the chosen
-// step. The tour itself is rendered by <ClioTour /> at the FAB root,
-// portal-mounted so it survives panel close.
-//
-// Platform-baseline list — every cluster gets these. Workshop-driven
-// items are NOT added here; this is the floor that ships with every
-// room. (See SESSION_A_CONFIGURABILITY.md §3 step 5.)
-//
-// Single source of truth: PLATFORM_HELP_ITEMS (below) is the only
-// place the surface list, selectors, and explanations live. Both the
-// help section and the popover read from it. To add a surface, edit
-// the list — both views update.
-
-const PLATFORM_HELP_ITEMS: TourStep[] = [
-  {
-    label: "Live presence",
-    selector: "#aggilo-cluster-presence",
-    description:
-      "Who's online now and how many sisters have joined this week.",
-  },
-  {
-    label: "Cluster restrictions",
-    selector: "#aggilo-cluster-chips",
-    description:
-      "Who this room is for — age, gender, location, language.",
-  },
-  {
-    label: "Pinned anchor",
-    selector: "#aggilo-pinned-anchor",
-    description: "The room's founding statement at the top.",
-  },
-  {
-    label: "Posts & timeline",
-    selector: "#aggilo-cluster-timeline",
-    description:
-      "The conversation. Long-press any post to react, share, or report.",
-  },
-  {
-    label: "Compose bar",
-    selector: "#aggilo-compose-bar",
-    description: "Where you share what's on your heart.",
-  },
-  {
-    label: "@Sage feature",
-    selector: "#aggilo-compose-bar",
-    description:
-      "Type @Sage in the compose bar and ask a question — she replies when she has something verified.",
-  },
-  {
-    label: "Sage's posts",
-    selector: ".sage-post",
-    description:
-      "Sage anchors the room and shares verified references from Quran and authentic Sunnah.",
-  },
-  {
-    label: "Room Workshop",
-    selector: "#aggilo-room-workshop",
-    description: "What Clio and I are building for this room.",
-  },
-  {
-    label: "Myself (Clio)",
-    selector: ".clio-fab, .clio-fab-cluster",
-    description: "I'm always here. Tap the avatar to chat anytime.",
-  },
-];
-
-interface ClusterHelpSectionProps {
-  /** Which step (if any) is currently being narrated by the tour. */
-  activeIndex: number | null;
-  /** Open the tour at this step. The FAB owns tour state. */
-  onJump: (index: number) => void;
-}
-
-function ClusterHelpSection({ activeIndex, onJump }: ClusterHelpSectionProps) {
-  return (
-    <details
-      className="rounded-lg border border-amber-200 bg-amber-50/60 group"
-      open={activeIndex !== null}
-    >
-      <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold text-amber-800 flex items-center gap-2 list-none">
-        <svg
-          className="w-3.5 h-3.5 shrink-0 transition-transform group-open:rotate-90"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-        <span>What&apos;s on this page?</span>
-        <span className="ml-auto text-[10px] font-normal text-amber-700/70">
-          {activeIndex !== null ? "Tour open" : "Tap a topic"}
-        </span>
-      </summary>
-      <div className="px-2 pb-2 pt-1 space-y-1">
-        {PLATFORM_HELP_ITEMS.map((item, idx) => {
-          const isActive = activeIndex === idx;
-          return (
-            <button
-              key={item.label + item.selector}
-              type="button"
-              onClick={() => onJump(idx)}
-              className={`w-full text-left px-2 py-1.5 rounded-md transition-colors flex flex-col gap-0.5 ${
-                isActive
-                  ? "bg-emerald-100/80 ring-1 ring-emerald-300"
-                  : "hover:bg-amber-100/80"
-              }`}
-              title={item.description}
-              aria-current={isActive ? "true" : undefined}
-            >
-              <span
-                className={`text-xs font-medium ${
-                  isActive ? "text-emerald-900" : "text-amber-900"
-                }`}
-              >
-                {item.label}
-                {isActive && (
-                  <span className="ml-1.5 text-[10px] font-normal text-emerald-700">
-                    showing now
-                  </span>
-                )}
-              </span>
-              <span
-                className={`text-[11px] leading-snug ${
-                  isActive ? "text-emerald-800/80" : "text-amber-700/80"
-                }`}
-              >
-                {item.description}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </details>
   );
 }

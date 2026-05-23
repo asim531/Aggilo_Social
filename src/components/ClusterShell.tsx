@@ -9,6 +9,7 @@ import ClusterHeader from "./ClusterHeader";
 import ClusterFeed from "./ClusterFeed";
 import ClioWelcome from "./ClioWelcome";
 import ClioFab from "./ClioFab";
+import ClioShowAround from "./ClioShowAround";
 
 interface ClusterShellProps {
   displayName: string;
@@ -243,6 +244,7 @@ export default function ClusterShell({
 
         <div className="cluster-clio-anchor">
           <ClioFab userId={userId} inCluster={true} />
+          <ClioShowAround />
         </div>
       </div>
     </PresenceProvider>

@@ -273,3 +273,45 @@
     animation: collaborate-bubble-sage 4s ease-in-out infinite;
   }
 }
+
+
+/* ── Clio show-around bubble ───────────────────────────────────────── */
+/*
+ * First-visit bubble that points at the Clio FAB inside a cluster.
+ * Anchored top-right, just below the FAB (which sits at top:72px).
+ * On phones we expand to span most of the viewport width minus a small
+ * gutter; on tablets and up we cap at ~16rem and right-anchor.
+ *
+ * The pulse animation fires once on mount, fades, and never returns.
+ * It draws the eye for the first ~3 seconds without becoming nagging
+ * ambient motion.
+ */
+@layer components {
+  .clio-show-around-bubble {
+    /* Sit below the FAB (FAB top:72px + 44px height + ~12px gap = ~128px). */
+    top: 128px;
+    right: 12px;
+    /* Phone: room minus the FAB gutter. Tablet+: capped, right-anchored. */
+    width: calc(100vw - 24px);
+    max-width: 18rem;
+    animation: clio-show-around-pulse 3s ease-out 1;
+  }
+
+  @media (min-width: 640px) {
+    .clio-show-around-bubble {
+      width: 18rem;
+    }
+  }
+
+  @keyframes clio-show-around-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgb(16 185 129 / 0.45);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgb(16 185 129 / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgb(16 185 129 / 0);
+    }
+  }
+}
