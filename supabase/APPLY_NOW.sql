@@ -1684,10 +1684,10 @@ ALTER TABLE public.cluster_config
 -- public_meta shape (Clio/admin-managed in B.5):
 -- {
 --   "display_name": "Sisters in Dua",
---   "tagline": "Faith lived, discussed, and held together.",
---   "description": "A women-only community for Muslim women navigating faith in real life…",
+--   "tagline": "Faith lived, discussed, and held together — in Hyderabad.",
+--   "description": "A community for Muslim women in Hyderabad navigating faith in real life…",
 --   "demographic_chips": [
---     { "icon": "🇮🇳", "label": "India" },
+--     { "icon": "📍", "label": "Hyderabad" },
 --     { "icon": "♀",  "label": "Women" },
 --     { "icon": "🤲", "label": "Faith" }
 --   ],
@@ -2001,11 +2001,11 @@ UPDATE public.cluster_config
    SET public_slug = COALESCE(public_slug, 'sisters-in-dua'),
        public_meta = COALESCE(public_meta, '{}'::jsonb) || jsonb_build_object(
          'display_name',  'Sisters in Dua',
-         'tagline',       'Faith lived, discussed, and held together.',
+         'tagline',       'Faith lived, discussed, and held together — in Hyderabad.',
          'description',
-           'A women-only community for Muslim women navigating faith in real life. Not a classroom. Not a fatwa service. A space where women talk honestly about what it means to stay close to Allah — through doubt, difficulty, routine, and everything in between. Grounded in Quran and authentic Sunnah.',
+           'A community for Muslim women in Hyderabad navigating faith in real life. Not a classroom. Not a fatwa service. A space where sisters talk honestly about what it means to stay close to Allah — through doubt, difficulty, routine, and everything in between. Grounded in Quran and authentic Sunnah.',
          'demographic_chips', jsonb_build_array(
-           jsonb_build_object('icon', '🇮🇳', 'label', 'India'),
+           jsonb_build_object('icon', '📍', 'label', 'Hyderabad'),
            jsonb_build_object('icon', '♀',  'label', 'Women'),
            jsonb_build_object('icon', '🤲', 'label', 'Faith')
          ),
