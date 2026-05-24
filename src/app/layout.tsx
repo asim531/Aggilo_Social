@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Sisters in Dua — Aggilo",
   description:
-    "A women-only community for Muslim women navigating faith in real life. Grounded in Quran and authentic Sunnah.",
+    "A women-only community for Muslim women navigating faith in real life — at work, at home, and everywhere the two collide. Grounded in Quran and authentic Sunnah.",
 };
 
 export default function RootLayout({

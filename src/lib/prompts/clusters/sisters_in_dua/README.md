@@ -2,7 +2,7 @@
 
 ## What this cluster is
 
-A women-only community for Muslim women navigating faith in real life.
+A women-only community for Muslim women navigating faith in real life — at work, at home, and everywhere the two collide. Not a classroom. Not a fatwa service. A space where women talk honestly about staying close to Allah through doubt, ambition, burnout, motherhood, career pressure, and everything in between.
 Grounded in Quran and authentic Sunnah. The first live cluster on the
 Aggilo platform — premium type. Phase 0's reference cluster: a one-off
 case used to test and refine the platform before any second partner

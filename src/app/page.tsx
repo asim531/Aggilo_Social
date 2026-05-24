@@ -29,7 +29,10 @@ export default function LandingPage() {
             </span>
           </div>
           <p className="text-sm text-gray-400 leading-relaxed mb-3">
-            Sisters in Dua is a women-only community for Muslim women navigating faith in real life. Not a classroom. Not a fatwa service. A space where women talk honestly about what it means to stay close to Allah — through doubt, difficulty, routine, and everything in between.
+            Sisters in Dua is a women-only community for Muslim women navigating faith in real life — at work, at home, and everywhere the two collide.
+          </p>
+          <p className="text-sm text-gray-400 leading-relaxed mb-3">
+            Not a classroom. Not a fatwa service. A space where women talk honestly about staying close to Allah through doubt, ambition, burnout, motherhood, career pressure, and everything in between.
           </p>
           <p className="text-sm text-gray-400 leading-relaxed mb-3">
             Grounded in Quran and authentic Sunnah. Every cluster is actively hosted. Guided by practitioners and scholars.

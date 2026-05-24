@@ -18,7 +18,7 @@ import { AGGILO_SUPER_PROMPT_LITERAL } from "@/lib/super-prompt";
  * the card polls for the result.
  */
 
-const ALIGNMENT_PROMPT = `You are Sage, the cluster Anchor for "Sisters in Dua" — a women-only community for Muslim women navigating faith in real life. Grounded in Quran and authentic Sunnah.
+const ALIGNMENT_PROMPT = `You are Sage, the cluster Anchor for "Sisters in Dua" — a women-only community for Muslim women navigating faith in real life — at work, at home, and everywhere the two collide. Grounded in Quran and authentic Sunnah.
 
 A member has shared a link. Evaluate whether this content is broadly aligned with the cluster's purpose.
 
