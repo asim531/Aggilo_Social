@@ -1,3 +1,79 @@
+// ── Orchestrator types ──────────────────────────────────────────────────────
+//
+// These types back the cluster orchestrator board (Phase 0).
+// A `Cluster` row is the provisioning record — it tracks lifecycle state,
+// type, and health. It is separate from `cluster_config` (which tracks
+// agent settings) and from the prompt registry (which tracks prompt modules).
+//
+// Lifecycle: create → active → drain → destroy
+//   create  — row inserted, cluster not yet serving traffic
+//   active  — cluster is live and serving members
+//   drain   — cluster is winding down; no new members, existing members can still post
+//   destroy — cluster is permanently shut down; row kept for audit
+//
+// The transition rules are enforced in cluster-orchestrator.ts and tested
+// in src/lib/__tests__/cluster-orchestrator.test.ts.
+
+export type ClusterStatus = "creating" | "active" | "draining" | "destroyed";
+
+export type ClusterType = "generic" | "premium";
+
+export interface Cluster {
+  id: string;
+  /** Stable snake_case identifier — matches cluster_id in posts, cluster_config, etc. */
+  cluster_id: string;
+  display_name: string;
+  cluster_type: ClusterType;
+  status: ClusterStatus;
+  /** ISO 639-1 primary language code. */
+  primary_language: string;
+  /** Free-text notes for the platform admin. Never shown to members. */
+  admin_notes: string | null;
+  /**
+   * Health signal — last time the cluster was confirmed reachable/active.
+   * Null until the cluster first transitions to 'active'.
+   * Phase 0: updated manually or by the admin board. Phase 1: automated health checks.
+   *
+   * TODO(product): Define the health check interval and SLA thresholds for
+   * generic vs premium clusters before Phase 1 ships.
+   */
+  last_health_check_at: string | null;
+  /**
+   * Whether the cluster is currently healthy.
+   * Null = not yet checked. True = healthy. False = degraded.
+   *
+   * TODO(product): Define what "degraded" means per cluster type
+   * (e.g. LLM error rate > X%, welfare queue > Y unresolved).
+   */
+  is_healthy: boolean | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  /** Timestamp when the cluster transitioned to 'active'. */
+  activated_at: string | null;
+  /** Timestamp when the cluster transitioned to 'draining'. */
+  drain_started_at: string | null;
+  /** Timestamp when the cluster was destroyed. */
+  destroyed_at: string | null;
+}
+
+export interface ClusterCreateInput {
+  cluster_id: string;
+  display_name: string;
+  cluster_type: ClusterType;
+  primary_language?: string;
+  admin_notes?: string;
+}
+
+export interface ClusterTransitionInput {
+  /** The target lifecycle status. */
+  to_status: ClusterStatus;
+  /** Optional reason for the transition — written to cluster_admin_actions. */
+  reason?: string;
+}
+
+// ── End orchestrator types ───────────────────────────────────────────────────
+
 export interface Profile {
   id: string;
   nickname: string;

@@ -47,6 +47,7 @@ function AuthFormContent() {
   const [step, setStep] = useState<SignupStep>("email");
   const [state, setState] = useState<AuthState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [nicknameChecking, setNicknameChecking] = useState(false);
 
   /** True for any selection inside the metro — these all map to "Hyderabad". */
   const isMetroSelection = HYDERABAD_METRO_AREAS.includes(citySelection);
@@ -131,7 +132,7 @@ function AuthFormContent() {
     setStep("nickname");
   }
 
-  function handleNicknameSubmit(e: FormEvent) {
+  async function handleNicknameSubmit(e: FormEvent) {
     e.preventDefault();
     if (!nickname.trim()) return;
     if (nickname.trim().length < 2) {
@@ -139,6 +140,23 @@ function AuthFormContent() {
       return;
     }
     setErrorMsg("");
+    setNicknameChecking(true);
+    try {
+      const res = await fetch("/api/auth/check-nickname", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname: nickname.trim() }),
+      });
+      const { available } = await res.json();
+      if (!available) {
+        setErrorMsg("That nickname is already taken. Please choose another.");
+        return;
+      }
+    } catch {
+      // Network error — allow through so sign-up isn't blocked
+    } finally {
+      setNicknameChecking(false);
+    }
     setStep("gender");
   }
 
@@ -398,13 +416,20 @@ function AuthFormContent() {
           </p>
           <button
             type="submit"
-            disabled={!nickname.trim()}
+            disabled={!nickname.trim() || nicknameChecking}
             className="w-full py-3 px-4 rounded-lg font-medium text-white
                        bg-emerald-700 hover:bg-emerald-600
                        disabled:opacity-50 disabled:cursor-not-allowed
                        transition-colors duration-200"
           >
-            Continue
+            {nicknameChecking ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Checking...
+              </span>
+            ) : (
+              "Continue"
+            )}
           </button>
           <button type="button" onClick={() => setStep("email")} className="w-full text-sm text-gray-500 hover:text-gray-400">
             Back
@@ -422,6 +447,7 @@ function AuthFormContent() {
             <div className="space-y-2">
               {[
                 { value: "woman", label: "Woman" },
+                { value: "man", label: "Man" },
                 { value: "other", label: "Other" },
               ].map((opt) => (
                 <label

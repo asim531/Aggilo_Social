@@ -235,7 +235,7 @@ export default function ClusterFeed({ initialPosts, userId }: ClusterFeedProps) 
       )}
 
       {/* feedTopRef: scroll target after user posts */}
-      <div ref={feedTopRef} />
+      <div ref={feedTopRef} className="scroll-mt-24" />
 
       {/*
        * "↑ New posts" pill — appears when the viewer is scrolled down and

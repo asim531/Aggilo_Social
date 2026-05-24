@@ -23,11 +23,23 @@ import { tryAcquireAgentLock, releaseAgentLock } from "@/lib/agent-lock";
  * marks, no "welcome!", no scripted flourish. One short line.
  */
 
-const WELCOME_LINES = [
-  "A new sister joined this room.",
+const WELCOME_LINES_GENERIC = [
+  "A new sister has joined the room.",
   "Someone new has arrived.",
   "Welcoming a new sister to the room.",
 ];
+
+function buildWelcomeLine(nickname: string | null): string {
+  if (nickname) {
+    const greetings = [
+      `${nickname} has joined the room. Assalamu Alaikum.`,
+      `A warm welcome to ${nickname}, who just joined the room.`,
+      `${nickname} is here. Welcome.`,
+    ];
+    return greetings[Math.floor(Math.random() * greetings.length)];
+  }
+  return WELCOME_LINES_GENERIC[Math.floor(Math.random() * WELCOME_LINES_GENERIC.length)];
+}
 
 const RECENT_WELCOME_WINDOW_MINUTES = 30;
 
@@ -76,6 +88,14 @@ async function runWelcome(
   admin: ReturnType<typeof adminClient>,
   userId: string
 ) {
+    // Fetch the new member's nickname so the welcome line can name them.
+    // Best-effort — if the profile isn't found yet, the generic line is used.
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("nickname")
+      .eq("id", userId)
+      .maybeSingle();
+    const nickname: string | null = profile?.nickname ?? null;
     // Already welcomed? Check behavioural_events for a 'welcome_posted' row
     // for this user.
     const { data: existing } = await admin
@@ -101,34 +121,10 @@ async function runWelcome(
       return NextResponse.json({ skipped: "already_posting" });
     }
 
-    // Was a Sage welcome posted recently? If so, batch with that one
-    // (don't post another).
-    const recentCutoff = new Date(
-      Date.now() - RECENT_WELCOME_WINDOW_MINUTES * 60 * 1000
-    ).toISOString();
-    const { data: recentWelcomes } = await admin
-      .from("posts")
-      .select("id")
-      .eq("is_sage", true)
-      .eq("post_subtype", "welcome")
-      .gte("created_at", recentCutoff)
-      .limit(1);
+    // Batching logic removed: every new user gets their own welcome message.
 
-    if (recentWelcomes && recentWelcomes.length > 0) {
-      // Mark this user as welcomed (the existing card covers them) without
-      // posting another.
-      await admin.from("behavioural_events").insert({
-        user_id: userId,
-        event_type: "session_started",
-        cluster_id: "the_single_source",
-        event_data: { welcome_posted: true, batched_with: recentWelcomes[0].id },
-      });
-      return NextResponse.json({ skipped: "batched", with_post_id: recentWelcomes[0].id });
-    }
-
-    // Pick a welcome line — vary so it doesn't feel scripted
-    const idx = Math.floor(Math.random() * WELCOME_LINES.length);
-    const line = WELCOME_LINES[idx];
+    // Build the welcome line — includes the nickname when available.
+    const line = buildWelcomeLine(nickname);
 
     const { data: post, error } = await admin
       .from("posts")
