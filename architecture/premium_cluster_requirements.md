@@ -433,3 +433,85 @@ A visitor arriving at `/c/<slug>` and clicking "Join this room" lands on the aut
 Full DDL for `cluster_config` extensions, `cluster_demand_signals`, `atlas_pulses`, `public_cluster_view`, and the V3.6 `skill_registry` additions lives in `supabase/APPLY_NOW.sql` v1.9.
 
 *v1.1 — V3.6 (Session B Part a). Public-listing controls + Atlas Pulse foundation. Admin panel, Atlas runtime, and Pulse Timeline card ship in Session B.5.*
+
+---
+
+## 12. Premium Cluster Trust Signals
+
+These are required UI elements for every premium cluster. They are intentionally minimal — trust is established through design restraint, not decoration.
+
+### 12.1 "Founded" badge
+
+Every premium cluster's **public-facing description** (the `/c/<slug>` preview page) and the **sign-in / sign-up auth page** (when reached via a cluster `?ref=` link) must display a "Founded" badge.
+
+**Placement:**
+- On the public preview page: next to the "About this room" section heading, as an inline pill or label.
+- On the auth/sign-up page: prominently positioned below the cluster name and tagline — visible before the user scrolls, not buried in the footer.
+
+**Visual styling:**
+- Small pill or labelled badge, styled to feel like a quiet credential — not a marketing claim.
+- The badge should not compete with the cluster name for hierarchy. Suggested: `text-[10px]–text-[11px]`, muted color, thin border, no fill or very low-opacity fill.
+
+**Tooltip copy (invariant):**
+> "Built and actively run by a dedicated host and team."
+
+**Implementation note:**
+- Use a CSS hover tooltip (a positioned `<div>` inside a `group` container), **not** the native HTML `title` attribute. Native `title` tooltips are slow to appear, styled inconsistently across browsers, and often invisible on touch devices.
+- The tooltip text is **not** configurable by the cluster admin. It is platform copy that applies identically to all premium clusters — it is a signal about the platform's standard, not about the specific cluster.
+
+**Why it exists:**
+Premium clusters are hosted by real humans. Members should have one reliable signal that distinguishes a premium cluster from a generic one: someone chose to be here, built it, and is accountable for it. "Founded" is that signal. It is not about the founding date; it is about active, intentional human ownership.
+
+---
+
+### 12.2 Clio's signature statement
+
+Every premium cluster that has a **description shown to new users** — on the auth page or the public preview page — must include a closing statement from Clio below the cluster description.
+
+**Purpose:**
+Clio is the member's personal guide inside Aggilo. The signature is her way of acknowledging the member before they enter the room — not as a bot greeting, but as a small moment of human-feeling connection. The signature is the first thing Clio says to someone, even if the member doesn't know it yet.
+
+**Canonical template (meaning, not copy):**
+Clio signals: *"I see what kind of room this is. I've thought about how to be useful to you here. When you're ready, I am too."*
+
+**Core rules:**
+
+1. **The statement must be humanised every time it renders.** It is generated, not retrieved from a static string. Clio should never appear to have copy-pasted her own greeting. Repetition of the same wording across sessions or across clusters breaks the illusion of presence and reduces Clio to a banner.
+
+2. **The statement must be short.** One or two sentences. No more. Clio is not giving a speech — she is acknowledging a person.
+
+3. **The attribution line is always:** `— Clio, your Aggilo guide`. This is invariant. The wording of the statement above it varies; the attribution does not.
+
+4. **The register must match the cluster.** A faith cluster warrants warmth and quietness. A professional cluster warrants precision and directness. Clio reads the cluster's identity (`sage_personas.register`, cluster description, tagline) to calibrate.
+
+5. **The statement must feel like it was written for this room, not for every room.** It should reference or reflect something specific about the cluster's purpose without being literal. Clio does not say "I built this room for Muslim women in Hyderabad"; she says something that *implies* she thought about who comes here.
+
+6. **The statement must not sound AI-generated.** No filler phrases: "I'm here to help", "Feel free to ask me anything", "I'm always available". No over-warmth: "I'm so excited you're here", "This is going to be amazing". No corporate language.
+
+**Example renderings (to illustrate variation, not as templates to rotate):**
+- *"I build rooms around who you actually are. This one is ready."*
+- *"This room was made with care. So was I."*
+- *"You'll find the people in here worth talking to. I'll be nearby."*
+- *"I know what kind of room this is. I'll hold it well."*
+- *"I've been waiting to see who walks in. Glad it's you."*
+
+These examples are illustrative only — they show the tone and length. The actual rendering should vary. Clio should never serve the same statement twice in the same session or to the same user across sessions, and no two clusters should receive the same default phrasing.
+
+**Implementation:**
+
+- The rendering logic lives in Clio's cluster-context prompt fragment (`src/lib/prompts/clusters/<id>/clio.ts`).
+- On the **auth page**, the statement is rendered as static server-generated copy — a lightweight inference call during page generation that produces a short string for the session. It does not need to be streamed or interactive.
+- On the **public preview page**, the statement may be cached per-session (not globally) — meaning different visitors see different phrasings. If the implementation complexity is high for Phase 0, a small pool of pre-generated phrasings for a given cluster is acceptable as an interim approach, with full dynamic rendering targeted for Phase 1.
+- Visual treatment: presented inside a subtle left-border block (`border-l-2`) or equivalent, clearly delineated from the cluster description above it. The attribution line should be visually quieter than the statement itself — `text-gray-500` or equivalent.
+- The block should not carry a heading. The statement should stand on its own. A heading like "A note from Clio" would undercut the effect.
+
+**What this must never be:**
+- A legal disclaimer.
+- A feature list ("Clio can help you with duas, reflections, and…").
+- A generic onboarding prompt ("Let me show you around!").
+- A repetition of the cluster description in Clio's voice.
+- The same sentence Clio said on a different cluster.
+
+---
+
+*§12 added v1.2 — premium cluster trust signals: Founded badge and Clio's humanised signature statement.*
