@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { PostWithAuthor } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
 import { PresenceProvider } from "@/lib/presence-context";
+import { track } from "@/lib/track";
 import Navbar from "./Navbar";
 import ClusterHeader from "./ClusterHeader";
 import ClusterFeed from "./ClusterFeed";
@@ -58,6 +59,12 @@ export default function ClusterShell({
       localStorage.removeItem(INTROSPECTION_NEXT_ELIGIBLE_KEY);
       localStorage.setItem(CACHE_VERSION_KEY, CURRENT_CACHE_VERSION);
     }
+  }, []);
+
+  // ── Session tracking ──────────────────────────────────────────────
+  useEffect(() => {
+    track("session_started");
+    track("cluster_landed");
   }, []);
 
   useEffect(() => {
