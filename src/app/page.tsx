@@ -21,13 +21,16 @@ export default function LandingPage() {
         </p>
 
         {/* Founded Badge */}
-        <div className="flex justify-center mb-1">
+        <div className="flex justify-center mb-1 relative group inline-block w-fit mx-auto">
           <span 
             className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-900/30 text-emerald-300 border border-emerald-800/50 cursor-help transition-colors hover:bg-emerald-800/40"
-            title="Built and actively run by a dedicated host and team."
           >
             Founded
           </span>
+          {/* Custom Tooltip */}
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 w-56 p-2 bg-[#11140f] border border-emerald-800/50 text-xs text-emerald-100/90 rounded shadow-2xl text-center z-10">
+            Built and actively run by a dedicated host and team.
+          </div>
         </div>
 
         {/* Clio introduction card */}

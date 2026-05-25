@@ -150,12 +150,16 @@ export default async function PublicClusterPage({ params }: PageProps) {
             <h2 className="text-xs uppercase tracking-[0.2em] text-white/50">
               About this room
             </h2>
-            <span 
-              className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20 text-white/60 cursor-help"
-              title="Built and actively run by a dedicated host and team."
-            >
-              Founded
-            </span>
+            <div className="relative group flex items-center">
+              <span 
+                className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20 text-white/60 cursor-help hover:bg-white/10 transition-colors"
+              >
+                Founded
+              </span>
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 w-48 p-2 bg-[#11140f] border border-white/10 text-[11px] text-white/80 rounded shadow-xl text-center z-10 normal-case tracking-normal">
+                Built and actively run by a dedicated host and team.
+              </div>
+            </div>
           </div>
           <p className="text-base text-white/85 leading-relaxed whitespace-pre-line">
             {meta.description}
