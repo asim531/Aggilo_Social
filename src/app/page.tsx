@@ -37,9 +37,17 @@ export default function LandingPage() {
           <p className="text-sm text-gray-400 leading-relaxed mb-3">
             Grounded in Quran and authentic Sunnah. Every cluster is actively hosted. Guided by practitioners and scholars.
           </p>
-          <p className="text-xs text-gray-500 italic mb-3">
+          <p className="text-xs text-gray-500 italic mb-4">
             Your community Anchor keeps the discussion grounded in verified sources and holds the space. The Admin and Managers are who you go to for guidance.
           </p>
+          <div className="border-l-2 border-emerald-500/30 pl-3 mb-4">
+            <p className="text-sm text-gray-400 italic">
+              &quot;I build rooms around who you actually are. This one is ready.&quot;
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              — Clio, your Aggilo guide
+            </p>
+          </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Currently in beta</span>

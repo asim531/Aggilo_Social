@@ -3,27 +3,26 @@
 import { useState, useEffect, type FormEvent, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
-import {
-  HYDERABAD_METRO_CANONICAL,
-  HYDERABAD_METRO_AREAS,
-  isHyderabadMetro,
-} from "@/lib/city-detect";
-
-type AuthMode = "signin" | "signup";
-type AuthState = "idle" | "loading" | "success" | "error";
 type SignupStep =
   | "email"
   | "nickname"
   | "gender"
-  | "city"
-  | "geo_block"
+  | "country"
   | "waitlist";
 
-const HYDERABAD_CITY_OPTIONS = [
-  ...HYDERABAD_METRO_AREAS,
-  "Somewhere else in Telangana",
-  "Somewhere else in India",
-  "Outside India",
+const COUNTRY_OPTIONS = [
+  "India",
+  "United States",
+  "United Kingdom",
+  "Canada",
+  "Australia",
+  "United Arab Emirates",
+  "Saudi Arabia",
+  "Pakistan",
+  "Bangladesh",
+  "Malaysia",
+  "Singapore",
+  "Other",
 ];
 
 function AuthFormContent() {
@@ -39,20 +38,11 @@ function AuthFormContent() {
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [gender, setGender] = useState("");
-  // The selected city option from HYDERABAD_CITY_OPTIONS. We store the
-  // canonical "Hyderabad" string in `cityToStore` once the user passes
-  // the gate; the raw selection is kept here for UI affordances (showing
-  // a non-fit explanation when "Somewhere else…" is picked).
-  const [citySelection, setCitySelection] = useState("");
+  const [countrySelection, setCountrySelection] = useState("");
   const [step, setStep] = useState<SignupStep>("email");
   const [state, setState] = useState<AuthState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [nicknameChecking, setNicknameChecking] = useState(false);
-
-  /** True for any selection inside the metro — these all map to "Hyderabad". */
-  const isMetroSelection = HYDERABAD_METRO_AREAS.includes(citySelection);
-  /** Display string for non-fit messaging. */
-  const cityForCopy = citySelection || "your area";
 
   useEffect(() => {
     if (urlError) setErrorMsg(urlError);
@@ -178,36 +168,13 @@ function AuthFormContent() {
       setStep("waitlist");
       return;
     }
-    setStep("city");
+    setStep("country");
   }
 
-  function handleCitySubmit(e: FormEvent) {
+  function handleCountrySubmit(e: FormEvent) {
     e.preventDefault();
-    if (!citySelection) return;
+    if (!countrySelection) return;
 
-    // Hard geographic restriction: Sisters in Dua MVP is Hyderabad-only.
-    if (!isMetroSelection) {
-      // Record the non-fit so we know who's knocking and from where.
-      void fetch("/api/demand-signals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          source_slug: refSlug ?? "sisters-in-dua",
-          email: email.trim() || undefined,
-          visitor_country: citySelection,
-          visitor_gender: gender || undefined,
-          free_text_note: `${citySelection} not yet in scope — cluster is currently Hyderabad-only.`,
-        }),
-      }).catch(() => undefined);
-      setStep("geo_block");
-      return;
-    }
-
-    // Hyderabad metro confirmed — proceed straight to OTP. The earlier
-    // beta disclosure was conditional on non-South-Asia countries; with
-    // the cluster now scoped to one city in South Asia, every signup
-    // sits inside the regional context the disclosure described, so the
-    // disclosure step is no longer triggered for normal flow.
     sendOtp();
   }
 
@@ -223,10 +190,7 @@ function AuthFormContent() {
         data: {
           nickname: nickname.trim(),
           gender: gender,
-          // We collapse any in-scope metro selection to the canonical
-          // "Hyderabad" value — the cluster treats the metro as one
-          // logical region. Non-fits never reach this code path.
-          country: HYDERABAD_METRO_CANONICAL,
+          country: countrySelection,
         },
       },
     });
@@ -484,61 +448,38 @@ function AuthFormContent() {
         </form>
       )}
 
-      {mode === "signup" && step === "city" && (
-        <form onSubmit={handleCitySubmit} className="space-y-4">
+      {mode === "signup" && step === "country" && (
+        <form onSubmit={handleCountrySubmit} className="space-y-4">
           <div>
-            <label htmlFor="city" className="block text-sm font-medium text-gray-400 mb-1.5">
-              Where in Hyderabad are you?
+            <label htmlFor="country" className="block text-sm font-medium text-gray-400 mb-1.5">
+              Where are you located?
             </label>
-            <p className="text-[11px] text-gray-500 leading-relaxed mb-3">
-              Sisters in Dua is currently open to sisters in <span className="text-gray-300">Hyderabad and the surrounding metro</span>. We use only this answer for the cluster — never your address, your coordinates, or anything more specific.
-            </p>
 
             <select
-              id="city"
-              value={citySelection}
-              onChange={(e) => setCitySelection(e.target.value)}
+              id="country"
+              value={countrySelection}
+              onChange={(e) => setCountrySelection(e.target.value)}
               required
-              className={`w-full px-4 py-3 rounded-lg border bg-[#11140f]
+              className="w-full px-4 py-3 rounded-lg border bg-[#11140f]
                          focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent
-                         text-white ${
-                           citySelection && !isMetroSelection
-                             ? "border-amber-700/60"
-                             : "border-gray-700"
-                         }`}
+                         text-white border-gray-700"
             >
               <option value="" disabled>
-                Pick the closest match
+                Select your country
               </option>
-              {HYDERABAD_CITY_OPTIONS.map((c) => (
+              {COUNTRY_OPTIONS.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
 
-            <p className="mt-2 text-[11px] text-gray-500 leading-relaxed">
-              If you live just outside any of these — Madhapur, Gachibowli, Kukatpally, LB Nagar and so on — pick the closest one. They&apos;re all part of the metro for our purposes.
+            <p className="mt-2 text-[11px] text-gray-500 leading-relaxed italic">
+              Rooted in India, but open to Muslim women everywhere.
             </p>
           </div>
 
-          {/* Inline non-fit notice — visible AS the user selects */}
-          {citySelection && !isMetroSelection && (
-            <div className="p-4 rounded-lg bg-[#11140f] border border-amber-700/50">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-amber-400">📍</span>
-                <span className="text-amber-300 text-sm font-semibold">
-                  Coming to {citySelection.toLowerCase()} soon
-                </span>
-              </div>
-              <p className="text-gray-400 text-xs leading-relaxed">
-                Sisters in Dua is currently open to sisters in Hyderabad only. Continue to add{" "}
-                <span className="text-gray-300">{email}</span> to our waitlist — we&apos;ll write back when a space opens that fits.
-              </p>
-            </div>
-          )}
-
           <button
             type="submit"
-            disabled={!citySelection || state === "loading"}
+            disabled={!countrySelection || state === "loading"}
             className="w-full py-3 px-4 rounded-lg font-medium text-white
                        bg-emerald-700 hover:bg-emerald-600
                        disabled:opacity-50 disabled:cursor-not-allowed
@@ -549,8 +490,6 @@ function AuthFormContent() {
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Sending link...
               </span>
-            ) : citySelection && !isMetroSelection ? (
-              "Join the waitlist"
             ) : (
               "Enter Sisters in Dua"
             )}
@@ -560,31 +499,6 @@ function AuthFormContent() {
           </button>
           {errorMsg && <p className="text-red-400 text-sm text-center">{errorMsg}</p>}
         </form>
-      )}
-
-      {/* ── GEO BLOCK — outside Hyderabad metro ─────────────────────── */}
-      {mode === "signup" && step === "geo_block" && (
-        <div className="space-y-4">
-          <div className="p-6 rounded-xl bg-[#11140f] border border-amber-700/50">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-amber-400 text-lg">📍</span>
-              <span className="font-semibold text-amber-300 text-sm">Coming to your area soon</span>
-            </div>
-            <p className="text-gray-300 text-sm leading-relaxed mb-3">
-              Sisters in Dua is currently open to sisters in <span className="text-gray-200">Hyderabad and the surrounding metro</span>. We&apos;re focused on serving this city well before opening to others.
-            </p>
-            <p className="text-gray-400 text-sm leading-relaxed mb-4">
-              We&apos;ve added <span className="text-gray-300 font-medium">{email}</span> to our waitlist. We&apos;ll write back when a Sisters in Dua space opens for {cityForCopy}.
-            </p>
-            <button
-              type="button"
-              onClick={() => setStep("city")}
-              className="w-full text-sm text-gray-500 hover:text-gray-400"
-            >
-              Choose a different area
-            </button>
-          </div>
-        </div>
       )}
 
       {mode === "signup" && step === "waitlist" && (

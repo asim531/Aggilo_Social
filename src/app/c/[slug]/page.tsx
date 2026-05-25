@@ -146,9 +146,17 @@ export default async function PublicClusterPage({ params }: PageProps) {
       <div className="max-w-3xl mx-auto px-6 py-12 space-y-12">
         {/* ── About ─────────────────────────────────────────────── */}
         <section>
-          <h2 className="text-xs uppercase tracking-[0.2em] text-white/50 mb-4">
-            About this room
-          </h2>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-white/50">
+              About this room
+            </h2>
+            <span 
+              className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded border border-white/20 text-white/60 cursor-help"
+              title="Built and actively run by a dedicated host and team."
+            >
+              Founded
+            </span>
+          </div>
           <p className="text-base text-white/85 leading-relaxed whitespace-pre-line">
             {meta.description}
           </p>

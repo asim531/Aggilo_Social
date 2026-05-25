@@ -25,7 +25,6 @@ interface DemographicChip {
 // Sisters in Dua Phase 0 restrictions.
 // In Phase 1 these come from the cluster's AGGIL config row.
 const CLUSTER_CHIPS: DemographicChip[] = [
-  { label: "Hyderabad", icon: "📍", color: "bg-orange-50 text-orange-700 border-orange-200" },
   { label: "Women", icon: "♀", color: "bg-rose-50 text-rose-700 border-rose-200" },
 ];
 
