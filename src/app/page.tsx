@@ -51,6 +51,13 @@ export default function LandingPage() {
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Currently in beta</span>
+            <span className="text-gray-600 px-1">•</span>
+            <span 
+              className="cursor-help border-b border-dashed border-gray-600 hover:text-gray-300 transition-colors" 
+              title="Built and actively run by a dedicated host and team."
+            >
+              Founded
+            </span>
           </div>
         </div>
 
