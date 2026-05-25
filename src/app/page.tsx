@@ -16,9 +16,19 @@ export default function LandingPage() {
         </h1>
 
         {/* Tagline */}
-        <p className="text-gray-400 text-lg mb-1">
+        <p className="text-gray-400 text-lg mb-4">
           Faith lived, discussed, and held together.
         </p>
+
+        {/* Founded Badge */}
+        <div className="flex justify-center mb-1">
+          <span 
+            className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-900/30 text-emerald-300 border border-emerald-800/50 cursor-help transition-colors hover:bg-emerald-800/40"
+            title="Built and actively run by a dedicated host and team."
+          >
+            Founded
+          </span>
+        </div>
 
         {/* Clio introduction card */}
         <div className="mt-6 p-5 rounded-xl bg-[#161a14] border border-gray-700 text-left">
@@ -51,13 +61,6 @@ export default function LandingPage() {
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Currently in beta</span>
-            <span className="text-gray-600 px-1">•</span>
-            <span 
-              className="cursor-help border-b border-dashed border-gray-600 hover:text-gray-300 transition-colors" 
-              title="Built and actively run by a dedicated host and team."
-            >
-              Founded
-            </span>
           </div>
         </div>
 
