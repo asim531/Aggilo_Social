@@ -3,6 +3,9 @@
 import { useState, useEffect, type FormEvent, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
+
+type AuthMode = "signin" | "signup";
+type AuthState = "idle" | "loading" | "success" | "error";
 type SignupStep =
   | "email"
   | "nickname"
