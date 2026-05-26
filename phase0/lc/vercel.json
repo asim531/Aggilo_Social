@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "Long Conversation is deployed as its own Vercel project, even",
+    "though it lives in the same git monorepo as the marketing site",
+    "and the MVP. The 'Root Directory' setting on the LC Vercel",
+    "project should be 'lc' so this file is the build root.",
+    "",
+    "The app is mounted at https://aggilo.in/c/long-conversation via",
+    "a rewrite from the marketing site's vercel.json. For the rewrite",
+    "to work, NEXT_PUBLIC_BASE_PATH=/c/long-conversation must be set",
+    "as a Production environment variable on this Vercel project.",
+    "",
+    "Required env vars on Vercel (Production):",
+    "  - NEXT_PUBLIC_SUPABASE_URL",
+    "  - NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "  - SUPABASE_SERVICE_ROLE_KEY",
+    "  - NEXT_PUBLIC_CLUSTER_ID=long_conversation",
+    "  - NEXT_PUBLIC_BASE_PATH=/c/long-conversation",
+    "  - NEXT_PUBLIC_APP_URL=https://aggilo.in",
+    "  - LLM_BASE_URL, LLM_API_KEY, LLM_MODEL",
+    "  - LLM_FALLBACK_BASE_URL, LLM_FALLBACK_API_KEY, LLM_FALLBACK_MODEL (optional)",
+    "  - LLM_DAILY_BUDGET_USD",
+    "  - ADMIN_EMAILS",
+    "  - NEXT_PUBLIC_GA_ID, NEXT_PUBLIC_CLARITY_ID (optional)",
+    "",
+    "Supabase project settings to update:",
+    "  - Auth → URL Configuration → Site URL: https://aggilo.in",
+    "  - Auth → URL Configuration → Redirect URLs (add both):",
+    "      https://aggilo.in/c/long-conversation/auth/callback",
+    "      http://localhost:3001/auth/callback"
+  ],
+
+  "framework": "nextjs",
+
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ]
+}

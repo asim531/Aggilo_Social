@@ -1,0 +1,180 @@
+"use client";
+
+/**
+ * PostComposer — Long Conversation.
+ *
+ * Sticky bottom compose bar. Two operations on submit:
+ *   1. Insert the post into Supabase (writes the row, RLS authorises by
+ *      auth.uid() = author_id; Realtime fires INSERT to the cluster channel).
+ *   2. Fire-and-forget POST to /api/sage/evaluate so Sage can decide
+ *      whether to respond. The user never waits for Sage.
+ *
+ * Optimistic UX: the post appears in the feed immediately on submit,
+ * before the Supabase write returns. If the server rejects, we roll
+ * back. The realtime channel's later INSERT for the same row is
+ * deduplicated by id in useRealtimePosts.
+ *
+ * The placeholder rotates through cluster-specific prompts. None of
+ * them are scripts — they are invitations. They follow the rule from
+ * the cluster spec: "Nobody's set the tone yet" / "What's the version
+ * of this you've actually lived?" — present tense, specific,
+ * non-prescriptive.
+ */
+
+import { useState, useCallback, type FormEvent } from "react";
+import { createClient } from "@/lib/supabase-browser";
+import { CLUSTER_ID } from "@/lib/cluster";
+import { withBasePath } from "@/lib/path";
+import { track } from "@/lib/track";
+import type { PostWithAuthor, Profile } from "@/lib/types";
+
+interface PostComposerProps {
+  userId: string;
+  profile: Profile;
+  onOptimisticPost: (post: PostWithAuthor) => void;
+  onConfirmPost: (tempId: string, confirmed: PostWithAuthor) => void;
+}
+
+const PLACEHOLDERS = [
+  "What's the conversation you keep almost having?",
+  "Say the thing that's actually true.",
+  "Nobody's set the tone yet.",
+  "What's the version of this you've actually lived?",
+  "Worth saying it the way you'd say it to a friend.",
+];
+
+function pickPlaceholder(): string {
+  // Deterministic per session to avoid jumpiness mid-typing
+  if (typeof window === "undefined") return PLACEHOLDERS[0];
+  const sessionKey = "lc:composer_placeholder_v1";
+  const cached = window.sessionStorage.getItem(sessionKey);
+  if (cached !== null) {
+    const idx = parseInt(cached, 10);
+    if (!Number.isNaN(idx) && idx >= 0 && idx < PLACEHOLDERS.length) {
+      return PLACEHOLDERS[idx];
+    }
+  }
+  const idx = Math.floor(Math.random() * PLACEHOLDERS.length);
+  window.sessionStorage.setItem(sessionKey, String(idx));
+  return PLACEHOLDERS[idx];
+}
+
+export default function PostComposer({
+  userId,
+  profile,
+  onOptimisticPost,
+  onConfirmPost,
+}: PostComposerProps) {
+  const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const placeholder = pickPlaceholder();
+
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      const trimmed = content.trim();
+      if (!trimmed || submitting) return;
+
+      setSubmitting(true);
+      setError(null);
+
+      // ── Optimistic insert ──────────────────────────────────────
+      const tempId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const now = new Date().toISOString();
+      const optimisticPost: PostWithAuthor = {
+        id: tempId,
+        cluster_id: CLUSTER_ID,
+        author_id: userId,
+        parent_id: null,
+        content: trimmed,
+        is_sage: false,
+        is_sage_question: false,
+        thread_state: "unattended",
+        created_at: now,
+        profiles: profile,
+      };
+      onOptimisticPost(optimisticPost);
+      track("post_composed", { length: trimmed.length });
+      setContent("");
+
+      // ── Server insert ──────────────────────────────────────────
+      const supabase = createClient();
+      const { data: inserted, error: insertError } = await supabase
+        .from("posts")
+        .insert({
+          cluster_id: CLUSTER_ID,
+          author_id: userId,
+          content: trimmed,
+          is_sage: false,
+          is_sage_question: false,
+          thread_state: "unattended",
+        })
+        .select("*, profiles(*)")
+        .single();
+
+      if (insertError || !inserted) {
+        // Roll back the optimistic insert by surfacing an error and
+        // re-populating the textarea so the user can retry.
+        setError("Couldn't post that. Try again.");
+        setContent(trimmed);
+        track("post_compose_failed", { reason: insertError?.message ?? "unknown" });
+        setSubmitting(false);
+        return;
+      }
+
+      onConfirmPost(tempId, inserted as PostWithAuthor);
+      track("post_compose_confirmed");
+
+      // ── Fire-and-forget Sage evaluation ─────────────────────────
+      // Don't await — Sage runs async, her response (if any) lands via
+      // Realtime as a separate post.
+      void fetch(withBasePath("/api/sage/evaluate"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: inserted.id }),
+      }).catch(() => {
+        // Silent failure — Sage staying silent is a valid outcome anyway.
+      });
+
+      setSubmitting(false);
+    },
+    [content, submitting, userId, profile, onOptimisticPost, onConfirmPost]
+  );
+
+  return (
+    <div className="sticky bottom-0 z-30 bg-lc-card/95 backdrop-blur border-t border-stone-200">
+      <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-4 py-3">
+        <div className="flex gap-2 items-end">
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={placeholder}
+            rows={1}
+            maxLength={2000}
+            className="flex-1 resize-none px-3 py-2.5 rounded-lg border border-stone-300 bg-lc-card focus:outline-none focus:ring-2 focus:ring-lc-clio focus:border-transparent text-sm text-lc-ink placeholder:text-stone-400 min-h-[44px] max-h-32"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                void handleSubmit(e as unknown as FormEvent);
+              }
+            }}
+          />
+          <button
+            type="submit"
+            disabled={!content.trim() || submitting}
+            className="px-4 py-2.5 rounded-lg font-medium text-white bg-lc-clio hover:bg-amber-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
+          >
+            {submitting ? "…" : "Post"}
+          </button>
+        </div>
+        {error && (
+          <p className="mt-2 text-xs text-rose-600">{error}</p>
+        )}
+        <p className="mt-1.5 text-[11px] text-lc-muted">
+          Words are your entire presence here. Cmd/Ctrl + Enter to send.
+        </p>
+      </form>
+    </div>
+  );
+}

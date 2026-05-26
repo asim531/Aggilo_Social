@@ -1,0 +1,126 @@
+"use client";
+
+/**
+ * useRealtimePosts — Long Conversation.
+ *
+ * Subscribes to Supabase Realtime INSERT and UPDATE events on the
+ * `posts` table, filtered by cluster_id. Maintains a list of posts in
+ * client state and applies optimistic updates from the composer.
+ *
+ * Two channels are needed because Supabase realtime filters apply per
+ * channel: one for INSERT (new posts arriving), one for UPDATE (post
+ * mutations like Sage handoff annotations, which Long Conversation
+ * doesn't use yet but the hook is built ready).
+ */
+
+import { useEffect, useState, useCallback } from "react";
+import { createClient } from "@/lib/supabase-browser";
+import { CLUSTER_ID } from "@/lib/cluster";
+import type { PostWithAuthor } from "@/lib/types";
+
+interface UseRealtimePostsArgs {
+  initialPosts: PostWithAuthor[];
+}
+
+export function useRealtimePosts({ initialPosts }: UseRealtimePostsArgs) {
+  const [posts, setPosts] = useState<PostWithAuthor[]>(initialPosts);
+
+  // Replace local state if the server-provided initial list changes
+  // (e.g. on hot reload). In normal use this fires once.
+  useEffect(() => {
+    setPosts(initialPosts);
+  }, [initialPosts]);
+
+  const insertPost = useCallback((post: PostWithAuthor) => {
+    setPosts((prev) => {
+      // Dedupe — realtime + optimistic insert can race
+      if (prev.some((p) => p.id === post.id)) return prev;
+      return [...prev, post].sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+  }, []);
+
+  const updatePost = useCallback((post: Partial<PostWithAuthor> & { id: string }) => {
+    setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, ...post } : p)));
+  }, []);
+
+  // Optimistic-update helper used by the composer.
+  const addOptimisticPost = useCallback(
+    (post: PostWithAuthor) => {
+      insertPost(post);
+    },
+    [insertPost]
+  );
+
+  // Replace an optimistic post (temporary id) with the server-confirmed one.
+  const replaceOptimisticPost = useCallback(
+    (tempId: string, confirmed: PostWithAuthor) => {
+      setPosts((prev) => {
+        const withoutTemp = prev.filter((p) => p.id !== tempId);
+        if (withoutTemp.some((p) => p.id === confirmed.id)) return withoutTemp;
+        return [...withoutTemp, confirmed].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      });
+    },
+    []
+  );
+
+  // Realtime subscriptions.
+  useEffect(() => {
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel(`posts:${CLUSTER_ID}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "posts",
+          filter: `cluster_id=eq.${CLUSTER_ID}`,
+        },
+        async (payload) => {
+          const newRow = payload.new as PostWithAuthor;
+          // Hydrate the author profile — INSERT events don't include joined rows.
+          if (newRow.author_id && !newRow.profiles) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", newRow.author_id)
+              .eq("cluster_id", CLUSTER_ID)
+              .maybeSingle();
+            insertPost({ ...newRow, profiles: profile ?? null });
+          } else {
+            insertPost(newRow);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "posts",
+          filter: `cluster_id=eq.${CLUSTER_ID}`,
+        },
+        (payload) => {
+          updatePost(payload.new as PostWithAuthor);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [insertPost, updatePost]);
+
+  return {
+    posts,
+    addOptimisticPost,
+    replaceOptimisticPost,
+  };
+}

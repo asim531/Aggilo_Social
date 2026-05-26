@@ -1,0 +1,85 @@
+/**
+ * Global CSS — Long Conversation.
+ *
+ * The visual language is intentionally minimal. This is a text-only
+ * cluster where words are the entire presence. The design supports
+ * that — it does not compete with it.
+ *
+ * No emoji decoration. No marketing flourishes. No animation that
+ * doesn't serve attention. The page should feel like a quiet table.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+@layer components {
+  /**
+   * sage-post — Sage's Timeline contributions.
+   *
+   * Visually distinct without being loud. Sage is the quality of the
+   * room, not its headline. A subtle teal left border and slightly
+   * elevated card surface communicate "anchor presence" without
+   * dominating the feed.
+   */
+  .sage-post {
+    @apply border-l-2 border-lc-sage/60 bg-lc-sageSoft/30;
+  }
+
+  /**
+   * clio-fab — top-right inside the cluster, 44px target (WCAG 2.5.5).
+   * Below the navbar with an 8px gap.
+   */
+  .clio-fab-cluster {
+    position: fixed;
+    top: 72px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    z-index: 50;
+    border-radius: 9999px;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    font-weight: 600;
+  }
+  .clio-fab-cluster:hover {
+    transform: scale(1.06);
+  }
+
+  /**
+   * Quiet idle pulse — Clio is present but not demanding attention.
+   */
+  .clio-fab-idle {
+    animation: clio-idle-halo 4s ease-in-out infinite;
+  }
+
+  @keyframes clio-idle-halo {
+    0%, 100% {
+      box-shadow:
+        0 8px 16px -4px rgba(0, 0, 0, 0.12),
+        0 0 0 0 rgba(217, 119, 6, 0.30);
+    }
+    50% {
+      box-shadow:
+        0 8px 16px -4px rgba(0, 0, 0, 0.12),
+        0 0 0 8px rgba(217, 119, 6, 0.04);
+    }
+  }
+}
