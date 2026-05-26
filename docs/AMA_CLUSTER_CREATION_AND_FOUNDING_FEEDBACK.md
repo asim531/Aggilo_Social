@@ -76,13 +76,23 @@ member, so this interaction does not fire.
 
 ### What Clio shows
 
-A single, gentle, non-blocking interaction in the FAB panel within the
-member's first 30 seconds in the cluster. The pattern:
+A persistent, user-invoked entry point — never auto-firing, never a
+forced takeover. The member chooses when to engage.
 
-1. Clio surfaces the FAB with a soft pulse — not a notification badge,
-   not a modal, not a forced takeover. Just her usual presence with
-   one unread message.
-2. When the member opens the FAB, they see a single message:
+**The badge** — a small pill in the cluster's chrome (top of the
+navbar in LC) that reads *"Clio has a note for you"* with a gentle
+amber pulse. The badge is visible on every visit until the founder
+either (a) submits feedback, (b) accepts the room as-is, or (c)
+explicitly declines (the Phase 1 silent_close after 24h since first
+shown also clears it). "Not now" closes the modal but leaves the
+badge — the founder can come back any time.
+
+**The modal** — opens when the founder taps the badge. Centered,
+soft backdrop, max 540px wide. The founder sees:
+
+1. A name greeting: *"A note for you, [nickname]."*
+2. Clio's verbatim opening (the same text every time, never
+   personalised by name or paraphrased):
 
    > *"This room was built around what you described. Before you
    > settle in — does the way it's set up feel right? If something is
@@ -90,7 +100,19 @@ member's first 30 seconds in the cluster. The pattern:
    > or how Sage holds the space. Or just say it's good and I'll get
    > out of your way."*
 
-3. The member responds in three possible ways:
+3. A collapsible **"See what's set up here"** panel exposing the
+   cluster's tagline, public description, and seed questions inline.
+   The founder can read what was actually built before judging it —
+   without having to leave the modal or remember what was in the
+   waitlist email.
+
+4. Three preset chips at the footer:
+   - **"It feels right"** — sends the chip text and accepts.
+   - **"Mostly right but…"** — opens a focused textarea.
+   - **"Not now"** — closes the modal. Does NOT stamp
+     `close_reason`. Badge stays visible for next visit.
+
+5. The member responds in three possible ways:
    - **"It's right"** (or a positive equivalent) — Clio acknowledges
      in one sentence and steps back. The interaction is closed and
      `founding_feedback_at` is stamped.
@@ -99,49 +121,112 @@ member's first 30 seconds in the cluster. The pattern:
      (cluster description copy, seed question wording) or queues a
      refinement for admin review (anything structural like AGGIL
      changes).
-   - **No response within 24 hours** — Clio takes silence as
-     "it's fine" and closes the interaction. `founding_feedback_at`
-     is stamped with a `silent_close` flag.
+   - **No response within 24 hours of first opening** — Clio takes
+     silence as "it's fine" and closes the interaction.
+     `founding_feedback_at` is stamped with a `silent_close` flag.
+
+**The badge offer** — after the conversation closes (any of the three
+response paths), Clio surfaces a small follow-up modal: *"You're the
+founding member of this room. Want a small ✦ Founder chip next to
+your name in the Timeline? You can ask me to remove it later."*
+Founder accepts or declines; on accept, `founding_badge_shown` is
+stamped and the chip renders next to their nickname in every post
+they make. This is the only place the platform marks them as
+distinguished — it is opt-in, dismissible, and never automatic.
 
 ### What Clio can adjust autonomously
 
-| Field | Autonomous? | Reason |
-|---|---|---|
-| Cluster description (public-facing copy) | Yes (Tier 1) | Reversible, member-facing copy that should match founder intent |
-| Seed questions | Yes (Tier 1) | Reversible, easily replaced |
-| Sage's first-post acknowledgement text | Yes (Tier 1) | Reversible, low blast radius |
-| Cluster name | No | Triggers the cluster name change protocol — admin-gated |
-| AGGIL configuration (age, gender, geography, language) | No | Structural; affects who can see/join. Admin approval required (escalates as Pattern 4 finding) |
-| Cluster type (generic ↔ premium) | No | Architectural decision — admin only |
-| Sage persona register (formality, register name) | Yes (Tier 1) | Reversible, low blast radius |
-| Tools active in the cluster | No | Tool proposal flow — Pattern 5 |
+| Field | Phase 0 | Phase 1+ | Reason |
+|---|---|---|---|
+| Cluster description (public-facing copy) | Captured for admin (48h SLA) | Yes (Tier 1) | Reversible, member-facing copy that should match founder intent |
+| Seed questions | Captured for admin (48h SLA) | Yes (Tier 1) | Reversible, easily replaced |
+| Sage's first-post acknowledgement text | Captured for admin (48h SLA) | Yes (Tier 1) | Reversible, low blast radius |
+| Sage persona register (formality, register name) | Captured for admin (48h SLA) | Yes (Tier 1) | Reversible, low blast radius |
+| Cluster name | No | No | Triggers the cluster name change protocol — admin-gated |
+| AGGIL configuration (age, gender, geography, language) | No | No | Structural; affects who can see/join. Admin approval required (escalates as Pattern 4 finding) |
+| Cluster type (generic ↔ premium) | No | No | Architectural decision — admin only |
+| Tools active in the cluster | No | No | Tool proposal flow — Pattern 5 |
 
-For changes Clio can apply autonomously, the standard Observer
-stewardship pattern applies (30-minute admin veto window, full
-versioning, rollback support). For changes she cannot apply, she
-captures the feedback verbatim in `cluster_intake_drafts` as a v3
-admin-edit candidate and tells the member: *"That's a structural
-change — I'll pass it to admin and someone will reach out within 48
-hours. The room is yours to use in the meantime."*
+**Phase 0 honesty rule.** The Observer stewardship layer that
+applies Tier-1 changes autonomously (per `architecture/PLATFORM_AGENCY.md`)
+is Phase 1 work. Until it ships, Clio must not imply she is making the
+change herself. The Phase 0 reply pattern is:
+
+> *"Got it — [reflection of what was heard]. I've captured that. Admin
+> will update it within 48 hours. Anything else, or is that the one?"*
+
+Not:
+
+> *"Got it. I'll soften that. Anything else?"* — implies autonomous action
+
+This is encoded in `phase0/lc/src/lib/prompts/platform/clio-founding-feedback.ts`
+under "CATEGORY B" of the prompt frame. When Phase 1 ships and Tier-1
+stewardship is live, the prompt frame switches to the autonomous
+phrasing.
+
+For changes Clio cannot apply autonomously (any phase), she captures
+the feedback verbatim in `cluster_intake_drafts` as a v3 admin-edit
+candidate and tells the member: *"That's a structural change — I'll
+pass it to admin and someone will reach out within 48 hours. The room
+is yours to use in the meantime."*
 
 ### What Clio never does in this interaction
 
 - Asks a battery of questions. One open prompt, one response cycle.
 - Pretends the feedback was logged when it wasn't. If the member
   describes something Clio cannot affect, she says so honestly.
+- Pretends an autonomous change is happening when it isn't. In
+  Phase 0, Tier-1 stewardship is not yet live; Clio captures and
+  routes to admin (48h SLA), and her reply must say so.
+- Auto-fires the prompt. The badge is conspicuous; the modal opens
+  only on click. No timer-based surfacing on entry.
 - Treats silence as a problem. Silence is acceptance — stamp
   `silent_close` and move on.
 - Returns to the topic later. This is a one-time interaction. If the
   member wants to revisit the cluster's setup later, they raise it
   in the AMA themselves.
 
+### Loading and failure UX
+
+The LLM round-trip can take 2–8 seconds depending on the provider.
+The modal must acknowledge the wait explicitly so it never feels
+broken:
+
+| Phase | What the founder sees |
+|---|---|
+| `opening` | Spinner + *"Clio is opening this with you…"* (sub-500ms typical) |
+| `ready` | Clio's verbatim opening + reference panel + chips |
+| `sending` | Three-dot pulse animation + *"Clio is reading…"* |
+| `ack` | Clio's reply + explicit Close button. Member dismisses on their own. |
+| `badge_offer` | Separate compact modal with the founder-chip opt-in |
+
+On network failure during `sending`: surface a friendly retry message
+inline (*"Something went wrong on my side. Try again or close this
+and come back later — your room isn't going anywhere."*) and return
+to the chip footer so the founder can retry or close.
+
+### Re-opening rules
+
+- **"Not now"** closes the modal but leaves the badge visible.
+  Server-side `close_reason` is NOT stamped. Same-session re-show is
+  suppressed via `sessionStorage` so the member doesn't get pestered;
+  next visit, the badge is back.
+- **Submit a response** (any of the three response chips) stamps
+  `close_reason` and the badge disappears for good.
+- **24h after first opening** with no response — Phase 1 scheduled
+  task stamps `silent_close`. Phase 0 has no such task; the badge
+  stays until response.
+
 ### Database
 
 ```sql
 alter table public.profiles
   add column if not exists founding_feedback_at timestamptz,
-  add column if not exists founding_feedback_close_reason text;
--- 'accepted' | 'changes_applied' | 'changes_queued' | 'silent_close'
+  add column if not exists founding_feedback_close_reason text,
+  -- 'accepted' | 'changes_applied' | 'changes_queued' | 'silent_close'
+  add column if not exists founding_badge_shown boolean default false not null;
+  -- Founder badge opt-in (the chip next to nickname in the Timeline).
+  -- Default false — opt-in only. Member can ask Clio to clear later.
 
 create table if not exists public.founding_feedback_log (
   id uuid primary key default gen_random_uuid(),
@@ -159,10 +244,21 @@ create table if not exists public.founding_feedback_log (
 ### Telemetry
 
 ```ts
-track("founding_feedback_shown");
-track("founding_feedback_responded", { close_reason: "accepted" | ... });
+// Lifecycle
+track("founding_feedback_badge_shown");          // navbar pill rendered
+track("founding_feedback_badge_clicked");        // member opened the modal
+track("founding_feedback_opened");               // server-side open completed
+track("founding_feedback_responded");            // member submitted a reply
+track("founding_feedback_closed", { close_reason }); // server stamped close
+track("founding_feedback_closed_by_user", { responded }); // member hit close
+track("founding_feedback_deferred");             // member hit "Not now"
+
+// Outcomes (server-side, when classification fires)
 track("founding_feedback_changes_applied", { fields: [...] });
 track("founding_feedback_changes_queued", { fields: [...] });
+
+// Founder badge
+track("founding_badge_offered_response", { accepted });
 ```
 
 ---
@@ -462,6 +558,79 @@ live and stable.
 
 ---
 
+## Appendix — Implementation lessons (LC pilot, 2026-05-26)
+
+The Long Conversation pilot validated the spec but exposed several
+UX assumptions that needed correction. Capturing them here so future
+clusters and the production-platform implementation don't repeat the
+mistakes.
+
+### Lesson 1 — User-invoked, not auto-firing
+
+The original spec imagined a "soft pulse on the FAB within 30
+seconds." In practice, anything that surfaces automatically on entry
+competes with the room itself — the founder is trying to read the
+Timeline and a modal interrupts. The right pattern is:
+
+- The badge is conspicuous in chrome.
+- The modal opens only on click.
+- No timer-based surfacing.
+
+Cluster onboarding teaches a general rule: **the room is the
+experience, modals are not the gate.**
+
+### Lesson 2 — Loading states are not optional
+
+The LLM call inside `action=reply` takes 2–8 seconds with most
+providers. Without an explicit loading state, the modal looks frozen
+and members assume it's broken. The five-phase model (`opening` →
+`ready` → `sending` → `ack` → `badge_offer`) plus a network-failure
+fallback message is the minimum.
+
+### Lesson 3 — Re-openable until explicit response
+
+"Not now" is not a close. Founders may want to read the cluster
+description, sit with it, post once, and only then have the
+conversation. The badge stays visible until an explicit positive or
+negative response is sent.
+
+### Lesson 4 — Founder badge is a fourth state, not an afterthought
+
+Originally listed as a possible follow-up, the founder badge offer is
+substantial enough to deserve its own phase in the modal sequence.
+Decision: a separate compact modal that appears after the main
+conversation closes. Opt-in, dismissible, never automatic.
+
+### Lesson 5 — Phase 0 honesty about autonomous changes
+
+The spec assumed Tier-1 stewardship would ship alongside Founding
+Feedback. It will not. Until Phase 1, Clio captures the feedback and
+routes to admin (48h SLA) — and her reply must say exactly that, not
+imply she is making the change herself. The prompt frame's
+"CATEGORY B" wording was rewritten to honour this. When Phase 1 ships
+and the Observer stewardship pipeline is live, the wording reverts to
+the autonomous-action phrasing in the original spec.
+
+These lessons are encoded in the LC implementation:
+
+- `phase0/lc/src/components/FoundingFeedbackBadge.tsx` — the
+  navbar-chrome entry point
+- `phase0/lc/src/components/FoundingFeedbackPrompt.tsx` — the modal
+  with the five-phase loading model and re-openable behaviour
+- `phase0/lc/src/lib/prompts/platform/clio-founding-feedback.ts` —
+  the prompt frame with Phase 0 honesty in CATEGORY B
+- `phase0/lc/src/app/api/clio/founding-feedback/route.ts` — the
+  three-action endpoint (`open`, `reply`, `badge`)
+- `phase0/lc/supabase/02_founding_feedback_migration.sql` — schema
+- `phase0/lc/supabase/03_founder_badge_migration.sql` — badge column
+
+Sisters in Dua and the production platform should mirror these
+contracts when they implement Founding Feedback.
+
+---
+
 *AMA Cluster Creation + Founding Feedback · Design v1 · 2026-05-25*
+*Implementation lessons appendix · 2026-05-26*
 *Subordinate to clio/SOUL.md and the platform soul.*
-*To be implemented in Phase 0a / 0b / Phase 1 per the phasing above.*
+*Part 1 implemented in LC (`phase0/lc/`). Parts 2 + production
+platform implementation pending.*

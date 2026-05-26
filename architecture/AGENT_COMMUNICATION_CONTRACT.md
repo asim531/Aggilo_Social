@@ -308,21 +308,44 @@ autonomously — that would risk circular refinement with no convergence.
 
 **The closing surface — founding-member feedback:** Pattern 7 has a
 human-facing closing step. After the cluster is created and the
-founding member arrives via their invite link, Clio shows them a
-single open-ended prompt asking whether the room feels right. This
-closes the interpretive loop with the actual person whose request
-produced the cluster — the only correct judge of whether the
-two-pass interpretation hit the mark. The interaction is one-shot
-(one prompt, one response cycle), runs in the FAB on first session,
-and is governed by a strict "step back" rule so it never feels like
-a survey. The Tier-1 stewardship pathway lets Clio apply small
-copy/seed-question/Sage-register adjustments autonomously; structural
-changes (AGGIL, name, type, tools) are queued for admin within 48h.
-Source-A clusters always show this prompt to the founding member;
-Source-B/C/D clusters either have no founding member (B, C) or a
-self-selected one whose context Clio captured during the AMA flow
-(D). For all of them, the closing surface is the same: did we get
-it right?
+founding member arrives via their invite link, Clio offers them a
+chance to validate the room before they settle in. This closes the
+interpretive loop with the actual person whose request produced the
+cluster — the only correct judge of whether the two-pass
+interpretation hit the mark.
+
+**UX requirements for the closing surface:**
+
+1. **User-invoked, never auto-firing.** A persistent badge in cluster
+   chrome ("Clio has a note for you") opens the modal on click. No
+   timer-based surfacing. Auto-firing modals on entry compete with
+   the room itself for attention; the room is the experience.
+2. **Re-openable until explicit response.** "Not now" closes the
+   modal but leaves the badge visible. Only an explicit response
+   chip (accept / mostly-right / structural change) stamps
+   `close_reason`. The badge stays visible across visits until then.
+3. **Explicit loading states for the LLM round-trip.** Five-phase
+   model: `opening` → `ready` → `sending` → `ack` → `badge_offer`,
+   with a friendly retry message on network failure. Without these,
+   slow networks make the UI feel broken.
+4. **One-shot interaction.** One open prompt, one response cycle, then
+   step back. Tier-1 changes (description, seed questions, Sage
+   register) are routed to admin in Phase 0; in Phase 1, Clio applies
+   them autonomously per the Observer stewardship contract. Structural
+   changes (AGGIL, name, type, tools) are queued for admin in any
+   phase.
+5. **Founder badge offer is a fourth state.** After the conversation
+   closes, Clio offers the founder a small `✦ Founder` chip next to
+   their nickname. Opt-in, dismissible later, never automatic.
+
+The Tier-1 stewardship pathway lets Clio apply small
+copy/seed-question/Sage-register adjustments autonomously (Phase 1);
+structural changes (AGGIL, name, type, tools) are queued for admin
+within 48h in any phase. Source-A clusters always show this prompt
+to the founding member; Source-B/C/D clusters either have no founding
+member (B, C) or a self-selected one whose context Clio captured
+during the AMA flow (D). For all of them, the closing surface is the
+same: did we get it right?
 
 **Full founding-feedback specification:**
 `docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md` Part 1.
