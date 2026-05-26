@@ -29,26 +29,8 @@ export default function LandingPage() {
       {/* ── Description ─────────────────────────────────────────── */}
       <div className="max-w-md w-full mb-10 text-left">
         <div className="bg-lc-card border border-stone-200 rounded-xl p-6">
-          <p className="text-sm text-lc-ink leading-relaxed mb-4">
-            A space for people who are tired of conversations that don&apos;t
-            go anywhere. No photos. No swiping. No mutual matches. The only
-            thing you know about anyone here is what they choose to say.
-          </p>
-          <p className="text-sm text-lc-ink leading-relaxed mb-4">
-            Apps optimise for surface signals. They are efficient at producing
-            matches and poor at producing the thing that actually matters —
-            the moment when two people realise they are genuinely interested
-            in each other as people, not as profiles.
-          </p>
-          <p className="text-sm text-lc-ink leading-relaxed mb-4">
-            Here, words are the only currency. People who are genuinely
-            interesting reveal themselves through language faster than they
-            reveal themselves through photos.
-          </p>
           <p className="text-sm text-lc-ink leading-relaxed">
-            This public room exists to set the vibe. When a real connection
-            sparks, our resident agent, Clio, will step in to open a private
-            line for direct messages. But it all starts here, in the open.
+            A space where words are the only currency. The public room is designed to help you truly understand people on a deeper level. When a real connection sparks and you're ready to take matters to the next level, Clio opens a private line.
           </p>
         </div>
       </div>

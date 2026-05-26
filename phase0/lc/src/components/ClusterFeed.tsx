@@ -84,12 +84,15 @@ export default function ClusterFeed({
         className="max-w-3xl mx-auto px-4 py-6 space-y-3"
       >
         {topLevel.length === 0 ? (
-          <div className="bg-lc-card border border-dashed border-stone-300 rounded-lg p-8 text-center">
-            <p className="text-sm text-lc-muted">
-              Nobody&apos;s set the tone yet.
+          <div className="bg-lc-card border border-stone-200 rounded-lg p-8 flex flex-col items-center justify-center text-center">
+            <div className="relative w-16 h-16 mb-4">
+              <img src="/characters/clio.png" alt="Clio" className="object-contain w-full h-full drop-shadow-md" />
+            </div>
+            <p className="text-sm font-medium text-lc-ink mb-1">
+              I am working on finding the crowd for this room.
             </p>
-            <p className="text-xs text-lc-muted/80 mt-2">
-              Sage will be here. The room belongs to whoever speaks first.
+            <p className="text-xs text-lc-muted/80 max-w-sm">
+              The room belongs to whoever speaks first. Feel free to use the share button above to invite others.
             </p>
           </div>
         ) : (

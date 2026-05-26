@@ -38,7 +38,9 @@ import ClioTour from "./ClioTour";
 import AgentChatbox from "./AgentChatbox";
 import FoundingFeedbackPrompt from "./FoundingFeedbackPrompt";
 import FirstVisitHint from "./FirstVisitHint";
+import ClioTipLayer from "./ClioTipLayer";
 import type { PostWithAuthor, Profile } from "@/lib/types";
+import { PresenceProvider } from "@/lib/presence-context";
 
 interface ClusterShellProps {
   userId: string;
@@ -141,14 +143,41 @@ export default function ClusterShell({
     return () => clearTimeout(trigger);
   }, []);
 
+  // Welcome tip auto-trigger on first session
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const WELCOME_TIP_KEY = `lc:welcome_tip_checked_${userId}`;
+    if (window.localStorage.getItem(WELCOME_TIP_KEY)) return;
+
+    window.localStorage.setItem(WELCOME_TIP_KEY, "true");
+    
+    // Slight delay so it feels natural and doesn't block immediate render
+    setTimeout(() => {
+      fetch(withBasePath("/api/agents/clio-tips/welcome"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          userId, 
+          nickname: profile.nickname,
+          gender: profile.gender,
+          country: profile.country
+        }),
+      }).then(() => {
+        window.dispatchEvent(new Event("clio-tip-inserted"));
+      }).catch(() => {});
+    }, 3000);
+  }, [userId, profile]);
+
   return (
-    <div className="min-h-screen flex flex-col bg-lc-surface">
-      <a
-        href="#lc-cluster-timeline"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[80] focus:px-3 focus:py-2 focus:bg-lc-ink focus:text-white focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-lc-clio"
-      >
-        Skip to feed
-      </a>
+    <>
+      <PresenceProvider userId={userId} nickname={profile.nickname}>
+        <div className="min-h-screen flex flex-col bg-lc-surface">
+        <a
+          href="#lc-cluster-timeline"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[80] focus:px-3 focus:py-2 focus:bg-lc-ink focus:text-white focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-lc-clio"
+        >
+          Skip to feed
+        </a>
 
       <Navbar
         displayName={profile.nickname}
@@ -175,6 +204,7 @@ export default function ClusterShell({
         <AgentChatbox />
       </main>
 
+      <ClioTipLayer userId={userId} />
       <ClioFab userId={userId} />
 
       {/* User-invoked overlays */}
@@ -200,11 +230,12 @@ export default function ClusterShell({
         onClose={(didRespond) => {
           setShowFoundingFeedback(false);
           if (didRespond) {
-            // The badge unmount on next mount will hide itself based
-            // on the server-side closed flag. No-op here.
+            setTimeout(() => window.location.reload(), 600);
           }
         }}
       />
-    </div>
+      </div>
+    </PresenceProvider>
+    </>
   );
 }

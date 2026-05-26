@@ -67,6 +67,7 @@ export default function PostComposer({
 }: PostComposerProps) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [requestingTip, setRequestingTip] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const placeholder = pickPlaceholder();
 
@@ -160,6 +161,31 @@ export default function PostComposer({
     [content, submitting, userId, profile, onOptimisticPost, onConfirmPost]
   );
 
+  const handleTipMe = useCallback(async () => {
+    if (requestingTip) return;
+    setRequestingTip(true);
+    setError(null);
+    try {
+      const res = await fetch(withBasePath("/api/agents/clio-tips/manual"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, nickname: profile.nickname }),
+      });
+      if (res.ok) {
+        window.dispatchEvent(new Event("clio-tip-inserted"));
+      } else {
+        const body = await res.json().catch(() => ({}));
+        console.error("Tip request failed:", body);
+        setError("Clio couldn't generate a tip right now. Try again later.");
+      }
+    } catch (err) {
+      console.error("Failed to request tip:", err);
+      setError("Couldn't reach Clio. Check your connection.");
+    } finally {
+      setRequestingTip(false);
+    }
+  }, [userId, profile.nickname, requestingTip]);
+
   return (
     <div className="sticky bottom-0 z-30 bg-lc-card/95 backdrop-blur border-t border-stone-200">
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-4 py-3">
@@ -189,9 +215,22 @@ export default function PostComposer({
         {error && (
           <p className="mt-2 text-xs text-rose-600">{error}</p>
         )}
-        <p className="mt-1.5 text-[11px] text-lc-muted">
-          Words are your entire presence here. Cmd/Ctrl + Enter to send.
-        </p>
+        <div className="mt-1.5 flex items-center justify-between">
+          <p className="text-[11px] text-lc-muted">
+            Words are your entire presence here. Cmd/Ctrl + Enter to send.
+          </p>
+          <button
+            type="button"
+            onClick={handleTipMe}
+            disabled={requestingTip}
+            className="text-[11px] text-lc-clio hover:text-amber-700 transition-colors flex items-center gap-1 disabled:opacity-50"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            {requestingTip ? "Asking Clio..." : "Tip me, Clio"}
+          </button>
+        </div>
       </form>
     </div>
   );

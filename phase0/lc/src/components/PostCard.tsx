@@ -22,9 +22,10 @@
  * (one level deep) so the conversation stays linear.
  */
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { PostWithAuthor, Profile } from "@/lib/types";
 import { withBasePath } from "@/lib/path";
+import LinkPreviewCard, { extractUrls, renderTextWithLinks } from "@/components/LinkPreviewCard";
 import { track } from "@/lib/track";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
@@ -153,8 +154,8 @@ export default function PostCard({
     <article
       className={
         isWelfare
-          ? "rounded-lg border border-lc-welfare/20 bg-lc-welfareSoft/30 border-l-2 border-l-lc-welfare/50 overflow-hidden"
-          : "rounded-lg border border-stone-200 overflow-hidden"
+          ? "rounded-lg border border-lc-welfare/20 bg-lc-welfareSoft/30 border-l-2 border-l-lc-welfare/50"
+          : "rounded-lg border border-stone-200"
       }
       aria-label={isWelfare ? "Welfare-flagged thread" : undefined}
     >
@@ -238,9 +239,14 @@ function PostBody({ post }: { post: PostWithAuthor }) {
     return (
       <div className="sage-post p-4 bg-lc-sageSoft/30">
         <header className="flex items-baseline justify-between mb-2">
-          <span className="text-xs font-medium text-lc-sage uppercase tracking-wider">
-            Sage · Anchor
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="relative w-5 h-5 rounded-full overflow-hidden bg-lc-sageSoft shrink-0">
+              <img src="/characters/sage.png" alt="Sage" className="object-contain w-full h-full" />
+            </div>
+            <span className="text-xs font-medium text-lc-sage uppercase tracking-wider">
+              Sage · Anchor
+            </span>
+          </div>
           <time
             className="text-xs text-lc-muted"
             dateTime={post.created_at}
@@ -249,9 +255,12 @@ function PostBody({ post }: { post: PostWithAuthor }) {
             {formatTimestamp(post.created_at)}
           </time>
         </header>
-        <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line">
-          {post.content}
+        <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line break-words">
+          {renderTextWithLinks(post.content)}
         </p>
+        {extractUrls(post.content).map(url => (
+          <LinkPreviewCard key={url} url={url} />
+        ))}
       </div>
     );
   }
@@ -260,9 +269,7 @@ function PostBody({ post }: { post: PostWithAuthor }) {
     <div className="p-4 bg-lc-card">
       <header className="flex items-baseline justify-between mb-2">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-sm font-medium text-lc-ink">
-            {post.profiles?.nickname ?? "member"}
-          </span>
+          <MemberIdentity profile={post.profiles} />
           {(post.profiles as { is_founding_member?: boolean; founding_badge_shown?: boolean } | null)
             ?.is_founding_member &&
             (post.profiles as { founding_badge_shown?: boolean } | null)
@@ -280,9 +287,12 @@ function PostBody({ post }: { post: PostWithAuthor }) {
           {formatTimestamp(post.created_at)}
         </time>
       </header>
-      <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line">
-        {post.content}
+      <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line break-words">
+        {renderTextWithLinks(post.content)}
       </p>
+      {extractUrls(post.content).map(url => (
+        <LinkPreviewCard key={url} url={url} />
+      ))}
     </div>
   );
 }
@@ -296,9 +306,14 @@ function ReplyCard({ post }: { post: PostWithAuthor }) {
     return (
       <div className="px-4 py-3 pl-8 bg-lc-sageSoft/20 border-l-2 border-lc-sage/50">
         <header className="flex items-baseline justify-between mb-1.5">
-          <span className="text-[10px] font-medium text-lc-sage uppercase tracking-wider">
-            Sage · Anchor
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="relative w-4 h-4 rounded-full overflow-hidden bg-lc-sageSoft shrink-0">
+              <img src="/characters/sage.png" alt="Sage" className="object-contain w-full h-full" />
+            </div>
+            <span className="text-[10px] font-medium text-lc-sage uppercase tracking-wider">
+              Sage · Anchor
+            </span>
+          </div>
           <time
             className="text-[10px] text-lc-muted"
             dateTime={post.created_at}
@@ -306,9 +321,12 @@ function ReplyCard({ post }: { post: PostWithAuthor }) {
             {formatTimestamp(post.created_at)}
           </time>
         </header>
-        <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line">
-          {post.content}
+        <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line break-words">
+          {renderTextWithLinks(post.content)}
         </p>
+        {extractUrls(post.content).map(url => (
+          <LinkPreviewCard key={url} url={url} />
+        ))}
       </div>
     );
   }
@@ -317,9 +335,7 @@ function ReplyCard({ post }: { post: PostWithAuthor }) {
     <div className="px-4 py-3 pl-8">
       <header className="flex items-baseline justify-between mb-1.5">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs font-medium text-lc-ink">
-            {post.profiles?.nickname ?? "member"}
-          </span>
+          <MemberIdentity profile={post.profiles} />
           {(post.profiles as { is_founding_member?: boolean; founding_badge_shown?: boolean } | null)
             ?.is_founding_member &&
             (post.profiles as { founding_badge_shown?: boolean } | null)
@@ -336,9 +352,74 @@ function ReplyCard({ post }: { post: PostWithAuthor }) {
           {formatTimestamp(post.created_at)}
         </time>
       </header>
-      <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line">
-        {post.content}
+      <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line break-words">
+        {renderTextWithLinks(post.content)}
       </p>
+      {extractUrls(post.content).map(url => (
+        <LinkPreviewCard key={url} url={url} />
+      ))}
+    </div>
+  );
+}
+
+function MemberIdentity({ profile }: { profile: Profile | null }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (!profile) return <span className="text-sm font-medium text-lc-ink">member</span>;
+
+  let genderIndicator = null;
+  if (profile.gender === "female") {
+    genderIndicator = <span className="w-1.5 h-1.5 rounded-full bg-rose-400" title="Female" aria-label="Female"></span>;
+  } else if (profile.gender === "male") {
+    genderIndicator = <span className="w-1.5 h-1.5 rounded-full bg-blue-400" title="Male" aria-label="Male"></span>;
+  } else if (profile.gender === "non_binary") {
+    genderIndicator = <span className="w-1.5 h-1.5 rounded-full bg-purple-400" title="Non-binary" aria-label="Non-binary"></span>;
+  }
+
+  return (
+    <div className="relative inline-block" ref={ref}>
+      <button 
+        type="button" 
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 hover:opacity-70 focus:outline-none transition-opacity"
+      >
+        <span className="text-sm font-medium text-lc-ink">{profile.nickname}</span>
+      </button>
+      
+      {open && (
+        <div className="absolute top-full left-0 mt-1.5 z-[60] w-48 p-2.5 rounded-lg shadow-xl bg-lc-card border border-stone-200">
+          <div className="flex flex-col gap-1.5 text-xs text-lc-ink whitespace-nowrap">
+            {profile.gender && (
+              <div className="flex justify-between border-b border-stone-100 pb-1">
+                <span className="text-lc-muted">Gender</span>
+                <span className="font-medium flex items-center gap-1.5 capitalize">
+                  {profile.gender.replace("_", "-")}
+                  {genderIndicator}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between border-b border-stone-100 pb-1">
+              <span className="text-lc-muted">Born</span>
+              <span className="font-medium">{profile.birth_year || "—"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-lc-muted">Location</span>
+              <span className="font-medium">{profile.country || "—"}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

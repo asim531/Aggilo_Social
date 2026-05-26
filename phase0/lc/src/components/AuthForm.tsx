@@ -14,7 +14,7 @@ type SignupStep =
   | "nickname"
   | "gender"
   | "birth_year"
-  | "city";
+  | "location";
 
 const GENDER_OPTIONS = [
   { value: "male", label: "Male" },
@@ -45,6 +45,7 @@ function AuthFormContent() {
   const [nickname, setNickname] = useState("");
   const [gender, setGender] = useState("");
   const [birthYear, setBirthYear] = useState<number | "">("");
+  const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
   const [step, setStep] = useState<SignupStep>("email");
   const [state, setState] = useState<AuthState>("idle");
@@ -170,13 +171,13 @@ function AuthFormContent() {
     e.preventDefault();
     if (!birthYear) return;
     track("signup_birth_year_chosen", { birth_year: birthYear });
-    setStep("city");
+    setStep("location");
   }
 
-  function handleCitySubmit(e: FormEvent) {
+  function handleLocationSubmit(e: FormEvent) {
     e.preventDefault();
-    // City is optional — empty string is allowed.
-    track("signup_city_submitted");
+    if (!country.trim()) return; // Country is compulsory
+    track("signup_location_submitted");
     sendOtp();
   }
 
@@ -193,7 +194,7 @@ function AuthFormContent() {
           nickname: nickname.trim(),
           gender,
           birth_year: birthYear,
-          country: city.trim() || null,
+          country: city.trim() ? `${city.trim()}, ${country.trim()}` : country.trim(),
         },
       },
     });
@@ -444,14 +445,10 @@ function AuthFormContent() {
           <div>
             <label
               htmlFor="birth-year"
-              className="block text-sm font-medium text-lc-ink mb-1.5"
+              className="block text-sm font-medium text-lc-ink mb-3"
             >
               Your birth year
             </label>
-            <p className="text-xs text-lc-muted mb-3">
-              This room was built for the {RECOMMENDED_RANGE[0]}–{RECOMMENDED_RANGE[1]} window
-              (roughly 22–32 today). Anyone can join, but the conversation is calibrated for that range.
-            </p>
             <select
               id="birth-year"
               value={birthYear}
@@ -491,32 +488,53 @@ function AuthFormContent() {
         </form>
       )}
 
-      {/* ── SIGN UP — city step (optional) ───────────────────────── */}
-      {mode === "signup" && step === "city" && (
-        <form onSubmit={handleCitySubmit} className="space-y-4">
+      {/* ── SIGN UP — location step ────────────────────────────── */}
+      {mode === "signup" && step === "location" && (
+        <form onSubmit={handleLocationSubmit} className="space-y-4">
           <div>
+            <label
+              htmlFor="country"
+              className="block text-sm font-medium text-lc-ink mb-1.5"
+            >
+              Your country
+            </label>
+            <select
+              id="country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              required
+              className="w-full px-4 py-3 rounded-lg border border-stone-300 bg-lc-card focus:outline-none focus:ring-2 focus:ring-lc-clio focus:border-transparent text-lc-ink mb-4"
+            >
+              <option value="" disabled>Select a country</option>
+              <option value="India">India</option>
+              <option value="United States">United States</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="Canada">Canada</option>
+              <option value="Australia">Australia</option>
+              <option value="Singapore">Singapore</option>
+              <option value="United Arab Emirates">United Arab Emirates</option>
+              <option value="Other">Other</option>
+            </select>
+            
             <label
               htmlFor="city"
               className="block text-sm font-medium text-lc-ink mb-1.5"
             >
               Your city <span className="text-lc-muted font-normal">(optional)</span>
             </label>
-            <p className="text-xs text-lc-muted mb-3">
-              Where you&apos;re based. India-primary, but open to anyone. Skip this if you&apos;d rather not say.
-            </p>
             <input
               id="city"
               type="text"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. Bangalore, Bhopal, Delhi"
+              placeholder="e.g. Bangalore, London, New York"
               maxLength={64}
               className="w-full px-4 py-3 rounded-lg border border-stone-300 bg-lc-card focus:outline-none focus:ring-2 focus:ring-lc-clio focus:border-transparent text-lc-ink placeholder:text-stone-400"
             />
           </div>
           <button
             type="submit"
-            disabled={state === "loading"}
+            disabled={state === "loading" || !country.trim()}
             className="w-full py-3 px-4 rounded-lg font-medium text-white bg-lc-clio hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {state === "loading" ? "Sending link…" : "Enter Long Conversation"}

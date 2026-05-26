@@ -87,7 +87,7 @@ export default async function ClusterPage() {
     ? await supabase
         .from("profiles")
         .select(
-          "id, cluster_id, nickname, role, is_founding_member, founding_badge_shown"
+          "id, cluster_id, nickname, role, is_founding_member, founding_badge_shown, gender, birth_year, country"
         )
         .eq("cluster_id", CLUSTER_ID)
         .in("id", authorIds)
