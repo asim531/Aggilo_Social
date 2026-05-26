@@ -77,6 +77,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ outcome: "welfare_routed" });
     }
 
+    // ── @Sage mention detection ───────────────────────────────────
+    // When a member explicitly addresses Sage (per CLUSTER_DESCRIPTION
+    // §5: "Members can call her with @Sage"), the LLM gets a hint
+    // that silence is not the right answer. The standard 6-step
+    // framework still runs — Sage may witness, ask a depth question,
+    // reframe, or limit scope — but [SAGE_SILENT] is no longer a
+    // valid output.
+    const isMentioned = /\b@sage\b/i.test(post.content);
+
     // ── Context assembly ─────────────────────────────────────────
     // Recent posts (up to 10) for room context.
     const { data: recentRows } = await supabase
@@ -108,6 +117,7 @@ export async function POST(request: Request) {
       memberMessage: post.content,
       recentPosts,
       recentSagePosts,
+      isMentioned,
     });
 
     let llmResponse: string;
@@ -144,10 +154,20 @@ export async function POST(request: Request) {
     // Use the admin client because Sage posts have author_id = null,
     // which RLS would reject under the standard "auth.uid() = author_id"
     // policy. The service role bypasses RLS.
+    //
+    // Threading rule: Sage's response attaches as a reply to the
+    // triggering post. This keeps the conversation visually grouped —
+    // member's post and Sage's response live in the same thread card.
+    // If the triggering post is itself a reply, Sage replies to the
+    // root of that thread (post.parent_id) rather than nesting two
+    // levels deep, since the cluster intentionally keeps threads
+    // shallow (one level of replies).
     const admin = createAdminClient();
+    const replyParentId = post.parent_id ?? post.id;
     const { error: insertErr } = await admin.from("posts").insert({
       cluster_id: CLUSTER_ID,
       author_id: null,
+      parent_id: replyParentId,
       content: responseContent,
       is_sage: true,
       is_sage_question: decision.step === "depth_question",
@@ -195,13 +215,23 @@ async function handleWelfarePost(post: PostWithAuthor) {
     "What you're carrying is real, and it matters. Someone from this community will reach out to you.";
 
   // Mark the originating post as welfare_flagged so the admin queue
-  // can surface it.
+  // can surface it. If the originating post is a reply, mark the
+  // parent thread too so the visual cue is correct in the feed.
   await admin
     .from("posts")
     .update({ thread_state: "welfare_flagged" })
     .eq("id", post.id);
 
-  // Sage's care-witness post.
+  if (post.parent_id) {
+    await admin
+      .from("posts")
+      .update({ thread_state: "welfare_flagged" })
+      .eq("id", post.parent_id);
+  }
+
+  // Sage's care-witness post. Threaded as a reply at the root level
+  // so it groups with the originating post in the feed.
+  const replyParentId = post.parent_id ?? post.id;
   await admin.from("posts").insert({
     cluster_id: CLUSTER_ID,
     author_id: null,
@@ -209,7 +239,7 @@ async function handleWelfarePost(post: PostWithAuthor) {
     is_sage: true,
     is_sage_question: false,
     thread_state: "welfare_flagged",
-    parent_id: post.id,
+    parent_id: replyParentId,
   });
 
   // Welfare notification for the admin queue. Best-effort — never

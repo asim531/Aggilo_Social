@@ -25,6 +25,14 @@ export interface SageEvaluationSignals {
   }>;
   /** Recent Sage posts (last 10–15) so she does not repeat herself. */
   recentSagePosts: string[];
+  /**
+   * True when the member explicitly addressed Sage (e.g. via @Sage in
+   * the post body). When set, [SAGE_SILENT] is no longer a valid
+   * output — Sage must respond with one of the framework's named
+   * interventions. Witness, depth question, reframe, or scope-limit
+   * redirect are all valid; outright silence is not.
+   */
+  isMentioned?: boolean;
 }
 
 export interface SageDecision {
@@ -67,6 +75,12 @@ export function buildSageMessages(signals: SageEvaluationSignals): ChatMessage[]
 
 function buildRuntimeSignalsBlock(signals: SageEvaluationSignals): string {
   const parts: string[] = [];
+
+  if (signals.isMentioned) {
+    parts.push(
+      `## @Sage mention detected\nThe member explicitly addressed you with @Sage. Silence is not the right answer here. Respond using one of the framework's named interventions (witness, depth question, reframe, or scope-limit redirect). [SAGE_SILENT] is not a valid output for this turn.`
+    );
+  }
 
   if (signals.recentPosts.length > 0) {
     const lines = signals.recentPosts.slice(-10).map((p) => {

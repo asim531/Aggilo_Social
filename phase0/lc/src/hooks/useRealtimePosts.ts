@@ -46,6 +46,10 @@ export function useRealtimePosts({ initialPosts }: UseRealtimePostsArgs) {
     setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, ...post } : p)));
   }, []);
 
+  const removePost = useCallback((id: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
   // Optimistic-update helper used by the composer.
   const addOptimisticPost = useCallback(
     (post: PostWithAuthor) => {
@@ -111,12 +115,25 @@ export function useRealtimePosts({ initialPosts }: UseRealtimePostsArgs) {
           updatePost(payload.new as PostWithAuthor);
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "posts",
+          filter: `cluster_id=eq.${CLUSTER_ID}`,
+        },
+        (payload) => {
+          const oldRow = payload.old as { id?: string };
+          if (oldRow.id) removePost(oldRow.id);
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [insertPost, updatePost]);
+  }, [insertPost, updatePost, removePost]);
 
   return {
     posts,

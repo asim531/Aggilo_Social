@@ -116,9 +116,13 @@ export default function PostComposer({
       if (insertError || !inserted) {
         // Roll back the optimistic insert by surfacing an error and
         // re-populating the textarea so the user can retry.
-        setError("Couldn't post that. Try again.");
+        const detail = insertError?.message ?? "unknown error";
+        // Console-log the actual error so devs can debug — the inline
+        // message stays generic for the user.
+        console.warn("[PostComposer] insert failed:", detail, insertError);
+        setError(`Couldn't post that. ${detail}`);
         setContent(trimmed);
-        track("post_compose_failed", { reason: insertError?.message ?? "unknown" });
+        track("post_compose_failed", { reason: detail });
         setSubmitting(false);
         return;
       }

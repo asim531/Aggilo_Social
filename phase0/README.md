@@ -92,7 +92,13 @@ domain and the site itself is not throwaway.
 
 ## Convention for new pilot clusters
 
-Every new cluster started during the pilot follows the same shape:
+The detailed step-by-step ships in **`phase0/NEW_CLUSTER_CHECKLIST.md`**
+(database scoping, app scaffold, prompt files, Vercel rewrite,
+smoke test, gotchas to avoid). Read that first when spinning up
+a new cluster.
+
+In summary, every new cluster started during the pilot follows the
+same shape:
 
 1. The cluster's Next.js app goes at `phase0/<short-slug>/` (mirror
    of `phase0/lc/`). Its `NEXT_PUBLIC_CLUSTER_ID` is hard-pinned.
