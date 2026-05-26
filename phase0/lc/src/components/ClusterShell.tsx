@@ -9,14 +9,21 @@
  *
  * The Clio FAB (top-right, intimacy-cohort register, with the private
  * tip mechanic active) is wired in at the bottom of the shell.
+ *
+ * Room Workshop strip (AgentChatbox) renders between the cluster
+ * header and the feed. Default-collapsed; members open it once and
+ * the choice persists. Auto-fires the cadence-exchange ~30s after
+ * mount when the cadence floor allows.
  */
 
 import { useEffect } from "react";
+import { withBasePath } from "@/lib/path";
 import { track } from "@/lib/track";
 import Navbar from "./Navbar";
 import ClusterHeader from "./ClusterHeader";
 import ClusterFeed from "./ClusterFeed";
 import ClioFab from "./ClioFab";
+import AgentChatbox from "./AgentChatbox";
 import FoundingFeedbackPrompt from "./FoundingFeedbackPrompt";
 import type { PostWithAuthor, Profile } from "@/lib/types";
 
@@ -25,6 +32,9 @@ interface ClusterShellProps {
   profile: Profile;
   initialPosts: PostWithAuthor[];
 }
+
+const CADENCE_NEXT_ELIGIBLE_KEY = "lc:cadence_exchange_next_eligible";
+const FIRST_SESSION_DONE_KEY = "lc:first_session_done";
 
 export default function ClusterShell({
   userId,
@@ -35,6 +45,58 @@ export default function ClusterShell({
   useEffect(() => {
     track("session_started");
     track("cluster_landed");
+  }, []);
+
+  // Cadence-exchange trigger. Mirrors MVP's pattern with LC keys.
+  // The first session ever is silent — we just stamp the flag, so the
+  // member's first impression is the room itself, not a Workshop
+  // exchange. From the second session onward, the dialogue surfaces
+  // when the server-side cadence floor allows.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const firstDone = window.localStorage.getItem(FIRST_SESSION_DONE_KEY);
+    if (!firstDone) {
+      window.localStorage.setItem(FIRST_SESSION_DONE_KEY, String(Date.now()));
+      return;
+    }
+    const stored = window.localStorage.getItem(CADENCE_NEXT_ELIGIBLE_KEY);
+    if (stored && Date.now() < parseInt(stored, 10)) return;
+
+    const trigger = setTimeout(async () => {
+      try {
+        const res = await fetch(withBasePath("/api/agents/cadence-exchange"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = (await res.json()) as {
+          outcome?: string;
+          next_eligible_at?: string;
+        };
+        if (data.outcome === "cadence_blocked" && data.next_eligible_at) {
+          window.localStorage.setItem(
+            CADENCE_NEXT_ELIGIBLE_KEY,
+            String(new Date(data.next_eligible_at).getTime())
+          );
+        } else if (data.outcome === "posted") {
+          // Match the active-cluster floor (60 minutes) so we don't
+          // hammer the room mid-conversation.
+          window.localStorage.setItem(
+            CADENCE_NEXT_ELIGIBLE_KEY,
+            String(Date.now() + 60 * 60 * 1000)
+          );
+        } else {
+          // Errors / in_flight / budget_exceeded: short retry floor.
+          window.localStorage.setItem(
+            CADENCE_NEXT_ELIGIBLE_KEY,
+            String(Date.now() + 5 * 60 * 1000)
+          );
+        }
+      } catch {
+        /* silent */
+      }
+    }, 30_000);
+
+    return () => clearTimeout(trigger);
   }, []);
 
   return (
@@ -51,6 +113,7 @@ export default function ClusterShell({
 
       <main className="flex-1">
         <ClusterHeader />
+        <AgentChatbox />
         <ClusterFeed
           initialPosts={initialPosts}
           userId={userId}

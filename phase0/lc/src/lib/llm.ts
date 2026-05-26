@@ -18,6 +18,14 @@ interface LLMCallOptions {
   maxTokens?: number;
   /** Caller identifier for logging (e.g. "sage_review", "clio_chat"). */
   operationKey?: string;
+  /**
+   * OpenAI-compatible response_format. Set to { type: "json_object" }
+   * for routes that demand a JSON-shaped response (cadence-exchange,
+   * introspect). When the provider doesn't support this header the
+   * field is ignored at the API layer; we still get text back and
+   * the caller's JSON.parse acts as the validator.
+   */
+  responseFormat?: { type: "json_object" } | { type: "text" };
 }
 
 export interface LLMCallResult {
@@ -57,6 +65,9 @@ async function callProvider(
       messages: options.messages,
       temperature: options.temperature ?? 0.6,
       max_tokens: options.maxTokens ?? 400,
+      ...(options.responseFormat
+        ? { response_format: options.responseFormat }
+        : {}),
     }),
   });
 

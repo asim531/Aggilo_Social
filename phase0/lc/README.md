@@ -167,6 +167,13 @@ Phase 0 build in progress. Currently shipped:
       `/admin/welfare` queue page with open/resolved tabs,
       `/api/admin/welfare/[id]/resolve` route,
       Navbar admin link for admins
+- [x] Room Workshop:
+      `<AgentChatbox>` strip between header and feed (default-collapsed),
+      `<FeaturesList>` two-track Workshop UI at `/cluster/features`,
+      `/api/agents/cadence-exchange` route with LC intimacy register,
+      auto-trigger ~30s after second session,
+      cluster_features writes for proposed capabilities,
+      member-blame validator + retry + degraded fallback
 - [ ] AMA cluster creation workflow (per Part 2 of the AMA spec)
 - [ ] Founding member invite flow
 - [ ] Production deployment to Vercel + DNS cutover
