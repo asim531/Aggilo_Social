@@ -55,16 +55,51 @@ export default async function ClusterPage() {
 
   const profile = profileRow as Profile;
 
-  // Initial posts — top-level only on first paint. Replies are folded
-  // into the same query when threading ships in a later batch.
-  const { data: postRows } = await supabase
+  // Initial posts — top-level + their replies up to a depth of 1.
+  // Threading is shallow (one level) so a single SELECT covers the
+  // whole feed. Includes posts from Sage (author_id = null) and from
+  // members.
+  //
+  // Two-step fetch (posts then profiles in bulk) instead of a
+  // PostgREST embed, because posts.author_id has two FKs after the
+  // cluster-scope migration (auth.users + composite profiles), which
+  // makes embed disambiguation fragile. The two-step approach is
+  // robust to either FK shape and adds one extra small query.
+  const { data: rawPosts, error: postsError } = await supabase
     .from("posts")
-    .select("*, profiles(*)")
+    .select("*")
     .eq("cluster_id", CLUSTER_ID)
     .order("created_at", { ascending: true })
-    .limit(50);
+    .limit(200);
 
-  const initialPosts: PostWithAuthor[] = (postRows as PostWithAuthor[]) ?? [];
+  if (postsError) {
+    console.warn("[cluster/page] posts fetch failed:", postsError.message);
+  }
+
+  const authorIds = Array.from(
+    new Set(
+      (rawPosts ?? [])
+        .map((p) => p.author_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  const { data: profileRows } = authorIds.length
+    ? await supabase
+        .from("profiles")
+        .select(
+          "id, cluster_id, nickname, role, is_founding_member, founding_badge_shown"
+        )
+        .eq("cluster_id", CLUSTER_ID)
+        .in("id", authorIds)
+    : { data: [] };
+  const profilesById = new Map<string, Profile>(
+    ((profileRows ?? []) as Profile[]).map((p) => [p.id, p])
+  );
+
+  const initialPosts: PostWithAuthor[] = (rawPosts ?? []).map((p) => ({
+    ...(p as PostWithAuthor),
+    profiles: p.author_id ? profilesById.get(p.author_id) ?? null : null,
+  }));
 
   return (
     <ClusterShell

@@ -258,17 +258,40 @@ async function runCadenceExchange(
     }
   }
 
-  // Recent posts for context.
+  // Recent posts for context. Two-step fetch (rows then profiles) so
+  // we don't depend on PostgREST embed disambiguation after the
+  // cluster-scope migration added two FKs on posts.author_id.
   const { data: recentPosts } = await supabase
     .from("posts")
-    .select("*, profiles(*)")
+    .select("*")
     .eq("cluster_id", CLUSTER_ID)
     .order("created_at", { ascending: false })
     .limit(15);
 
+  const recentPostAuthorIds = Array.from(
+    new Set(
+      ((recentPosts ?? []) as PostWithAuthor[])
+        .map((p) => p.author_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  const { data: recentPostProfiles } = recentPostAuthorIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, nickname")
+        .eq("cluster_id", CLUSTER_ID)
+        .in("id", recentPostAuthorIds)
+    : { data: [] };
+  const recentNicknameById = new Map<string, string>(
+    ((recentPostProfiles ?? []) as Array<{ id: string; nickname: string }>)
+      .map((p) => [p.id, p.nickname])
+  );
+
   const recentSummary = ((recentPosts || []) as PostWithAuthor[])
     .map((p) => {
-      const who = p.is_sage ? "Sage" : "A member";
+      const who = p.is_sage
+        ? "Sage"
+        : (p.author_id && recentNicknameById.get(p.author_id)) || "A member";
       return `${who}: ${p.content.substring(0, 150).replace(/\s+/g, " ")}`;
     })
     .join("\n");

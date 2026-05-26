@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
+import { withBasePath } from "@/lib/path";
 import {
   AgentChatboxExchange,
   SEED_CHATBOX_EXCHANGES,
@@ -347,14 +348,20 @@ function FullHistorySheet({
         <div className="bg-stone-50 border-b border-stone-200 px-4 py-3 flex items-center gap-2">
           <span className="text-lc-clio">🛠️</span>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-lc-ink">Room Workshop</p>
+            <p className="text-sm font-semibold text-lc-ink">Room Workshop · Dialogue</p>
             <p className="text-[10px] uppercase tracking-wide text-lc-muted font-medium">
               What we&apos;re working on · most recent first
             </p>
           </div>
+          <a
+            href={withBasePath("/cluster/features")}
+            className="text-xs text-lc-clio hover:text-amber-700 font-medium"
+          >
+            Tools &amp; features →
+          </a>
           <button
             onClick={onClose}
-            className="text-stone-400 hover:text-lc-ink text-xl"
+            className="text-stone-400 hover:text-lc-ink text-xl ml-2"
             aria-label="Close"
           >
             ×

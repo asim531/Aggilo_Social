@@ -1,12 +1,14 @@
 "use client";
 
 /**
- * HelpMenu — a conspicuous, user-invoked entry point for orientation.
+ * HelpMenu — a conspicuous, user-invoked entry point for orientation
+ * and cluster surfaces beyond the Timeline.
  *
  * Replaces the auto-firing welcome modal + tour. The member arrives
  * in the cluster directly and can choose, at their own pace, to:
  *   - Read the welcome (cluster intro, agent dynamics, etc.)
  *   - Take the contextual tour
+ *   - Visit the Room Workshop (full features page)
  *
  * Position:
  *   - Top-right of the navbar, next to (but distinct from) the
@@ -14,13 +16,13 @@
  *
  * State:
  *   - Renders a small chip with a "?" icon. On click, opens a popover
- *     with two actions: "Show me around" (welcome) and "Take the tour"
- *     (contextual spotlight).
- *   - For first-time members, the chip carries a small dot indicator
- *     that fades after the chip has been opened once.
+ *     with the actions. For first-time members, the chip carries a
+ *     small dot indicator that fades after the chip has been opened
+ *     once.
  */
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const HELP_OPENED_KEY = "lc:help_menu_opened";
 
@@ -49,10 +51,11 @@ export default function HelpMenu({ onShowWelcome, onStartTour }: Props) {
     }
   }
 
-  function handleAction(action: "welcome" | "tour") {
+  function handleAction(action: "welcome" | "tour" | "workshop") {
     setOpen(false);
     if (action === "welcome") onShowWelcome();
-    else onStartTour();
+    else if (action === "tour") onStartTour();
+    // "workshop" navigates via Link; the popover just closes.
   }
 
   return (
@@ -128,6 +131,23 @@ export default function HelpMenu({ onShowWelcome, onStartTour }: Props) {
                 </p>
               </div>
             </button>
+            <div className="h-px bg-stone-100" />
+            <Link
+              href="/cluster/features"
+              onClick={() => handleAction("workshop")}
+              className="block w-full text-left px-4 py-3 hover:bg-amber-50 transition-colors flex items-start gap-3"
+              role="menuitem"
+            >
+              <span className="text-lc-sage text-base shrink-0" aria-hidden="true">
+                🛠️
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-lc-ink">Room Workshop</p>
+                <p className="text-[11px] text-lc-muted leading-snug">
+                  Tools we run for the room and features for you to vote on.
+                </p>
+              </div>
+            </Link>
           </div>
         </>
       )}

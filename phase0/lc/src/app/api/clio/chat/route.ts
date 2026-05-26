@@ -61,17 +61,39 @@ export async function POST(request: Request) {
     // `clio/CLIO_CLUSTER_HOST_CONTEXT.md` §11.2 — she reads public
     // posts and gives private nudges. She never cross-references two
     // members' private FAB conversations.
+    //
+    // Two-step fetch (post rows then bulk profile lookup) — see
+    // sage/evaluate for the same pattern.
     const { data: timelineRows } = await supabase
       .from("posts")
-      .select("is_sage, content, profiles(nickname)")
+      .select("is_sage, content, author_id")
       .eq("cluster_id", CLUSTER_ID)
       .order("created_at", { ascending: false })
       .limit(8);
+
+    const timelineAuthorIds = Array.from(
+      new Set(
+        (timelineRows ?? [])
+          .map((r) => r.author_id)
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+    const { data: timelineProfiles } = timelineAuthorIds.length
+      ? await supabase
+          .from("profiles")
+          .select("id, nickname")
+          .eq("cluster_id", CLUSTER_ID)
+          .in("id", timelineAuthorIds)
+      : { data: [] };
+    const nicknameById = new Map<string, string>(
+      ((timelineProfiles ?? []) as Array<{ id: string; nickname: string }>)
+        .map((p) => [p.id, p.nickname])
+    );
+
     const timelineState = (timelineRows ?? []).reverse().map((r) => ({
       is_sage: Boolean(r.is_sage),
       content: String(r.content ?? ""),
-      nickname:
-        (r.profiles as { nickname?: string } | null)?.nickname ?? null,
+      nickname: r.author_id ? nicknameById.get(r.author_id) ?? null : null,
     }));
 
     // ── LLM call ──────────────────────────────────────────────────

@@ -53,10 +53,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    // Fetch the post and confirm cluster scope.
+    // Fetch the post and confirm cluster scope. Two-step fetch to
+    // avoid PostgREST FK-disambiguation issues on the embed.
     const { data: postRow, error: postErr } = await supabase
       .from("posts")
-      .select("*, profiles(*)")
+      .select("*")
       .eq("id", post_id)
       .eq("cluster_id", CLUSTER_ID)
       .maybeSingle();
@@ -64,7 +65,20 @@ export async function POST(request: Request) {
     if (postErr || !postRow) {
       return NextResponse.json({ error: "post not found" }, { status: 404 });
     }
-    const post = postRow as PostWithAuthor;
+    let post = postRow as PostWithAuthor;
+
+    // Hydrate the author profile separately for log context.
+    if (post.author_id) {
+      const { data: authorProfile } = await supabase
+        .from("profiles")
+        .select("id, cluster_id, nickname, role")
+        .eq("id", post.author_id)
+        .eq("cluster_id", CLUSTER_ID)
+        .maybeSingle();
+      if (authorProfile) {
+        post = { ...post, profiles: authorProfile as PostWithAuthor["profiles"] };
+      }
+    }
 
     // Skip if the post is from Sage herself.
     if (post.is_sage) {
@@ -87,20 +101,41 @@ export async function POST(request: Request) {
     const isMentioned = /\b@sage\b/i.test(post.content);
 
     // ── Context assembly ─────────────────────────────────────────
-    // Recent posts (up to 10) for room context.
+    // Recent posts (up to 10) for room context. Two-step fetch to
+    // avoid embed-ambiguity issues.
     const { data: recentRows } = await supabase
       .from("posts")
-      .select("is_sage, content, profiles(nickname)")
+      .select("is_sage, content, author_id")
       .eq("cluster_id", CLUSTER_ID)
       .order("created_at", { ascending: false })
       .limit(10);
-    const recentPosts =
-      (recentRows ?? []).reverse().map((r) => ({
-        is_sage: Boolean(r.is_sage),
-        content: String(r.content ?? ""),
-        nickname:
-          (r.profiles as { nickname?: string } | null)?.nickname ?? null,
-      }));
+
+    // Bulk-fetch the author profiles for the recent posts.
+    const recentAuthorIds = Array.from(
+      new Set(
+        (recentRows ?? [])
+          .map((r) => r.author_id)
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+    const { data: recentProfiles } = recentAuthorIds.length
+      ? await supabase
+          .from("profiles")
+          .select("id, nickname")
+          .eq("cluster_id", CLUSTER_ID)
+          .in("id", recentAuthorIds)
+      : { data: [] };
+    const nicknameById = new Map<string, string>(
+      ((recentProfiles ?? []) as Array<{ id: string; nickname: string }>).map(
+        (p) => [p.id, p.nickname]
+      )
+    );
+
+    const recentPosts = (recentRows ?? []).reverse().map((r) => ({
+      is_sage: Boolean(r.is_sage),
+      content: String(r.content ?? ""),
+      nickname: r.author_id ? nicknameById.get(r.author_id) ?? null : null,
+    }));
 
     // Sage's own recent posts for repetition awareness.
     const { data: sageRows } = await supabase

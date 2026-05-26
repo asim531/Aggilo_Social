@@ -116,7 +116,7 @@ export default function PostCard({
         is_sage_question: false,
         thread_state: "unattended",
       })
-      .select("*, profiles(*)")
+      .select("*")
       .single();
 
     if (insertError || !inserted) {
@@ -130,7 +130,13 @@ export default function PostCard({
       return;
     }
 
-    onConfirmReply!(tempId, inserted as PostWithAuthor);
+    // Attach the current user's profile locally; realtime hydrates
+    // for other clients.
+    const confirmed: PostWithAuthor = {
+      ...(inserted as PostWithAuthor),
+      profiles: currentProfile!,
+    };
+    onConfirmReply!(tempId, confirmed);
     track("reply_compose_confirmed");
 
     // Fire-and-forget Sage evaluation on the reply too.

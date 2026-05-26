@@ -99,6 +99,11 @@ export default function PostComposer({
       setContent("");
 
       // ── Server insert ──────────────────────────────────────────
+      // Two-step approach (resilient to embed ambiguity):
+      //   1. INSERT and return the basic row (no embed)
+      //   2. attach the current user's profile in memory
+      // This avoids depending on the FK-disambiguation hint at insert
+      // time and gives a clean error path when only the insert fails.
       const supabase = createClient();
       const { data: inserted, error: insertError } = await supabase
         .from("posts")
@@ -110,7 +115,7 @@ export default function PostComposer({
           is_sage_question: false,
           thread_state: "unattended",
         })
-        .select("*, profiles(*)")
+        .select("*")
         .single();
 
       if (insertError || !inserted) {
@@ -127,7 +132,16 @@ export default function PostComposer({
         return;
       }
 
-      onConfirmPost(tempId, inserted as PostWithAuthor);
+      // Attach the current user's profile. The realtime UPDATE/INSERT
+      // events that other clients receive use a separate hydration
+      // path (see useRealtimePosts), so this attachment is local to
+      // the optimistic→confirmed swap on this client only.
+      const confirmed: PostWithAuthor = {
+        ...(inserted as PostWithAuthor),
+        profiles: profile,
+      };
+
+      onConfirmPost(tempId, confirmed);
       track("post_compose_confirmed");
 
       // ── Fire-and-forget Sage evaluation ─────────────────────────
