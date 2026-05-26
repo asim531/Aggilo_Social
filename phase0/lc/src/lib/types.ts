@@ -29,6 +29,27 @@ export interface Profile {
   onboarded: boolean;
   /** "member" | "admin" for this cluster (LC uses simpler role vocab). */
   role: "member" | "admin";
+  /**
+   * True for the member whose request produced this cluster (Source A
+   * in the intake taxonomy — see phase0/docs/AMA_CLUSTER_CREATION_AND_
+   * FOUNDING_FEEDBACK.md). Triggers the founding-feedback prompt on
+   * first session. For LC, this is Tas.
+   */
+  is_founding_member: boolean;
+  /**
+   * When the founding-member feedback prompt was closed. NULL = not
+   * yet shown. Once stamped, the prompt never fires again.
+   */
+  founding_feedback_at: string | null;
+  /**
+   * Why the prompt closed. NULL when prompt never fired.
+   */
+  founding_feedback_close_reason:
+    | "accepted"
+    | "changes_applied"
+    | "changes_queued"
+    | "silent_close"
+    | null;
   created_at: string;
 }
 

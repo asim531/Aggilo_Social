@@ -17,6 +17,7 @@ import Navbar from "./Navbar";
 import ClusterHeader from "./ClusterHeader";
 import ClusterFeed from "./ClusterFeed";
 import ClioFab from "./ClioFab";
+import FoundingFeedbackPrompt from "./FoundingFeedbackPrompt";
 import type { PostWithAuthor, Profile } from "@/lib/types";
 
 interface ClusterShellProps {
@@ -46,7 +47,7 @@ export default function ClusterShell({
         Skip to feed
       </a>
 
-      <Navbar displayName={profile.nickname} />
+      <Navbar displayName={profile.nickname} isAdmin={profile.role === "admin"} />
 
       <main className="flex-1">
         <ClusterHeader />
@@ -59,6 +60,14 @@ export default function ClusterShell({
 
       {/* Clio FAB — top-right, 44px, 16px from edge, 8px below Navbar */}
       <ClioFab userId={userId} />
+
+      {/*
+        Founding-member feedback prompt. Renders nothing for non-
+        founding members (the component checks eligibility on mount).
+        For the founding member, it surfaces ~30s after they enter the
+        room with Clio's verbatim opening per spec. One-shot.
+      */}
+      <FoundingFeedbackPrompt />
     </div>
   );
 }

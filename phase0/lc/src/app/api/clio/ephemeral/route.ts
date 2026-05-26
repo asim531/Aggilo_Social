@@ -64,9 +64,11 @@ export async function POST(request: Request) {
     }
 
     // Increment message count (best-effort, non-blocking).
-    void admin.rpc("increment_ephemeral_message_count", {
-      p_session_id: activeSessionId,
-    }).catch(() => {});
+    Promise.resolve(
+      admin.rpc("increment_ephemeral_message_count", {
+        p_session_id: activeSessionId,
+      })
+    ).catch(() => {});
 
     // ── Welfare pre-filter ────────────────────────────────────────
     if (detectWelfareSignal(message)) {

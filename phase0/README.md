@@ -39,6 +39,24 @@ phase0/
     └── DEPLOYMENT_AGGILO_IN_REWRITE.md
 ```
 
+> **Note on naming.** The pilot apps follow a `phase0/<slug>/`
+> convention. Two apps currently exist:
+>
+> - `phase0/lc/` — **Long Conversation** cluster
+> - `phase0/mvp/` — **Sisters in Dua** cluster
+>
+> The `phase0/mvp/` folder is named `mvp` for historical reasons —
+> it was the first pilot app, built before the multi-cluster pattern
+> existed, and `mvp.aggilo.in` is its production URL. The `mvp` here
+> is not a generic label for "the pilot folder"; it is the specific
+> name of the Sisters in Dua deployment. New pilot clusters get a
+> real slug (e.g. `phase0/study/`, `phase0/builders/`), not "mvp".
+>
+> The cluster's full identifier inside Supabase is
+> `the_single_source` — that is the value of `cluster_id` on every
+> row, and the folder name in `phase0/clusters/the_single_source/`.
+> "MVP" is just the deployment shorthand.
+
 ---
 
 ## Why a separate folder

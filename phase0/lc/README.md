@@ -153,14 +153,24 @@ Phase 0 build in progress. Currently shipped:
 - [x] Clio FAB (cluster + ephemeral modes, two-tab panel, Clarity-masked)
 - [x] Private tip mechanic (frequency, repetition, dependency prevention, cluster-wide cap)
 - [x] Welfare notifications table + flag on FAB + ephemeral welfare detection
+- [x] Sage welfare path now writes welfare_notifications rows
 - [x] basePath wiring for Vercel deployment under aggilo.in/c/long-conversation
 - [x] vercel.json rewrite on the marketing site + LC project vercel.json
-- [x] Deployment guide (`docs/DEPLOYMENT_AGGILO_IN_REWRITE.md`)
-- [ ] Founding member feedback prompt (per `docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md` Part 1)
-- [ ] AMA cluster creation workflow (per Part 2 of the same doc)
+- [x] Deployment guide (`phase0/docs/DEPLOYMENT_AGGILO_IN_REWRITE.md`)
+- [x] Founding member feedback prompt (per Part 1 of the AMA spec):
+      schema migration `02_founding_feedback_migration.sql`,
+      `clio-founding-feedback.ts` prompt frame + classifier,
+      `/api/clio/founding-feedback` GET + POST,
+      `<FoundingFeedbackPrompt>` UI component
+- [x] Admin welfare queue UI:
+      `/admin` index page with unresolved count,
+      `/admin/welfare` queue page with open/resolved tabs,
+      `/api/admin/welfare/[id]/resolve` route,
+      Navbar admin link for admins
+- [ ] AMA cluster creation workflow (per Part 2 of the AMA spec)
 - [ ] Founding member invite flow
-- [ ] Admin welfare queue UI (`/admin/welfare`)
 - [ ] Production deployment to Vercel + DNS cutover
+- [ ] Scheduled task to silent_close founding feedback at 24h
 
 ## Founding member
 

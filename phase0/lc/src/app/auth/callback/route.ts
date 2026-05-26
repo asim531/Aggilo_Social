@@ -110,6 +110,31 @@ export async function GET(request: Request) {
         .eq("id", user.id)
         .eq("cluster_id", CLUSTER_ID);
     }
+
+    // Founding-member flag. The cluster was created in response to a
+    // specific waitlist request; the person who submitted that request
+    // is the founding member. They get the founding-feedback prompt
+    // on their first session in the cluster.
+    //
+    // Phase 0: founding emails are configured per-cluster in env. The
+    // LC cluster's founding member is Tas. When the intake pipeline
+    // ships in Phase 1, this will be replaced with a lookup against
+    // cluster_intake_signals.
+    const foundingEmails = (process.env.FOUNDING_MEMBER_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    if (
+      user.email &&
+      foundingEmails.includes(user.email.toLowerCase())
+    ) {
+      await admin
+        .from("profiles")
+        .update({ is_founding_member: true })
+        .eq("id", user.id)
+        .eq("cluster_id", CLUSTER_ID)
+        .eq("is_founding_member", false);
+    }
   } catch (err) {
     // Profile creation failure should not block login. The user can
     // still see the cluster (limited) and we surface this in logs for

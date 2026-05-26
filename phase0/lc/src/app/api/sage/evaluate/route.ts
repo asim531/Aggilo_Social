@@ -195,7 +195,7 @@ async function handleWelfarePost(post: PostWithAuthor) {
     "What you're carrying is real, and it matters. Someone from this community will reach out to you.";
 
   // Mark the originating post as welfare_flagged so the admin queue
-  // (when it ships) can surface it.
+  // can surface it.
   await admin
     .from("posts")
     .update({ thread_state: "welfare_flagged" })
@@ -211,4 +211,23 @@ async function handleWelfarePost(post: PostWithAuthor) {
     thread_state: "welfare_flagged",
     parent_id: post.id,
   });
+
+  // Welfare notification for the admin queue. Best-effort — never
+  // blocks the care-witness post.
+  if (post.author_id) {
+    try {
+      await admin.from("welfare_notifications").insert({
+        cluster_id: CLUSTER_ID,
+        user_id: post.author_id,
+        post_id: post.id,
+        trigger_content: post.content.slice(0, 500),
+        source: "sage_post",
+        sage_response: careWitness,
+        resolved: false,
+      });
+    } catch {
+      // Logged elsewhere; don't block the safety floor on insert
+      // failure.
+    }
+  }
 }

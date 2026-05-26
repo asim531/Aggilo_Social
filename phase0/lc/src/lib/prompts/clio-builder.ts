@@ -17,6 +17,7 @@ import {
   CLIO_WELFARE_RESPONSE_SHAPE,
   CLIO_EPHEMERAL_FRAME,
 } from "./platform/clio-character";
+import { CLIO_FOUNDING_FEEDBACK_FRAME } from "./platform/clio-founding-feedback";
 import { CLIO_LONG_CONVERSATION_CONTEXT } from "./cluster/clio";
 
 export interface ClioClusterSignals {
@@ -40,6 +41,16 @@ export interface ClioClusterSignals {
 export interface ClioEphemeralSignals {
   userMessage: string;
   history: Array<{ role: "user" | "assistant"; content: string }>;
+}
+
+export interface ClioFoundingFeedbackSignals {
+  userMessage: string;
+  history: Array<{ role: "user" | "assistant"; content: string }>;
+  /**
+   * Display name for the founding member. Used for analytics-style
+   * context, not surfaced to Clio's prose. Optional.
+   */
+  founderNickname?: string | null;
 }
 
 /**
@@ -97,6 +108,38 @@ export function buildClioEphemeralMessages(
   messages.push({ role: "system", content: CLIO_EPHEMERAL_FRAME });
   messages.push({ role: "system", content: CLIO_WELFARE_RESPONSE_SHAPE });
 
+  for (const turn of signals.history) {
+    messages.push({ role: turn.role, content: turn.content });
+  }
+
+  messages.push({ role: "user", content: signals.userMessage });
+
+  return messages;
+}
+
+/**
+ * Build messages for founding-feedback-mode Clio.
+ *
+ * Used by /api/clio/founding-feedback. Single-shot session: one open
+ * prompt from Clio, one response cycle, then close. Welfare detection
+ * still applies — the API route runs the regex pre-filter before
+ * building this stack.
+ */
+export function buildClioFoundingFeedbackMessages(
+  signals: ClioFoundingFeedbackSignals
+): ChatMessage[] {
+  const messages: ChatMessage[] = buildSystemMessages(
+    CLIO_CHARACTER_PROMPT,
+    CLIO_LONG_CONVERSATION_CONTEXT
+  );
+
+  messages.push({ role: "system", content: CLIO_FOUNDING_FEEDBACK_FRAME });
+  messages.push({ role: "system", content: CLIO_WELFARE_RESPONSE_SHAPE });
+
+  // History is normally empty (this is a one-shot session) but we
+  // pass it through so the prompt is robust to a multi-turn close
+  // (e.g. member replies to acknowledgement — Clio should still
+  // step back gracefully).
   for (const turn of signals.history) {
     messages.push({ role: turn.role, content: turn.content });
   }
