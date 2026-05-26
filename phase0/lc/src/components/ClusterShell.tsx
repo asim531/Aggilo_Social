@@ -14,15 +14,23 @@
  * header and the feed. Default-collapsed; members open it once and
  * the choice persists. Auto-fires the cadence-exchange ~30s after
  * mount when the cadence floor allows.
+ *
+ * First-session welcome:
+ *   - On first visit (profile.onboarded === false), the ClioWelcome
+ *     modal renders. The cadence-trigger and the founding-feedback
+ *     prompt both wait until welcome is dismissed.
+ *   - On dismiss, profile.onboarded is stamped via
+ *     /api/auth/mark-onboarded so the modal never fires again.
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { withBasePath } from "@/lib/path";
 import { track } from "@/lib/track";
 import Navbar from "./Navbar";
 import ClusterHeader from "./ClusterHeader";
 import ClusterFeed from "./ClusterFeed";
 import ClioFab from "./ClioFab";
+import ClioWelcome from "./ClioWelcome";
 import AgentChatbox from "./AgentChatbox";
 import FoundingFeedbackPrompt from "./FoundingFeedbackPrompt";
 import type { PostWithAuthor, Profile } from "@/lib/types";
@@ -41,18 +49,35 @@ export default function ClusterShell({
   profile,
   initialPosts,
 }: ClusterShellProps) {
+  // Welcome modal state. Initial value comes from the server-side
+  // profile.onboarded; the client may also flip it via dismiss.
+  const [showWelcome, setShowWelcome] = useState<boolean>(!profile.onboarded);
+
   // Session-level analytics on mount.
   useEffect(() => {
     track("session_started");
     track("cluster_landed");
+    if (showWelcome) track("welcome_modal_shown");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function handleDismissWelcome() {
+    setShowWelcome(false);
+    track("welcome_modal_dismissed");
+    try {
+      await fetch(withBasePath("/api/auth/mark-onboarded"), { method: "POST" });
+    } catch {
+      // Non-blocking. The localStorage first-session-done flag and
+      // the server-side stamp protect against re-show; if the stamp
+      // didn't land, the next mount will retry.
+    }
+  }
+
   // Cadence-exchange trigger. Mirrors MVP's pattern with LC keys.
-  // The first session ever is silent — we just stamp the flag, so the
-  // member's first impression is the room itself, not a Workshop
-  // exchange. From the second session onward, the dialogue surfaces
-  // when the server-side cadence floor allows.
+  // Waits until the welcome modal is dismissed so it doesn't compete
+  // with the member's first impression.
   useEffect(() => {
+    if (showWelcome) return;
     if (typeof window === "undefined") return;
     const firstDone = window.localStorage.getItem(FIRST_SESSION_DONE_KEY);
     if (!firstDone) {
@@ -78,14 +103,11 @@ export default function ClusterShell({
             String(new Date(data.next_eligible_at).getTime())
           );
         } else if (data.outcome === "posted") {
-          // Match the active-cluster floor (60 minutes) so we don't
-          // hammer the room mid-conversation.
           window.localStorage.setItem(
             CADENCE_NEXT_ELIGIBLE_KEY,
             String(Date.now() + 60 * 60 * 1000)
           );
         } else {
-          // Errors / in_flight / budget_exceeded: short retry floor.
           window.localStorage.setItem(
             CADENCE_NEXT_ELIGIBLE_KEY,
             String(Date.now() + 5 * 60 * 1000)
@@ -97,7 +119,7 @@ export default function ClusterShell({
     }, 30_000);
 
     return () => clearTimeout(trigger);
-  }, []);
+  }, [showWelcome]);
 
   return (
     <div className="min-h-screen flex flex-col bg-lc-surface">
@@ -109,7 +131,10 @@ export default function ClusterShell({
         Skip to feed
       </a>
 
-      <Navbar displayName={profile.nickname} isAdmin={profile.role === "admin"} />
+      <Navbar
+        displayName={profile.nickname}
+        isAdmin={profile.role === "admin"}
+      />
 
       <main className="flex-1">
         <ClusterHeader />
@@ -124,13 +149,23 @@ export default function ClusterShell({
       {/* Clio FAB — top-right, 44px, 16px from edge, 8px below Navbar */}
       <ClioFab userId={userId} />
 
+      {/* First-session welcome — three-step modal, gates founding-feedback. */}
+      {showWelcome && (
+        <ClioWelcome
+          nickname={profile.nickname}
+          onDismiss={handleDismissWelcome}
+        />
+      )}
+
       {/*
         Founding-member feedback prompt. Renders nothing for non-
         founding members (the component checks eligibility on mount).
-        For the founding member, it surfaces ~30s after they enter the
-        room with Clio's verbatim opening per spec. One-shot.
+        For the founding member, it surfaces after the welcome modal is
+        dismissed. One-shot.
       */}
-      <FoundingFeedbackPrompt />
+      {!showWelcome && (
+        <FoundingFeedbackPrompt founderNickname={profile.nickname} />
+      )}
     </div>
   );
 }
