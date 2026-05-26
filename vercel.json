@@ -4,5 +4,15 @@
       "path": "/api/admin/atlas/tick",
       "schedule": "0 3 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/c/long-conversation",
+      "destination": "https://aggilo-long-conversation.vercel.app/c/long-conversation"
+    },
+    {
+      "source": "/c/long-conversation/:path*",
+      "destination": "https://aggilo-long-conversation.vercel.app/c/long-conversation/:path*"
+    }
   ]
 }
