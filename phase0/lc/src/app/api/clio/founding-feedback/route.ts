@@ -47,7 +47,13 @@ interface ReplyRequest {
   history: Array<{ role: "user" | "assistant"; content: string }>;
 }
 
-type FoundingFeedbackRequest = OpenRequest | ReplyRequest;
+interface BadgeRequest {
+  action: "badge";
+  /** true = founder accepted the badge; false = declined */
+  accept: boolean;
+}
+
+type FoundingFeedbackRequest = OpenRequest | ReplyRequest | BadgeRequest;
 
 /**
  * Verbatim opening per the spec. NEVER paraphrase. NEVER add an
@@ -101,6 +107,21 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminClient();
+
+    // ── action=badge ──────────────────────────────────────────────
+    // The client sends this after the founding-feedback interaction
+    // closes, when the member responds to Clio's badge offer.
+    if (body.action === "badge") {
+      const accept = Boolean((body as BadgeRequest).accept);
+      if (accept) {
+        await admin
+          .from("profiles")
+          .update({ founding_badge_shown: true })
+          .eq("id", user.id)
+          .eq("cluster_id", CLUSTER_ID);
+      }
+      return NextResponse.json({ ok: true, badge_shown: accept });
+    }
 
     // ── action=open ───────────────────────────────────────────────
     if (body.action === "open") {
@@ -241,7 +262,13 @@ export async function POST(request: Request) {
       close_reason: closeReason,
     });
 
-    return NextResponse.json({ reply, close_reason: closeReason });
+    return NextResponse.json({
+      reply,
+      close_reason: closeReason,
+      // After the interaction closes, the client shows a badge offer.
+      // The badge_offer flag tells the client to surface it.
+      badge_offer: true,
+    });
   } catch (err) {
     console.warn(
       "[clio/founding-feedback] error:",

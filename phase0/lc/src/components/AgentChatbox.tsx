@@ -22,6 +22,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
 import {
@@ -277,19 +278,19 @@ export default function AgentChatbox() {
                   !isLatest ? "opacity-70 pb-2 border-b border-stone-200/60" : ""
                 }`}
               >
-                <div className="flex gap-2 text-xs">
-                  <span className="font-semibold text-lc-sage shrink-0">
-                    Sage:
-                  </span>
-                  <p className="text-lc-ink line-clamp-3 leading-relaxed">
+                <div className="flex gap-2 text-xs items-start">
+                  <div className="relative w-5 h-5 shrink-0 mt-0.5 rounded-full overflow-hidden bg-lc-sageSoft">
+                    <Image src="/characters/sage.png" alt="Sage" fill className="object-contain" />
+                  </div>
+                  <p className="text-lc-ink line-clamp-3 leading-relaxed flex-1">
                     {exc.sage_message}
                   </p>
                 </div>
-                <div className="flex gap-2 text-xs">
-                  <span className="font-semibold text-lc-clio shrink-0">
-                    Clio:
-                  </span>
-                  <p className="text-lc-ink line-clamp-3 leading-relaxed">
+                <div className="flex gap-2 text-xs items-start">
+                  <div className="relative w-5 h-5 shrink-0 mt-0.5 rounded-full overflow-hidden bg-lc-clioSoft">
+                    <Image src="/characters/clio.png" alt="Clio" fill className="object-contain" />
+                  </div>
+                  <p className="text-lc-ink line-clamp-3 leading-relaxed flex-1">
                     {exc.clio_message}
                   </p>
                 </div>

@@ -61,9 +61,20 @@ export default function PostCard({ post }: PostCardProps) {
   return (
     <article className="bg-lc-card rounded-lg p-4 border border-stone-200">
       <header className="flex items-baseline justify-between mb-2">
-        <span className="text-sm font-medium text-lc-ink">
-          {post.profiles?.nickname ?? "member"}
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-sm font-medium text-lc-ink">
+            {post.profiles?.nickname ?? "member"}
+          </span>
+          {/* Founder badge — shown when the founding member has opted in */}
+          {(post.profiles as { is_founding_member?: boolean; founding_badge_shown?: boolean } | null)
+            ?.is_founding_member &&
+            (post.profiles as { founding_badge_shown?: boolean } | null)
+              ?.founding_badge_shown && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-lc-clio text-[10px] font-semibold leading-none">
+                ✦ Founder
+              </span>
+            )}
+        </div>
         <time
           className="text-xs text-lc-muted"
           dateTime={post.created_at}

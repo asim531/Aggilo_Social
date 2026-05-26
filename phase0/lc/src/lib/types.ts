@@ -50,6 +50,12 @@ export interface Profile {
     | "changes_queued"
     | "silent_close"
     | null;
+  /**
+   * Whether the founding member has opted in to showing the Founder
+   * badge next to their nickname. Offered by Clio after the founding-
+   * feedback interaction closes.
+   */
+  founding_badge_shown: boolean;
   created_at: string;
 }
 

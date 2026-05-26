@@ -49,6 +49,7 @@ type PromptState =
   | { phase: "loading" }
   | { phase: "ineligible" }
   | { phase: "ready"; messages: Message[]; sending: boolean; closed: boolean }
+  | { phase: "badge_offer" }
   | { phase: "closed" };
 
 /**
@@ -177,6 +178,7 @@ export default function FoundingFeedbackPrompt({ founderNickname }: Props) {
       const data = (await res.json()) as {
         reply?: string;
         close_reason?: string;
+        badge_offer?: boolean;
       };
 
       const final: Message[] = [
@@ -194,6 +196,10 @@ export default function FoundingFeedbackPrompt({ founderNickname }: Props) {
       });
       if (data.close_reason) {
         track("founding_feedback_closed", { close_reason: data.close_reason });
+      }
+      // After a short pause, transition to the badge offer.
+      if (data.badge_offer) {
+        setTimeout(() => setState({ phase: "badge_offer" }), 2200);
       }
     } catch {
       setState({ ...state, sending: false });
@@ -226,9 +232,23 @@ export default function FoundingFeedbackPrompt({ founderNickname }: Props) {
     void sendReply(input);
   }
 
+  async function handleBadge(accept: boolean) {
+    track("founding_badge_offered_response", { accepted: accept });
+    try {
+      await fetch(withBasePath("/api/clio/founding-feedback"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "badge", accept }),
+      });
+    } catch {
+      // Non-blocking.
+    }
+    setState({ phase: "closed" });
+  }
+
   // ── Render ─────────────────────────────────────────────────────
 
-  if (state.phase !== "ready") return null;
+  if (state.phase !== "ready" && state.phase !== "badge_offer") return null;
 
   // Suppress within-session re-show when deferred.
   if (
@@ -236,6 +256,63 @@ export default function FoundingFeedbackPrompt({ founderNickname }: Props) {
     window.sessionStorage.getItem("lc:founding_feedback_deferred") === "1"
   ) {
     return null;
+  }
+
+  // ── Badge offer modal ──────────────────────────────────────────
+  if (state.phase === "badge_offer") {
+    return (
+      <div
+        className="fixed inset-0 z-[85] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300"
+        data-clarity-mask="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lc-badge-title"
+      >
+        <div className="bg-lc-card rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
+          <div className="bg-gradient-to-br from-amber-50 to-stone-50 px-5 pt-5 pb-3 border-b border-amber-200">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-lc-clio animate-pulse" aria-hidden="true" />
+              <span className="text-[11px] uppercase tracking-wider text-lc-clio font-semibold">
+                Clio · one more thing
+              </span>
+            </div>
+            <h2 id="lc-badge-title" className="text-base font-semibold text-lc-ink">
+              You&apos;re the founding member of this room.
+            </h2>
+          </div>
+          <div className="px-5 py-4 text-sm text-lc-ink leading-relaxed">
+            <p className="mb-3">
+              This room exists because of what you described. Would you like
+              that shown next to your name in the Timeline? A small{" "}
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-lc-clio text-[10px] font-semibold">
+                ✦ Founder
+              </span>{" "}
+              chip — nothing more.
+            </p>
+            <p className="text-lc-muted text-xs">
+              It&apos;s a small thing, but it&apos;s true. You can always ask
+              me to remove it later.
+            </p>
+          </div>
+          <div className="border-t border-stone-200 px-5 py-3 flex items-center justify-end gap-2 bg-stone-50/40">
+            <button
+              type="button"
+              onClick={() => handleBadge(false)}
+              className="text-xs px-3 py-1.5 rounded-full border border-stone-300 text-lc-muted hover:text-lc-ink hover:border-stone-400 transition-colors"
+            >
+              No thanks
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBadge(true)}
+              className="text-xs px-3 py-1.5 rounded-full bg-lc-clio text-white hover:bg-amber-700 transition-colors"
+            >
+              Yes, show it
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

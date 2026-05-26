@@ -31,6 +31,7 @@ import ClusterHeader from "./ClusterHeader";
 import ClusterFeed from "./ClusterFeed";
 import ClioFab from "./ClioFab";
 import ClioWelcome from "./ClioWelcome";
+import ClioTour, { isTourDone } from "./ClioTour";
 import AgentChatbox from "./AgentChatbox";
 import FoundingFeedbackPrompt from "./FoundingFeedbackPrompt";
 import type { PostWithAuthor, Profile } from "@/lib/types";
@@ -52,6 +53,8 @@ export default function ClusterShell({
   // Welcome modal state. Initial value comes from the server-side
   // profile.onboarded; the client may also flip it via dismiss.
   const [showWelcome, setShowWelcome] = useState<boolean>(!profile.onboarded);
+  // Tour fires after welcome is dismissed, only if not already done.
+  const [showTour, setShowTour] = useState(false);
 
   // Session-level analytics on mount.
   useEffect(() => {
@@ -64,12 +67,14 @@ export default function ClusterShell({
   async function handleDismissWelcome() {
     setShowWelcome(false);
     track("welcome_modal_dismissed");
+    // Fire the tour after a short delay so the room is visible first.
+    if (!isTourDone()) {
+      setTimeout(() => setShowTour(true), 600);
+    }
     try {
       await fetch(withBasePath("/api/auth/mark-onboarded"), { method: "POST" });
     } catch {
-      // Non-blocking. The localStorage first-session-done flag and
-      // the server-side stamp protect against re-show; if the stamp
-      // didn't land, the next mount will retry.
+      // Non-blocking.
     }
   }
 
@@ -138,22 +143,33 @@ export default function ClusterShell({
 
       <main className="flex-1">
         <ClusterHeader />
-        <AgentChatbox />
         <ClusterFeed
           initialPosts={initialPosts}
           userId={userId}
           profile={profile}
         />
+        {/* Room Workshop — below the compose bar, secondary to the feed */}
+        <AgentChatbox />
       </main>
 
       {/* Clio FAB — top-right, 44px, 16px from edge, 8px below Navbar */}
       <ClioFab userId={userId} />
 
-      {/* First-session welcome — three-step modal, gates founding-feedback. */}
+      {/* First-session welcome — three-step modal, gates tour + founding-feedback. */}
       {showWelcome && (
         <ClioWelcome
           nickname={profile.nickname}
           onDismiss={handleDismissWelcome}
+        />
+      )}
+
+      {/* Contextual tour — fires once after welcome is dismissed. */}
+      {showTour && (
+        <ClioTour
+          onDone={() => {
+            setShowTour(false);
+            track("tour_completed");
+          }}
         />
       )}
 
