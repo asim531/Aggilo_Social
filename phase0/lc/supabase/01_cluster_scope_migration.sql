@@ -6,76 +6,200 @@
 -- ║  and Long Conversation can coexist in the same Supabase project. ║
 -- ║  Existing rows default to 'the_single_source' (Sisters in Dua).  ║
 -- ║                                                                   ║
--- ║  This migration is IDEMPOTENT — safe to run twice.               ║
+-- ║  This migration is IDEMPOTENT — safe to run twice or to re-run    ║
+-- ║  after a partial failure. Each statement guards against the       ║
+-- ║  state already existing.                                          ║
 -- ╚══════════════════════════════════════════════════════════════════╝
 
+-- Wrap in a transaction so a mid-migration failure rolls back cleanly.
+begin;
+
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 1: profiles — add cluster_id                               │
+-- │  STEP 1: profiles — add cluster_id + birth_year columns          │
 -- │                                                                  │
--- │  A profile is per-user, per-cluster. The same email arriving on  │
--- │  Long Conversation creates a new profile row even if they have   │
--- │  one in Sisters in Dua. This keeps nicknames cluster-scoped.     │
--- │                                                                  │
--- │  The PK changes from id → (id, cluster_id). Auth user id stays   │
--- │  the same; the profile is the per-cluster identity.              │
+-- │  Existing rows default to 'the_single_source' so the MVP keeps   │
+-- │  working unchanged. cluster_id is NOT NULL — every profile must  │
+-- │  belong to exactly one cluster.                                  │
 -- └──────────────────────────────────────────────────────────────────┘
 
 alter table public.profiles
   add column if not exists cluster_id text not null default 'the_single_source';
 
 -- Long Conversation introduces a birth_year field for AGGIL fit.
--- The MVP doesn't use this field (Sisters in Dua doesn't filter by age)
--- but adding it as nullable is harmless — no row backfill required.
+-- Adding as nullable — Sisters in Dua doesn't use it, no backfill needed.
 alter table public.profiles
   add column if not exists birth_year smallint;
 
--- NOTE on gender field:
--- The MVP's existing `gender` column (single-value text) is kept and
--- used by both clusters for SIGNUP. A user's identity at signup is
--- single-select — they pick one of: "male", "female", "non_binary".
---
--- A separate concern, NOT addressed here, is multi-select gender on
--- CLUSTER CREATION — a cluster founder may want their cluster open to
--- multiple genders (e.g. "male + non-binary"). That field will live on
--- a future `clusters` table when the cluster creation flow is built.
--- It does NOT belong on `profiles`.
---
--- The earlier draft of this migration added a `genders text[]` column
--- to `profiles`. That has been removed. Cluster creation will introduce
--- its own audience-filter array on a different table.
 
--- Drop the old single-column PK and replace with composite
-alter table public.profiles
-  drop constraint if exists profiles_pkey;
+-- ┌──────────────────────────────────────────────────────────────────┐
+-- │  STEP 2: Drop dependent foreign keys                             │
+-- │                                                                  │
+-- │  21 tables FK to profiles_pkey, which was just (id). We need to  │
+-- │  change profiles_pkey to (id, cluster_id). PostgreSQL won't drop │
+-- │  a unique index that has dependents, so we drop the FKs first.   │
+-- │                                                                  │
+-- │  After the new composite PK is in place, we re-add these FKs at  │
+-- │  Step 5 — but pointing at `auth.users(id)` rather than           │
+-- │  `profiles(id)`. The semantic is "this row belongs to this auth  │
+-- │  user", which is true regardless of which cluster's profile they │
+-- │  hold. auth.users.id is the right home for user identity.        │
+-- │                                                                  │
+-- │  All drops are guarded with IF EXISTS so the migration is        │
+-- │  idempotent across partial failures.                             │
+-- └──────────────────────────────────────────────────────────────────┘
 
-alter table public.profiles
-  add constraint profiles_pkey primary key (id, cluster_id);
+alter table public.posts                  drop constraint if exists posts_author_id_fkey;
+alter table public.welfare_notifications  drop constraint if exists welfare_notifications_user_id_fkey;
+alter table public.welfare_notifications  drop constraint if exists welfare_notifications_resolved_by_fkey;
+alter table public.clio_ephemeral_sessions drop constraint if exists clio_ephemeral_sessions_user_id_fkey;
+alter table public.clio_handoff_greetings drop constraint if exists clio_handoff_greetings_user_id_fkey;
+alter table public.llm_response_logs      drop constraint if exists llm_response_logs_user_id_fkey;
+alter table public.agent_feedback         drop constraint if exists agent_feedback_user_id_fkey;
+alter table public.behavioural_events     drop constraint if exists behavioural_events_user_id_fkey;
+alter table public.character_concerns     drop constraint if exists character_concerns_user_id_fkey;
+alter table public.character_concerns     drop constraint if exists character_concerns_admin_responded_by_fkey;
+alter table public.vault_gap_requests     drop constraint if exists vault_gap_requests_resolved_by_fkey;
+alter table public.vault_sources          drop constraint if exists vault_sources_added_by_fkey;
+alter table public.cluster_features       drop constraint if exists cluster_features_admin_decision_by_fkey;
+alter table public.cluster_feature_upvotes drop constraint if exists cluster_feature_upvotes_user_id_fkey;
+alter table public.cluster_feature_comments drop constraint if exists cluster_feature_comments_user_id_fkey;
+alter table public.agent_prompt_proposals drop constraint if exists agent_prompt_proposals_admin_decision_by_fkey;
+alter table public.agent_chatbox_views    drop constraint if exists agent_chatbox_views_user_id_fkey;
+alter table public.cluster_tool_invocations drop constraint if exists cluster_tool_invocations_user_id_fkey;
+alter table public.cluster_config         drop constraint if exists cluster_config_updated_by_fkey;
+alter table public.cluster_admin_actions  drop constraint if exists cluster_admin_actions_actor_id_fkey;
+alter table public.waitlist_submissions   drop constraint if exists waitlist_submissions_admin_actioned_by_fkey;
 
--- Re-establish the FK to auth.users (unchanged, but redeclared for safety)
-alter table public.profiles
-  drop constraint if exists profiles_id_fkey;
 
+-- ┌──────────────────────────────────────────────────────────────────┐
+-- │  STEP 3: Replace profiles primary key                            │
+-- │                                                                  │
+-- │  Old PK: (id) — one profile per user                             │
+-- │  New PK: (id, cluster_id) — one profile per (user, cluster)      │
+-- │                                                                  │
+-- │  This lets one auth user hold separate profiles in Sisters in    │
+-- │  Dua and Long Conversation — different nicknames, different      │
+-- │  roles, different cluster identities for the same person.        │
+-- └──────────────────────────────────────────────────────────────────┘
+
+alter table public.profiles drop constraint if exists profiles_pkey;
+alter table public.profiles drop constraint if exists profiles_id_fkey;
+
+alter table public.profiles add constraint profiles_pkey primary key (id, cluster_id);
+
+-- The auth.users FK on profiles.id is independent of the PK; re-add it.
 alter table public.profiles
   add constraint profiles_id_fkey
   foreign key (id) references auth.users(id) on delete cascade;
 
--- Nickname uniqueness — within a cluster only. Sisters in Dua and
--- Long Conversation can each have a "tas" without colliding.
+-- Nickname uniqueness — within a cluster only. SiD and LC each get
+-- their own "tas" namespace.
 create unique index if not exists profiles_cluster_nickname_unique
   on public.profiles (cluster_id, lower(nickname));
 
--- Existing RLS policies still match on auth.uid() = id — they keep working.
--- We just need an additional implicit scope: a user can only see/update
--- profiles within their own (id, cluster_id) tuple, which is automatic
--- because they only have one profile per cluster.
+
+-- ┌──────────────────────────────────────────────────────────────────┐
+-- │  STEP 4: Re-add the 21 FKs, re-pointed at auth.users             │
+-- │                                                                  │
+-- │  ON DELETE behaviour:                                            │
+-- │    - User-owned data (posts, feedback, notifications, etc.):     │
+-- │      ON DELETE CASCADE — when a user is fully removed, their     │
+-- │      data goes with them.                                        │
+-- │    - Admin/actor audit columns (resolved_by, admin_decision_by,  │
+-- │      etc.): ON DELETE SET NULL — preserves the audit row even    │
+-- │      if the admin's account is later deleted.                    │
+-- └──────────────────────────────────────────────────────────────────┘
+
+-- ── User-owned data (CASCADE) ──────────────────────────────────────
+alter table public.posts
+  add constraint posts_author_id_fkey
+  foreign key (author_id) references auth.users(id) on delete cascade;
+
+alter table public.welfare_notifications
+  add constraint welfare_notifications_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.clio_ephemeral_sessions
+  add constraint clio_ephemeral_sessions_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.clio_handoff_greetings
+  add constraint clio_handoff_greetings_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.llm_response_logs
+  add constraint llm_response_logs_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete set null;
+
+alter table public.agent_feedback
+  add constraint agent_feedback_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.behavioural_events
+  add constraint behavioural_events_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.character_concerns
+  add constraint character_concerns_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.cluster_feature_upvotes
+  add constraint cluster_feature_upvotes_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.cluster_feature_comments
+  add constraint cluster_feature_comments_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.agent_chatbox_views
+  add constraint agent_chatbox_views_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+alter table public.cluster_tool_invocations
+  add constraint cluster_tool_invocations_user_id_fkey
+  foreign key (user_id) references auth.users(id) on delete cascade;
+
+
+-- ── Admin/actor audit (SET NULL) ───────────────────────────────────
+alter table public.welfare_notifications
+  add constraint welfare_notifications_resolved_by_fkey
+  foreign key (resolved_by) references auth.users(id) on delete set null;
+
+alter table public.character_concerns
+  add constraint character_concerns_admin_responded_by_fkey
+  foreign key (admin_responded_by) references auth.users(id) on delete set null;
+
+alter table public.vault_gap_requests
+  add constraint vault_gap_requests_resolved_by_fkey
+  foreign key (resolved_by) references auth.users(id) on delete set null;
+
+alter table public.vault_sources
+  add constraint vault_sources_added_by_fkey
+  foreign key (added_by) references auth.users(id) on delete set null;
+
+alter table public.cluster_features
+  add constraint cluster_features_admin_decision_by_fkey
+  foreign key (admin_decision_by) references auth.users(id) on delete set null;
+
+alter table public.agent_prompt_proposals
+  add constraint agent_prompt_proposals_admin_decision_by_fkey
+  foreign key (admin_decision_by) references auth.users(id) on delete set null;
+
+alter table public.cluster_config
+  add constraint cluster_config_updated_by_fkey
+  foreign key (updated_by) references auth.users(id) on delete set null;
+
+alter table public.cluster_admin_actions
+  add constraint cluster_admin_actions_actor_id_fkey
+  foreign key (actor_id) references auth.users(id) on delete set null;
+
+alter table public.waitlist_submissions
+  add constraint waitlist_submissions_admin_actioned_by_fkey
+  foreign key (admin_actioned_by) references auth.users(id) on delete set null;
 
 
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 2: posts — add cluster_id                                  │
--- │                                                                  │
--- │  Every post belongs to exactly one cluster. Existing posts (from │
--- │  the MVP) default to 'the_single_source'. New posts MUST specify │
--- │  a cluster_id — the app passes it on every insert.               │
+-- │  STEP 5: posts — cluster_id scoping                              │
 -- └──────────────────────────────────────────────────────────────────┘
 
 alter table public.posts
@@ -88,41 +212,35 @@ create index if not exists idx_posts_cluster_feed
 create index if not exists idx_posts_cluster_state
   on public.posts(cluster_id, thread_state);
 
--- RLS: posts are still viewable by all authenticated users, but only
--- within the cluster they joined. The app filters on cluster_id in
--- every query — RLS is the belt; the filter is the braces.
-
 
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 3a: welfare_notifications — shared across clusters         │
+-- │  STEP 6: welfare_notifications — cluster_id scoping              │
 -- │                                                                  │
--- │  The MVP schema doesn't have this table yet (it was planned but  │
--- │  not shipped in the base schema.sql). Adding it here so both     │
--- │  Sisters in Dua and Long Conversation can write welfare alerts.  │
--- │  The admin UI for reviewing these ships in a later batch.        │
+-- │  The MVP schema may or may not have welfare_notifications        │
+-- │  already. Add the table if missing, otherwise just ensure the    │
+-- │  cluster_id column exists.                                       │
 -- └──────────────────────────────────────────────────────────────────┘
 
 create table if not exists public.welfare_notifications (
   id uuid default gen_random_uuid() primary key,
-  cluster_id text not null,
+  cluster_id text not null default 'the_single_source',
   user_id uuid references auth.users(id) on delete cascade,
   post_id uuid references public.posts(id) on delete set null,
-  -- post_id is null for FAB-sourced welfare signals (no public post)
   trigger_content text,
-  -- First 500 chars of the triggering message. Never the full content.
   source text not null default 'sage_post',
-  -- 'sage_post' | 'clio_fab' | 'clio_ephemeral'
   sage_response text,
   resolved boolean default false not null,
-  resolved_by uuid references auth.users(id),
+  resolved_by uuid references auth.users(id) on delete set null,
   resolved_at timestamptz,
   created_at timestamptz default now() not null
 );
 
+-- If the table already existed, ensure cluster_id column is there.
+alter table public.welfare_notifications
+  add column if not exists cluster_id text not null default 'the_single_source';
+
 alter table public.welfare_notifications enable row level security;
 
--- Only platform_admin and cluster admins can read welfare notifications.
--- Members never see this table.
 drop policy if exists "Admins read welfare notifications" on public.welfare_notifications;
 create policy "Admins read welfare notifications"
   on public.welfare_notifications for select
@@ -138,12 +256,9 @@ create index if not exists idx_welfare_notifications_cluster_unresolved
   on public.welfare_notifications(cluster_id, resolved, created_at desc)
   where resolved = false;
 
+
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 3b: clio_ephemeral_sessions — shared across clusters       │
--- │                                                                  │
--- │  The MVP schema has this table. Adding it here as a CREATE IF    │
--- │  NOT EXISTS so the migration is safe to run on a project that    │
--- │  already has it (from the MVP schema-phase5.sql).                │
+-- │  STEP 7: clio_ephemeral_sessions — cluster_id scoping            │
 -- └──────────────────────────────────────────────────────────────────┘
 
 create table if not exists public.clio_ephemeral_sessions (
@@ -158,6 +273,9 @@ create table if not exists public.clio_ephemeral_sessions (
   deleted_at timestamptz
 );
 
+alter table public.clio_ephemeral_sessions
+  add column if not exists cluster_id text not null default 'the_single_source';
+
 alter table public.clio_ephemeral_sessions enable row level security;
 
 drop policy if exists "Users read own ephemeral sessions" on public.clio_ephemeral_sessions;
@@ -165,7 +283,6 @@ create policy "Users read own ephemeral sessions"
   on public.clio_ephemeral_sessions for select
   using (auth.uid() = user_id);
 
--- RPC for incrementing message count (used by the ephemeral route).
 create or replace function public.increment_ephemeral_message_count(
   p_session_id uuid
 ) returns void as $$
@@ -176,48 +293,21 @@ begin
 end;
 $$ language plpgsql security definer;
 
+
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 3c: clio_tip_log — NEW table for Long Conversation          │
--- │                                                                  │
--- │  Records every private FAB tip Clio delivers. Used for:          │
--- │   - Frequency enforcement (max 1 per member per 24h)             │
--- │   - Repetition prevention (no same trigger to same member in 14d)│
--- │   - Cluster-wide repetition cap (3+ same trigger type in 7d      │
--- │     pauses that trigger for 7d cluster-wide)                     │
--- │   - Dependency detection (3+ tips with no posting rate increase) │
--- │                                                                  │
--- │  Specification: clio/CLIO_CLUSTER_HOST_CONTEXT.md §11            │
+-- │  STEP 8: clio_tip_log — NEW table for Long Conversation          │
 -- └──────────────────────────────────────────────────────────────────┘
 
 create table if not exists public.clio_tip_log (
   id uuid default gen_random_uuid() primary key,
   cluster_id text not null,
   user_id uuid not null references auth.users(id) on delete cascade,
-
-  -- Which trigger fired. See CLIO_CLUSTER_HOST_CONTEXT.md §11.3
-  -- 'guarded_intellectual' | 'hedged_vulnerability' | 'question_reveals_want' |
-  -- 'interested_but_guarded' | 'no_post_48h' | 'complementary_a' | 'complementary_b'
   trigger_type text not null,
-
-  -- The public post that triggered the tip. NULL for no_post_48h
-  -- (where the trigger is absence of posts).
   source_post_id uuid references public.posts(id) on delete set null,
-
-  -- The tip text Clio delivered (for audit + repetition check).
   tip_content text not null,
-
-  -- When the tip was delivered to the member's FAB.
   tip_delivered_at timestamptz default now() not null,
-
-  -- Whether the member posted within 24h of the tip. Updated by a
-  -- background check at tip + 24h. NULL until then.
   member_acted boolean,
-
-  -- Populated when a tip is suppressed (not delivered).
-  -- 'dependency_prevention' | 'cluster_repetition_limit' |
-  -- 'welfare_flagged' | 'frequency_limit_24h' | 'pattern_repetition_14d'
   suppression_reason text,
-
   created_at timestamptz default now() not null
 );
 
@@ -233,8 +323,6 @@ create index if not exists idx_clio_tip_log_action_check
 
 alter table public.clio_tip_log enable row level security;
 
--- Members never see their own tip log. Only platform_admin reads it.
--- The log is for Observer Domain 5 monitoring and admin review only.
 drop policy if exists "Platform admin reads tip log" on public.clio_tip_log;
 create policy "Platform admin reads tip log"
   on public.clio_tip_log for select
@@ -245,46 +333,30 @@ create policy "Platform admin reads tip log"
     )
   );
 
--- The service role inserts (via the Sage/Clio worker). RLS does not
--- restrict service-role writes, so no policy needed for INSERT.
-
 
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 4: profile role constraint update                          │
+-- │  STEP 9: profiles role constraint extension                      │
 -- │                                                                  │
--- │  The MVP defined roles as ('member', 'manager', 'founder') for   │
--- │  the premium-cluster pattern. Long Conversation is a generic     │
--- │  cluster with simpler role structure: just member + admin.       │
--- │                                                                  │
--- │  We extend the constraint to allow both vocabularies. Sisters in │
--- │  Dua keeps using 'founder'; Long Conversation uses 'admin'.      │
+-- │  MVP defined role check as ('member', 'manager', 'founder'). LC  │
+-- │  uses 'admin' as the simpler vocabulary. Allow both.             │
 -- └──────────────────────────────────────────────────────────────────┘
 
-alter table public.profiles
-  drop constraint if exists profiles_role_check;
-
+alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles
   add constraint profiles_role_check
   check (role in ('member', 'manager', 'founder', 'admin'));
 
 
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 5: Update the auto-create-profile trigger                  │
+-- │  STEP 10: handle_new_user trigger — composite PK aware           │
 -- │                                                                  │
--- │  The MVP trigger creates a profile with default cluster_id, which │
--- │  is now 'the_single_source' (the MVP cluster). This keeps the    │
--- │  MVP's auth flow working unchanged.                              │
+-- │  The MVP trigger created a profile keyed by (id) only. With the  │
+-- │  new composite PK, we INSERT (id, cluster_id, ...) and use ON    │
+-- │  CONFLICT (id, cluster_id) DO NOTHING for idempotency.           │
 -- │                                                                  │
--- │  For Long Conversation, the auth callback explicitly INSERTS a   │
--- │  second profile row with cluster_id = 'long_conversation' for the│
--- │  same auth user. The composite PK (id, cluster_id) allows both   │
--- │  rows to coexist.                                                │
--- │                                                                  │
--- │  We update the trigger function so that:                         │
--- │   - It still creates a Sisters in Dua profile (legacy default)   │
--- │   - The INSERT is idempotent (ON CONFLICT DO NOTHING) so a user  │
--- │     who already has a profile in either cluster doesn't crash    │
--- │     the trigger on second sign-in.                               │
+-- │  The trigger only creates the Sisters in Dua profile. Long       │
+-- │  Conversation profiles are created by the LC app's auth          │
+-- │  callback — see phase0/lc/src/app/auth/callback/route.ts.        │
 -- └──────────────────────────────────────────────────────────────────┘
 
 create or replace function public.handle_new_user()
@@ -294,17 +366,13 @@ begin
   values (
     new.id,
     'the_single_source',
-    coalesce(
-      split_part(new.email, '@', 1),
-      'Sister'
-    )
+    coalesce(split_part(new.email, '@', 1), 'Sister')
   )
   on conflict (id, cluster_id) do nothing;
   return new;
 end;
 $$ language plpgsql security definer;
 
--- Re-attach the trigger if it was dropped previously
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
@@ -312,16 +380,13 @@ create trigger on_auth_user_created
 
 
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 6: Realtime publication (no change needed)                 │
+-- │  STEP 11: Realtime publication                                   │
 -- │                                                                  │
--- │  The posts table is already in supabase_realtime. The cluster_id │
--- │  filter happens client-side in the LC app's realtime subscription│
--- │  so each app only receives events for its own cluster.           │
+-- │  posts is already in supabase_realtime in the MVP. Confirm and   │
+-- │  add if missing — no-op when already present.                    │
 -- └──────────────────────────────────────────────────────────────────┘
 
--- No-op confirmation that the publication exists and includes posts:
-do $$
-begin
+do $$ begin
   if not exists (
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime' and tablename = 'posts'
@@ -331,31 +396,42 @@ begin
 end $$;
 
 
+commit;
+
+
 -- ┌──────────────────────────────────────────────────────────────────┐
--- │  STEP 7: Verification queries                                    │
--- │                                                                  │
--- │  Run these in the SQL Editor after the migration to confirm     │
--- │  the schema is correctly scoped.                                 │
+-- │  Verification queries (run after migration)                      │
 -- └──────────────────────────────────────────────────────────────────┘
 
--- All tables that should now have cluster_id:
--- select column_name, data_type, is_nullable, column_default
--- from information_schema.columns
--- where table_schema = 'public'
---   and column_name = 'cluster_id'
--- order by table_name;
+-- Confirm composite PK exists:
+-- select pg_get_constraintdef(oid) from pg_constraint where conname = 'profiles_pkey';
+-- Expected: PRIMARY KEY (id, cluster_id)
 
--- Existing posts and profiles defaulted correctly:
--- select cluster_id, count(*) from public.posts group by cluster_id;
+-- Confirm the 21 FKs all reference auth.users now:
+-- select conname, pg_get_constraintdef(oid)
+-- from pg_constraint
+-- where confrelid = 'auth.users'::regclass
+-- order by conname;
+
+-- Confirm cluster_id is populated on every profile and post:
 -- select cluster_id, count(*) from public.profiles group by cluster_id;
+-- select cluster_id, count(*) from public.posts group by cluster_id;
 
--- New table is present:
+-- Confirm the new tables exist:
 -- select count(*) from public.clio_tip_log;
+-- select count(*) from public.welfare_notifications;
+-- select count(*) from public.clio_ephemeral_sessions;
 
 -- ╔══════════════════════════════════════════════════════════════════╗
 -- ║  MIGRATION COMPLETE                                              ║
--- ║  Existing Sisters in Dua data is unchanged (cluster_id defaults  ║
--- ║  to 'the_single_source'). Long Conversation can now write its    ║
--- ║  own rows with cluster_id = 'long_conversation' and they will    ║
--- ║  not collide with Sisters in Dua data.                           ║
+-- ║                                                                  ║
+-- ║  - Sisters in Dua data is unchanged (cluster_id defaults to      ║
+-- ║    'the_single_source').                                         ║
+-- ║  - All 21 FKs now reference auth.users(id) instead of            ║
+-- ║    profiles(id), so a user can hold multiple profiles (one per   ║
+-- ║    cluster) without breaking referential integrity.              ║
+-- ║  - Long Conversation can now write rows with                     ║
+-- ║    cluster_id = 'long_conversation' without colliding with SiD.  ║
+-- ║                                                                  ║
+-- ║  Next step: run 02_founding_feedback_migration.sql.              ║
 -- ╚══════════════════════════════════════════════════════════════════╝

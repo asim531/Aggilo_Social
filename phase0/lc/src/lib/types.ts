@@ -31,9 +31,9 @@ export interface Profile {
   role: "member" | "admin";
   /**
    * True for the member whose request produced this cluster (Source A
-   * in the intake taxonomy — see phase0/docs/AMA_CLUSTER_CREATION_AND_
-   * FOUNDING_FEEDBACK.md). Triggers the founding-feedback prompt on
-   * first session. For LC, this is Tas.
+   * in the intake taxonomy — see
+   * docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md). Triggers the
+   * founding-feedback prompt on first session. For LC, this is Tas.
    */
   is_founding_member: boolean;
   /**

@@ -15,7 +15,7 @@ import { detectWelfareSignal } from "@/lib/welfare";
  *
  * Single-shot endpoint that runs the founding-member feedback prompt
  * described in:
- *   phase0/docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md Part 1
+ *   docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md Part 1
  *
  * Two distinct calls:
  *

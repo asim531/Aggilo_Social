@@ -4,7 +4,7 @@
 -- ║                                                                   ║
 -- ║  Adds the database surface for the founding-member feedback       ║
 -- ║  prompt described in:                                             ║
--- ║    phase0/docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md      ║
+-- ║    docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md             ║
 -- ║    Part 1 — "Founding Member Feedback"                            ║
 -- ║                                                                   ║
 -- ║  Mechanism:                                                       ║

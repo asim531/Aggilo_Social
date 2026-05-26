@@ -7,7 +7,7 @@
  * frame is never re-loaded for that member.
  *
  * Specification:
- *   phase0/docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md
+ *   docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md
  *   Part 1 — "Founding Member Feedback"
  *
  * Loaded between CLIO_CHARACTER_PROMPT and the cluster context so the

@@ -35,8 +35,12 @@ phase0/
 │       ├── CLUSTER_TOOLS.md
 │       └── SAGE_PERSONA.md
 └── docs/              ← Phase-0 implementation/operations docs
-    ├── AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md
-    └── DEPLOYMENT_AGGILO_IN_REWRITE.md
+    ├── DEPLOYMENT_AGGILO_IN_REWRITE.md   pilot deployment guide
+    └── AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md
+                                          stub → docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md
+                                          (the spec graduated to main product
+                                          because founding feedback applies to
+                                          every cluster, not just the pilot)
 ```
 
 > **Note on naming.** The pilot apps follow a `phase0/<slug>/`
@@ -117,11 +121,12 @@ but belong to the main product. They stay here while the pilot is
 the only place running them, and graduate to `docs/` or
 `architecture/` when the production platform picks them up:
 
-- `phase0/docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md` —
-  founding-member feedback prompt and AMA cluster creation. Lives
-  here because the pilot is where it ships first; the canonical
-  product spec moves to `docs/` when the intake pipeline goes
-  autonomous in Phase 1.
+- `docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md` —
+  founding-member feedback prompt and AMA cluster creation. Promoted
+  to a main-product spec on 2026-05-26 because founding feedback is
+  required for every Source-A cluster across the platform. The Phase
+  0 LC implementation is the reference; future clusters and the
+  production platform read the canonical spec from `docs/`.
 
 When a feature graduates, leave a one-line pointer behind so old
 links don't rot:

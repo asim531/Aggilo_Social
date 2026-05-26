@@ -5,7 +5,7 @@
  *
  * One-shot UI that surfaces only for the founding member of this
  * cluster (Tas, for LC). Specification:
- *   phase0/docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md Part 1
+ *   docs/AMA_CLUSTER_CREATION_AND_FOUNDING_FEEDBACK.md Part 1
  *
  * Behaviour:
  *   1. On mount, query /api/clio/founding-feedback (GET) to see if
