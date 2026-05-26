@@ -3,24 +3,27 @@
 /**
  * ClusterShell — Long Conversation.
  *
- * Single-scroll layout. Sticky Navbar at top, sticky compose bar at
- * bottom (rendered by ClusterFeed → PostComposer), everything between
- * scrolls together. Mobile-first.
+ * Renders the cluster page with:
+ *   - Navbar (sticky top, has HelpMenu + founder badge + admin + signout)
+ *   - ClusterHeader (cluster identity + chips)
+ *   - ClusterFeed (Timeline + sticky compose bar)
+ *   - AgentChatbox (Room Workshop, below the compose bar)
+ *   - ClioFab (top-right floating button)
  *
- * The Clio FAB (top-right, intimacy-cohort register, with the private
- * tip mechanic active) is wired in at the bottom of the shell.
+ * Modal/overlay layer (user-invoked, never auto-firing):
+ *   - ClioWelcome — opened from HelpMenu "Show me around"
+ *   - ClioTour — opened from HelpMenu "Take the tour"
+ *   - FoundingFeedbackPrompt — opened from FoundingFeedbackBadge
  *
- * Room Workshop strip (AgentChatbox) renders between the cluster
- * header and the feed. Default-collapsed; members open it once and
- * the choice persists. Auto-fires the cadence-exchange ~30s after
- * mount when the cadence floor allows.
+ * What still auto-fires (not user-visible):
+ *   - cadence-exchange — Sage⇄Clio dialogue cycle, 30s after first
+ *     non-first session (invisible UX; result lands in Workshop strip)
  *
- * First-session welcome:
- *   - On first visit (profile.onboarded === false), the ClioWelcome
- *     modal renders. The cadence-trigger and the founding-feedback
- *     prompt both wait until welcome is dismissed.
- *   - On dismiss, profile.onboarded is stamped via
- *     /api/auth/mark-onboarded so the modal never fires again.
+ * Design rationale:
+ *   - The room is the experience. Modals are not the gate.
+ *   - First-session orientation moved out of the way: a tiny
+ *     dismissible banner above the Timeline points the new member
+ *     to the HelpMenu. Power-users ignore it; new members find it.
  */
 
 import { useEffect, useState } from "react";
@@ -31,9 +34,10 @@ import ClusterHeader from "./ClusterHeader";
 import ClusterFeed from "./ClusterFeed";
 import ClioFab from "./ClioFab";
 import ClioWelcome from "./ClioWelcome";
-import ClioTour, { isTourDone } from "./ClioTour";
+import ClioTour from "./ClioTour";
 import AgentChatbox from "./AgentChatbox";
 import FoundingFeedbackPrompt from "./FoundingFeedbackPrompt";
+import FirstVisitHint from "./FirstVisitHint";
 import type { PostWithAuthor, Profile } from "@/lib/types";
 
 interface ClusterShellProps {
@@ -50,39 +54,50 @@ export default function ClusterShell({
   profile,
   initialPosts,
 }: ClusterShellProps) {
-  // Welcome modal state. Initial value comes from the server-side
-  // profile.onboarded; the client may also flip it via dismiss.
-  const [showWelcome, setShowWelcome] = useState<boolean>(!profile.onboarded);
-  // Tour fires after welcome is dismissed, only if not already done.
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [showFoundingFeedback, setShowFoundingFeedback] = useState(false);
+  // Server-side onboarded flag is used only for the first-visit hint
+  // (which is non-blocking). The welcome modal itself is always
+  // user-invoked from the HelpMenu.
+  const [hintVisible, setHintVisible] = useState(!profile.onboarded);
 
-  // Session-level analytics on mount.
   useEffect(() => {
     track("session_started");
     track("cluster_landed");
-    if (showWelcome) track("welcome_modal_shown");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleDismissWelcome() {
-    setShowWelcome(false);
-    track("welcome_modal_dismissed");
-    // Fire the tour after a short delay so the room is visible first.
-    if (!isTourDone()) {
-      setTimeout(() => setShowTour(true), 600);
-    }
-    try {
-      await fetch(withBasePath("/api/auth/mark-onboarded"), { method: "POST" });
-    } catch {
-      // Non-blocking.
-    }
+  function handleDismissHint() {
+    setHintVisible(false);
+    void fetch(withBasePath("/api/auth/mark-onboarded"), {
+      method: "POST",
+    }).catch(() => {});
   }
 
-  // Cadence-exchange trigger. Mirrors MVP's pattern with LC keys.
-  // Waits until the welcome modal is dismissed so it doesn't compete
-  // with the member's first impression.
+  function handleShowWelcomeFromHint() {
+    setShowWelcome(true);
+    handleDismissHint();
+    track("welcome_modal_shown_from_hint");
+  }
+
+  function handleShowWelcomeFromHelp() {
+    setShowWelcome(true);
+    track("welcome_modal_shown_from_help");
+  }
+
+  function handleStartTour() {
+    setShowTour(true);
+    track("tour_started");
+  }
+
+  function handleOpenFoundingFeedback() {
+    setShowFoundingFeedback(true);
+    track("founding_feedback_modal_opened");
+  }
+
+  // Cadence-exchange auto-trigger (invisible to the user). Keeps the
+  // Workshop strip alive across visits without asking anyone.
   useEffect(() => {
-    if (showWelcome) return;
     if (typeof window === "undefined") return;
     const firstDone = window.localStorage.getItem(FIRST_SESSION_DONE_KEY);
     if (!firstDone) {
@@ -124,11 +139,10 @@ export default function ClusterShell({
     }, 30_000);
 
     return () => clearTimeout(trigger);
-  }, [showWelcome]);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-lc-surface">
-      {/* Skip-to-content for keyboard users. WCAG 2.4.1 (Bypass Blocks). */}
       <a
         href="#lc-cluster-timeline"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[80] focus:px-3 focus:py-2 focus:bg-lc-ink focus:text-white focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-lc-clio"
@@ -139,31 +153,38 @@ export default function ClusterShell({
       <Navbar
         displayName={profile.nickname}
         isAdmin={profile.role === "admin"}
+        onShowWelcome={handleShowWelcomeFromHelp}
+        onStartTour={handleStartTour}
+        onOpenFoundingFeedback={handleOpenFoundingFeedback}
       />
 
       <main className="flex-1">
         <ClusterHeader />
+        {hintVisible && (
+          <FirstVisitHint
+            nickname={profile.nickname}
+            onShowWelcome={handleShowWelcomeFromHint}
+            onDismiss={handleDismissHint}
+          />
+        )}
         <ClusterFeed
           initialPosts={initialPosts}
           userId={userId}
           profile={profile}
         />
-        {/* Room Workshop — below the compose bar, secondary to the feed */}
         <AgentChatbox />
       </main>
 
-      {/* Clio FAB — top-right, 44px, 16px from edge, 8px below Navbar */}
       <ClioFab userId={userId} />
 
-      {/* First-session welcome — three-step modal, gates tour + founding-feedback. */}
+      {/* User-invoked overlays */}
       {showWelcome && (
         <ClioWelcome
           nickname={profile.nickname}
-          onDismiss={handleDismissWelcome}
+          onDismiss={() => setShowWelcome(false)}
         />
       )}
 
-      {/* Contextual tour — fires once after welcome is dismissed. */}
       {showTour && (
         <ClioTour
           onDone={() => {
@@ -173,15 +194,17 @@ export default function ClusterShell({
         />
       )}
 
-      {/*
-        Founding-member feedback prompt. Renders nothing for non-
-        founding members (the component checks eligibility on mount).
-        For the founding member, it surfaces after the welcome modal is
-        dismissed. One-shot.
-      */}
-      {!showWelcome && (
-        <FoundingFeedbackPrompt founderNickname={profile.nickname} />
-      )}
+      <FoundingFeedbackPrompt
+        open={showFoundingFeedback}
+        founderNickname={profile.nickname}
+        onClose={(didRespond) => {
+          setShowFoundingFeedback(false);
+          if (didRespond) {
+            // The badge unmount on next mount will hide itself based
+            // on the server-side closed flag. No-op here.
+          }
+        }}
+      />
     </div>
   );
 }
