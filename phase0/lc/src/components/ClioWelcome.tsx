@@ -41,10 +41,10 @@ export default function ClioWelcome({ nickname, onDismiss }: ClioWelcomeProps) {
       body: (
         <>
           <p className="mb-2">
-            This is <strong>Long Conversation</strong>. Text-only, nicknames only. No photos, no DMs, no likes.
+            This is <strong>Long Conversation</strong>. Text-only, nicknames only. No photos, no likes.
           </p>
           <p className="text-lc-muted text-sm">
-            Words are your entire presence here — that&apos;s the point.
+            The room sets the vibe. When there's a spark, I can open a private channel for DMs.
           </p>
         </>
       ),

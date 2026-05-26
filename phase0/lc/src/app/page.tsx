@@ -40,10 +40,15 @@ export default function LandingPage() {
             the moment when two people realise they are genuinely interested
             in each other as people, not as profiles.
           </p>
-          <p className="text-sm text-lc-ink leading-relaxed">
+          <p className="text-sm text-lc-ink leading-relaxed mb-4">
             Here, words are the only currency. People who are genuinely
             interesting reveal themselves through language faster than they
-            reveal themselves through photos. This room is built on that.
+            reveal themselves through photos.
+          </p>
+          <p className="text-sm text-lc-ink leading-relaxed">
+            This public room exists to set the vibe. When a real connection
+            sparks, our resident agent, Clio, will step in to open a private
+            line for direct messages. But it all starts here, in the open.
           </p>
         </div>
       </div>
@@ -58,8 +63,8 @@ export default function LandingPage() {
         <div className="bg-lc-card/50 border border-stone-200/60 rounded-lg p-4">
           <p className="text-xs text-lc-muted leading-relaxed">
             You will choose a nickname — no real names are shown. No photos,
-            no DMs, no mutual matches. Every interaction is a public
-            Timeline post inside the room.
+            no swiping, no mutual matches. The timeline is public, and direct
+            messages only open when Clio facilitates them.
           </p>
         </div>
       </div>
