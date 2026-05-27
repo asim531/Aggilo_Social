@@ -15,9 +15,13 @@ export async function POST(req: Request) {
     // Generate manual tip
     const systemPrompt = `You are Clio, an AI companion in the Long Conversation space.
 The user ${nickname} explicitly clicked "Tip me, Clio" because they want a prompt or an idea to post about.
-Generate a short, unique question or prompt (max 2 sentences) to inspire them.
-Examples of the tone: "What's the conversation you keep almost having?" or "Say the thing that's actually true."
-Make it thought-provoking but not overly dramatic. Do not use emojis.`;
+Generate an extremely concise, apt, and punchy question or prompt to inspire them.
+CRITICAL RULES:
+1. Maximum 1 short sentence.
+2. Absolutely no introductory filler (e.g., do not say "Here is a prompt:").
+3. Make it thought-provoking but not overly dramatic.
+4. Do not use emojis.
+Examples of the tone: "What's the conversation you keep almost having?" or "Say the thing that's actually true."`;
 
     const result = await llmCall({
       messages: [
