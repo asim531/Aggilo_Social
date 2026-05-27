@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
+import { withBasePath } from "@/lib/path";
 import type { ClioTipLogRow } from "@/lib/types";
 
 export default function ClioTipLayer({ userId }: { userId: string }) {
@@ -81,7 +82,7 @@ export default function ClioTipLayer({ userId }: { userId: string }) {
         
         {/* Clio icon */}
         <div className="absolute left-3 top-4 w-6 h-6 rounded-full overflow-hidden bg-amber-100 flex items-center justify-center">
-          <img src="/characters/clio.png" alt="Clio" className="w-full h-full object-cover" />
+          <img src={withBasePath("/characters/clio.png")} alt="Clio" className="w-full h-full object-cover" />
         </div>
         
         <p className="text-sm text-lc-ink leading-relaxed pr-6">

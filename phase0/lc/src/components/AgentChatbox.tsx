@@ -281,7 +281,7 @@ export default function AgentChatbox() {
               >
                 <div className="flex gap-2 text-xs items-start">
                   <div className="relative w-5 h-5 shrink-0 mt-0.5 rounded-full overflow-hidden bg-lc-sageSoft">
-                    <Image src="/characters/sage.png" alt="Sage" fill className="object-contain" />
+                    <img src={withBasePath("/characters/sage.png")} alt="Sage" className="object-contain w-full h-full" />
                   </div>
                   <p className="text-lc-ink line-clamp-3 leading-relaxed flex-1">
                     {exc.sage_message}
@@ -289,7 +289,7 @@ export default function AgentChatbox() {
                 </div>
                 <div className="flex gap-2 text-xs items-start">
                   <div className="relative w-5 h-5 shrink-0 mt-0.5 rounded-full overflow-hidden bg-lc-clioSoft">
-                    <Image src="/characters/clio.png" alt="Clio" fill className="object-contain" />
+                    <img src={withBasePath("/characters/clio.png")} alt="Clio" className="object-contain w-full h-full" />
                   </div>
                   <p className="text-lc-ink line-clamp-3 leading-relaxed flex-1">
                     {exc.clio_message}

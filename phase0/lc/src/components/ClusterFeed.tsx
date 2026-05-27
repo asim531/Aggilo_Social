@@ -17,6 +17,7 @@ import { useRealtimePosts } from "@/hooks/useRealtimePosts";
 import PostCard from "./PostCard";
 import PostComposer from "./PostComposer";
 import type { PostWithAuthor, Profile } from "@/lib/types";
+import { withBasePath } from "@/lib/path";
 
 interface ClusterFeedProps {
   initialPosts: PostWithAuthor[];
@@ -86,7 +87,7 @@ export default function ClusterFeed({
         {topLevel.length === 0 ? (
           <div className="bg-lc-card border border-stone-200 rounded-lg p-8 flex flex-col items-center justify-center text-center">
             <div className="relative w-16 h-16 mb-4">
-              <img src="/characters/clio.png" alt="Clio" className="object-contain w-full h-full drop-shadow-md" />
+              <img src={withBasePath("/characters/clio.png")} alt="Clio" className="object-contain w-full h-full drop-shadow-md" />
             </div>
             <p className="text-sm font-medium text-lc-ink mb-1">
               I am working on finding the crowd for this room.

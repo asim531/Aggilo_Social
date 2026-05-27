@@ -241,7 +241,7 @@ function PostBody({ post }: { post: PostWithAuthor }) {
         <header className="flex items-baseline justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="relative w-5 h-5 rounded-full overflow-hidden bg-lc-sageSoft shrink-0">
-              <img src="/characters/sage.png" alt="Sage" className="object-contain w-full h-full" />
+              <img src={withBasePath("/characters/sage.png")} alt="Sage" className="object-contain w-full h-full" />
             </div>
             <span className="text-xs font-medium text-lc-sage uppercase tracking-wider">
               Sage · Anchor
@@ -308,7 +308,7 @@ function ReplyCard({ post }: { post: PostWithAuthor }) {
         <header className="flex items-baseline justify-between mb-1.5">
           <div className="flex items-center gap-2">
             <div className="relative w-4 h-4 rounded-full overflow-hidden bg-lc-sageSoft shrink-0">
-              <img src="/characters/sage.png" alt="Sage" className="object-contain w-full h-full" />
+              <img src={withBasePath("/characters/sage.png")} alt="Sage" className="object-contain w-full h-full" />
             </div>
             <span className="text-[10px] font-medium text-lc-sage uppercase tracking-wider">
               Sage · Anchor

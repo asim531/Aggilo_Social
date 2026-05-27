@@ -11,6 +11,20 @@ export async function POST(req: Request) {
     }
 
     const supabase = createAdminClient();
+
+    // Fetch the user's previous tips so Clio never repeats herself.
+    const { data: pastTips } = await supabase
+      .from("clio_tip_log")
+      .select("tip_content")
+      .eq("cluster_id", CLUSTER_ID)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(15);
+
+    const pastTipsList = (pastTips ?? []).map((t) => t.tip_content).filter(Boolean);
+    const pastTipsBlock = pastTipsList.length > 0
+      ? `\nYou have already given this user the following tips. Do NOT repeat any of them — generate something completely new and different:\n${pastTipsList.map((t, i) => `${i + 1}. "${t}"`).join("\n")}`
+      : "";
     
     // Generate manual tip
     const systemPrompt = `You are Clio, an AI companion in the Long Conversation space.
@@ -21,7 +35,7 @@ CRITICAL RULES:
 2. Absolutely no introductory filler (e.g., do not say "Here is a prompt:").
 3. Make it thought-provoking but not overly dramatic.
 4. Do not use emojis.
-Examples of the tone: "What's the conversation you keep almost having?" or "Say the thing that's actually true."`;
+Examples of the tone: "What's the conversation you keep almost having?" or "Say the thing that's actually true."${pastTipsBlock}`;
 
     const result = await llmCall({
       messages: [

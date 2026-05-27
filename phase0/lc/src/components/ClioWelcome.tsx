@@ -11,6 +11,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { withBasePath } from "@/lib/path";
 
 interface ClioWelcomeProps {
   nickname: string;
@@ -182,12 +183,10 @@ function IntroStage() {
       <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
       <div className="absolute inset-2 rounded-full bg-white/10" />
       <div className="absolute inset-0 flex items-center justify-center">
-        <Image
-          src="/characters/clio.png"
+        <img
+          src={withBasePath("/characters/clio.png")}
           alt="Clio"
-          fill
-          className="object-contain drop-shadow-lg"
-          priority
+          className="object-contain drop-shadow-lg w-full h-full"
         />
       </div>
     </div>
@@ -198,12 +197,10 @@ function AgentsStage() {
   return (
     <div className="relative w-full max-w-xs h-24 px-4">
       <div className="absolute left-4 top-1/2 -translate-y-1/2 w-16 h-16">
-        <Image
-          src="/characters/clio.png"
+        <img
+          src={withBasePath("/characters/clio.png")}
           alt="Clio"
-          fill
-          className="object-contain drop-shadow-lg"
-          priority
+          className="object-contain drop-shadow-lg w-full h-full"
         />
         <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-[9px] font-medium whitespace-nowrap">
           Clio
@@ -219,12 +216,10 @@ function AgentsStage() {
         className="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16"
         style={{ animation: "sage-arrive 0.6s ease-out 0.4s both" }}
       >
-        <Image
-          src="/characters/sage.png"
+        <img
+          src={withBasePath("/characters/sage.png")}
           alt="Sage"
-          fill
-          className="object-contain drop-shadow-lg"
-          priority
+          className="object-contain drop-shadow-lg w-full h-full"
         />
         <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-[9px] font-medium whitespace-nowrap">
           Sage
@@ -256,12 +251,10 @@ function DynamicsStage() {
         </span>
       </div>
       <div className="absolute left-4 bottom-0 w-16 h-16">
-        <Image
-          src="/characters/clio.png"
+        <img
+          src={withBasePath("/characters/clio.png")}
           alt="Clio"
-          fill
-          className="object-contain drop-shadow-lg"
-          priority
+          className="object-contain drop-shadow-lg w-full h-full"
         />
       </div>
       <div
@@ -273,12 +266,10 @@ function DynamicsStage() {
         </span>
       </div>
       <div className="absolute right-4 bottom-0 w-16 h-16">
-        <Image
-          src="/characters/sage.png"
+        <img
+          src={withBasePath("/characters/sage.png")}
           alt="Sage"
-          fill
-          className="object-contain drop-shadow-lg"
-          priority
+          className="object-contain drop-shadow-lg w-full h-full"
         />
       </div>
       <div className="absolute left-1/2 bottom-8 -translate-x-1/2 w-16 h-0.5 bg-white/30 rounded-full" />

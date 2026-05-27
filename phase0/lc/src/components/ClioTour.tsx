@@ -28,6 +28,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
+import { withBasePath } from "@/lib/path";
 
 interface TourStop {
   id: string;
@@ -257,11 +258,10 @@ export default function ClioTour({ onDone }: Props) {
           {/* Clio avatar + label */}
           <div className="flex items-center gap-2 mb-2">
             <div className="relative w-7 h-7 shrink-0">
-              <Image
-                src="/characters/clio.png"
+              <img
+                src={withBasePath("/characters/clio.png")}
                 alt="Clio"
-                fill
-                className="object-contain"
+                className="object-contain w-full h-full"
               />
             </div>
             <span className="text-[10px] uppercase tracking-wider text-lc-clio font-semibold">
