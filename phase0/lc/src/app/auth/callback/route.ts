@@ -150,13 +150,5 @@ export async function GET(request: Request) {
   const fallbackPath = withBasePath("/cluster");
   const finalPath = next ? withBasePath(next) : fallbackPath;
 
-  // We explicitly create the redirect response and copy cookies
-  const response = NextResponse.redirect(`${origin}${finalPath}`);
-  
-  const cookieStore = await cookies();
-  cookieStore.getAll().forEach((c) => {
-    response.cookies.set(c.name, c.value, c);
-  });
-
-  return response;
+  return NextResponse.redirect(`${origin}${finalPath}`);
 }
