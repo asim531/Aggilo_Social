@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { CLUSTER_ID } from "@/lib/cluster";
-import { withBasePath } from "@/lib/path";
+import { withBasePath, resolvePublicUrl } from "@/lib/path";
 
 /**
  * GET /auth/callback
@@ -20,7 +20,7 @@ import { withBasePath } from "@/lib/path";
  * path, we own profile creation here.
  */
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
 
   // basePath note: in production the public origin is https://aggilo.in
@@ -28,14 +28,13 @@ export async function GET(request: Request) {
   // `/c/long-conversation/...`. All redirects from this handler need
   // to go through withBasePath() so the URL bar lands on the
   // publicly-routable URL, not the un-prefixed internal one.
-  const homePath = withBasePath("/");
-  const clusterPath = withBasePath("/cluster");
 
   if (!code) {
     const errorDesc = searchParams.get("error_description");
-    return NextResponse.redirect(
-      `${origin}${homePath}?error=${encodeURIComponent(errorDesc ?? "No code provided")}`
-    );
+    // Ensure we preserve the error parameter when bouncing back
+    const errorUrl = new URL(resolvePublicUrl(request, "/"));
+    errorUrl.searchParams.set("error", errorDesc ?? "No code provided");
+    return NextResponse.redirect(errorUrl.toString());
   }
 
   const supabase = await createClient();
@@ -45,9 +44,9 @@ export async function GET(request: Request) {
     const friendly = exchangeError.message.includes("code challenge")
       ? "Please request a new sign-in link and open it in the same browser where you requested it."
       : exchangeError.message;
-    return NextResponse.redirect(
-      `${origin}${homePath}?error=${encodeURIComponent(friendly)}`
-    );
+    const errorUrl = new URL(resolvePublicUrl(request, "/"));
+    errorUrl.searchParams.set("error", friendly);
+    return NextResponse.redirect(errorUrl.toString());
   }
 
   const {
@@ -55,9 +54,9 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.redirect(
-      `${origin}${homePath}?error=${encodeURIComponent("Session not established")}`
-    );
+    const errorUrl = new URL(resolvePublicUrl(request, "/"));
+    errorUrl.searchParams.set("error", "Session not established");
+    return NextResponse.redirect(errorUrl.toString());
   }
 
   // ── Profile upsert for Long Conversation ────────────────────────
@@ -147,8 +146,7 @@ export async function GET(request: Request) {
   }
   
   const next = searchParams.get("next");
-  const fallbackPath = withBasePath("/cluster");
-  const finalPath = next ? withBasePath(next) : fallbackPath;
+  const finalPath = next ? next : "/cluster";
 
-  return NextResponse.redirect(`${origin}${finalPath}`);
+  return NextResponse.redirect(resolvePublicUrl(request, finalPath));
 }

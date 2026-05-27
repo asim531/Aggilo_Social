@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { withBasePath } from "@/lib/path";
+import { resolvePublicUrl } from "@/lib/path";
 
 /**
  * Auth middleware — Long Conversation.
@@ -54,8 +54,7 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   if (!user && (path.startsWith("/cluster") || path.startsWith("/admin"))) {
-    const redirectUrl = new URL(withBasePath("/"), request.url);
-    redirectUrl.search = request.nextUrl.search;
+    const redirectUrl = resolvePublicUrl(request, "/");
     const response = NextResponse.redirect(redirectUrl);
     // Forward the cookies that were set during token refresh
     supabaseResponse.cookies.getAll().forEach((c) => {
@@ -71,8 +70,7 @@ export async function middleware(request: NextRequest) {
       return supabaseResponse;
     }
 
-    const redirectUrl = new URL(withBasePath("/cluster"), request.url);
-    redirectUrl.search = request.nextUrl.search;
+    const redirectUrl = resolvePublicUrl(request, "/cluster");
     const response = NextResponse.redirect(redirectUrl);
     // Forward the cookies that were set during token refresh
     supabaseResponse.cookies.getAll().forEach((c) => {

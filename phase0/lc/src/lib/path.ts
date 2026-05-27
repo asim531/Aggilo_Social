@@ -47,3 +47,27 @@ export function withBasePath(path: string): string {
 export function absoluteUrl(path: string, origin: string): string {
   return `${origin.replace(/\/+$/, "")}${withBasePath(path)}`;
 }
+
+/**
+ * Build an absolute URL from a Request object that respects the proxy host.
+ * Vercel rewrites requests from mvp.aggilo.in -> vercel.app. Inside Next.js,
+ * request.url uses the vercel.app domain, which causes redirects to jump domains.
+ * This helper respects x-forwarded-host so redirects stay on the public domain.
+ */
+export function resolvePublicUrl(request: Request, targetPath: string): string {
+  const url = new URL(request.url);
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  
+  if (forwardedHost) {
+    url.host = forwardedHost;
+    url.port = "";
+  }
+  if (forwardedProto) {
+    url.protocol = `${forwardedProto}:`;
+  }
+  
+  url.pathname = withBasePath(targetPath);
+  // Keep the original search parameters intact for redirects
+  return url.toString();
+}
