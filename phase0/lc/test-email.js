@@ -25,7 +25,7 @@ async function test() {
     const result = await resend.emails.send({
       from: 'Clio <clio@aggilo.in>',
       to: email,
-      reply_to: 'clio@aggilo.in',
+      replyTo: 'clio@aggilo.in',
       subject: 'Your room is ready.',
       html,
     });
