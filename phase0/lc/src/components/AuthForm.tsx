@@ -219,8 +219,10 @@ function AuthFormContent() {
         return;
       }
 
-      if (data.actionLink) {
-        window.location.href = data.actionLink;
+      if (data.session) {
+        const supabase = createClient();
+        await supabase.auth.setSession(data.session);
+        window.location.href = withBasePath("/cluster");
       }
     } catch (err) {
       setState("error");

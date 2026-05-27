@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-    // We redirect to our callback so it can set up the session and create the profile
+    // We redirect to a dummy callback since we will intercept the redirect
     const redirectTo = `${appUrl}${withBasePath("/auth/callback")}`;
 
     const { data, error } = await supabase.auth.admin.generateLink({
@@ -46,7 +46,36 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ actionLink: data.properties.action_link });
+    // Fetch the action link to consume it and get the session tokens
+    const res = await fetch(data.properties.action_link, { redirect: 'manual' });
+    const location = res.headers.get("location");
+
+    if (!location || !location.includes("#access_token=")) {
+      return NextResponse.json(
+        { error: "Failed to retrieve session tokens" },
+        { status: 500 }
+      );
+    }
+
+    // Parse the fragment parameters
+    const fragment = location.split("#")[1];
+    const params = new URLSearchParams(fragment);
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+
+    if (!access_token || !refresh_token) {
+      return NextResponse.json(
+        { error: "Missing tokens in response" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ 
+      session: {
+        access_token,
+        refresh_token
+      }
+    });
   } catch (error) {
     console.error("Founder login error:", error);
     return NextResponse.json(

@@ -25,26 +25,6 @@ export async function POST(req: Request) {
     recipients.map(async ({ email, name }: { email: string; name: string }) => {
       let html = baseHtml.replace('Hey Tas,', `Hey ${name},`);
       
-      const nextUrl = `/?founder=tas&email=${encodeURIComponent(email)}`;
-      const { data: linkData, error } = await admin.auth.admin.generateLink({
-        type: 'magiclink',
-        email,
-        options: {
-          redirectTo: `https://mvp.aggilo.in/c/long-conversation/auth/callback?next=${encodeURIComponent(nextUrl)}`
-        }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (linkData?.properties?.action_link) {
-        html = html.replace(
-          'href="https://mvp.aggilo.in/c/long-conversation/cluster"',
-          `href="${linkData.properties.action_link}"`
-        );
-      }
-
       return resend.emails.send({
         from: 'Clio <clio@aggilo.in>',
         to: email,
