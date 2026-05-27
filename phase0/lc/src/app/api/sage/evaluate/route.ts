@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     // framework still runs — Sage may witness, ask a depth question,
     // reframe, or limit scope — but [SAGE_SILENT] is no longer a
     // valid output.
-    const isMentioned = /\b@sage\b/i.test(post.content);
+    const isMentioned = /@sage\b/i.test(post.content);
 
     // ── Context assembly ─────────────────────────────────────────
     // Recent posts (up to 10) for room context. Two-step fetch to

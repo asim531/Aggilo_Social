@@ -97,7 +97,7 @@ function buildRuntimeSignalsBlock(signals: SageEvaluationSignals): string {
       return `- ${truncated}`;
     });
     parts.push(
-      `## Your own recent posts (do not repeat)\n${lines.join("\n")}`
+      `## Your own recent posts — NEVER repeat or echo these\n${lines.join("\n")}\n\nCRITICAL: If the response you are about to generate is substantively similar to ANY of the posts above — same idea, same framing, same question structure, same metaphor, or same sentiment — you MUST output [SAGE_SILENT] instead. Vary your intervention type, your angle, and your phrasing every time. The room notices monotony. Your personality should feel present but unpredictable — each post should feel like it came from a specific observation about THIS moment, not a template.`
     );
   }
 
