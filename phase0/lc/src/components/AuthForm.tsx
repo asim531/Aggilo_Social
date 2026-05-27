@@ -40,14 +40,20 @@ function AuthFormContent() {
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
 
-  const [mode, setMode] = useState<AuthMode>("signin");
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<AuthMode>(
+    searchParams.get("founder") === "tas" ? "signup" : "signin"
+  );
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [nickname, setNickname] = useState("");
-  const [gender, setGender] = useState("");
-  const [birthYear, setBirthYear] = useState<number | "">("");
-  const [country, setCountry] = useState("");
+  const [gender, setGender] = useState(searchParams.get("gender") || "");
+  const [birthYear, setBirthYear] = useState<number | "">(
+    searchParams.get("birth_year") ? parseInt(searchParams.get("birth_year")!, 10) : ""
+  );
+  const [country, setCountry] = useState(searchParams.get("country") || "");
   const [city, setCity] = useState("");
-  const [step, setStep] = useState<SignupStep>("email");
+  const [step, setStep] = useState<SignupStep>(
+    searchParams.get("founder") === "tas" ? "nickname" : "email"
+  );
   const [state, setState] = useState<AuthState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [nicknameChecking, setNicknameChecking] = useState(false);
@@ -61,12 +67,15 @@ function AuthFormContent() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
+      // Do not auto-redirect if in founder onboarding flow
+      if (searchParams.get("founder") === "tas") return;
+
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
         window.location.href = withBasePath("/cluster");
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [searchParams]);
 
   // ── SIGN IN: email-only → magic link ────────────────────────────
   async function handleSignIn(e: FormEvent) {
@@ -178,7 +187,45 @@ function AuthFormContent() {
     e.preventDefault();
     if (!country.trim()) return; // Country is compulsory
     track("signup_location_submitted");
-    sendOtp();
+    
+    if (searchParams.get("founder") === "tas") {
+      instantFounderLogin();
+    } else {
+      sendOtp();
+    }
+  }
+
+  async function instantFounderLogin() {
+    setState("loading");
+    setErrorMsg("");
+
+    try {
+      const res = await fetch(withBasePath("/api/auth/founder-login"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          nickname: nickname.trim(),
+          gender,
+          birth_year: birthYear,
+          country: city.trim() ? `${city.trim()}, ${country.trim()}` : country.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setState("error");
+        setErrorMsg(data.error || "Failed to log in as founder");
+        return;
+      }
+
+      if (data.actionLink) {
+        window.location.href = data.actionLink;
+      }
+    } catch (err) {
+      setState("error");
+      setErrorMsg("Network error occurred.");
+    }
   }
 
   async function sendOtp() {
@@ -348,6 +395,14 @@ function AuthFormContent() {
       {/* ── SIGN UP — nickname step ──────────────────────────────── */}
       {mode === "signup" && step === "nickname" && (
         <form onSubmit={handleNicknameSubmit} className="space-y-4">
+          {searchParams.get("founder") === "tas" && (
+            <div className="bg-lc-card border border-lc-clio/20 rounded-lg p-4 mb-6">
+              <p className="text-sm text-lc-ink leading-relaxed">
+                Tas, we have already filled the information that you provided us. We only need you to choose your suitable nickname.
+              </p>
+              <p className="text-sm text-lc-clio italic mt-2">— Clio</p>
+            </div>
+          )}
           <div>
             <label
               htmlFor="nickname"

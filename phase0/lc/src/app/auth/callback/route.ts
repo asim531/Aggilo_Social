@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { CLUSTER_ID } from "@/lib/cluster";
@@ -144,6 +145,18 @@ export async function GET(request: Request) {
       err instanceof Error ? err.message : String(err)
     );
   }
+  
+  const next = searchParams.get("next");
+  const fallbackPath = withBasePath("/cluster");
+  const finalPath = next ? withBasePath(next) : fallbackPath;
 
-  return NextResponse.redirect(`${origin}${clusterPath}`);
+  // We explicitly create the redirect response and copy cookies
+  const response = NextResponse.redirect(`${origin}${finalPath}`);
+  
+  const cookieStore = await cookies();
+  cookieStore.getAll().forEach((c) => {
+    response.cookies.set(c.name, c.value, c);
+  });
+
+  return response;
 }

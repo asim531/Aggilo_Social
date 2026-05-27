@@ -54,11 +54,31 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   if (!user && (path.startsWith("/cluster") || path.startsWith("/admin"))) {
-    return NextResponse.redirect(new URL(withBasePath("/"), request.url));
+    const redirectUrl = new URL(withBasePath("/"), request.url);
+    redirectUrl.search = request.nextUrl.search;
+    const response = NextResponse.redirect(redirectUrl);
+    // Forward the cookies that were set during token refresh
+    supabaseResponse.cookies.getAll().forEach((c) => {
+      response.cookies.set(c.name, c.value, c);
+    });
+    return response;
   }
 
   if (user && path === "/") {
-    return NextResponse.redirect(new URL(withBasePath("/cluster"), request.url));
+    // If it's a special founder invite flow, allow them to stay on the AuthForm
+    // so they can complete their onboarding without needing a second email.
+    if (request.nextUrl.searchParams.get("founder") === "tas") {
+      return supabaseResponse;
+    }
+
+    const redirectUrl = new URL(withBasePath("/cluster"), request.url);
+    redirectUrl.search = request.nextUrl.search;
+    const response = NextResponse.redirect(redirectUrl);
+    // Forward the cookies that were set during token refresh
+    supabaseResponse.cookies.getAll().forEach((c) => {
+      response.cookies.set(c.name, c.value, c);
+    });
+    return response;
   }
 
   return supabaseResponse;
