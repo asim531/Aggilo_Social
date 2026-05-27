@@ -2,8 +2,11 @@ import { Resend } from 'resend';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
+// Prevent Next.js from evaluating this route at build time
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  const resend = new Resend(process.env.RESEND_API_KEY!);
   const { recipients } = await req.json();
 
   if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
