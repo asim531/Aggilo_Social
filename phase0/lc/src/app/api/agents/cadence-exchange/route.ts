@@ -179,7 +179,16 @@ What does NOT count as a concrete capability:
 - "more discussion"
 - "better engagement"
 - "let's see what happens"
-These are not capabilities. Reject them inside your own dialogue.`;
+These are not capabilities. Reject them inside your own dialogue.
+
+## ANTI-REPETITION (critical)
+
+You will be given your past exchanges and the list of features that already exist. Read them carefully.
+
+1. **Never repeat an exchange topic.** If a past exchange already discussed a concept (even with different phrasing), find a completely different angle. The room notices when agents have the same conversation twice.
+2. **Never propose a feature that already exists.** If the feature list contains something similar — even under a different name — do NOT propose it again. Find a genuinely new capability gap.
+3. **Vary the dynamic.** If the last exchange was agreement, this one should have some pushback. If the last one was observe_mode, this one should ship something. If the last one was Sage-driven, let Clio lead this time.
+4. **Build on history, don't restart.** Reference or follow up on past exchanges where it's natural — "Last cycle we shipped X, and it's doing Y" or "We shelved Z — worth revisiting now that the room has grown." This makes the agents feel alive and continuous.`;
 
 export async function POST() {
   try {
@@ -300,12 +309,49 @@ async function runCadenceExchange(
     (p) => p.is_sage
   ).length;
 
+  // Fetch past exchanges so the LLM has memory of previous Workshop conversations.
+  const { data: pastExchanges } = await supabase
+    .from("agent_chatbox_exchanges")
+    .select("exchange_number, triggering_observation, sage_message, clio_message, observe_mode, features_proposed")
+    .eq("cluster_id", CLUSTER_ID)
+    .order("created_at", { ascending: false })
+    .limit(8);
+
+  const pastExchangeSummary = (pastExchanges ?? [])
+    .reverse()
+    .map((e) => {
+      const feat = (e.features_proposed ?? []).length > 0
+        ? ` [Proposed: ${(e.features_proposed as string[]).join(", ")}]`
+        : e.observe_mode ? " [observe_mode]" : "";
+      return `#${e.exchange_number}: Sage: ${(e.sage_message ?? "").substring(0, 120)} | Clio: ${(e.clio_message ?? "").substring(0, 120)}${feat}`;
+    })
+    .join("\n");
+
+  // Fetch all existing features to prevent duplicates.
+  const { data: existingFeatures } = await supabase
+    .from("cluster_features")
+    .select("display_name, display_description, status")
+    .eq("cluster_id", CLUSTER_ID);
+
+  const featuresList = (existingFeatures ?? [])
+    .map((f) => `- ${(f as { display_name: string }).display_name}: ${(f as { display_description: string }).display_description ?? ""} [${(f as { status: string }).status}]`)
+    .join("\n");
+
   const userContext = [
     `Member count: ${memberCount || 0}`,
     `Total posts: ${postCount || 0}`,
     `Recent Sage posts: ${recentSagePosts}`,
+    ``,
     `Recent in the room (last 15 posts):`,
     recentSummary || "(empty room)",
+    ``,
+    pastExchangeSummary
+      ? `Your past Workshop exchanges (DO NOT repeat these topics or ideas):\n${pastExchangeSummary}`
+      : "(no past exchanges yet — this is your first)",
+    ``,
+    featuresList
+      ? `Features that already exist (DO NOT propose any of these again):\n${featuresList}`
+      : "(no features proposed yet)",
   ].join("\n");
 
   // First LLM call.
@@ -446,9 +492,21 @@ async function runCadenceExchange(
       .gte("created_at", fourteenDaysAgo);
 
     const proposedName = cap.name.trim().toLowerCase();
+    const proposedWords = new Set(proposedName.split(/\s+/).filter((w) => w.length > 3));
     const alreadyExists = (existing ?? []).some(
-      (f: { display_name: string }) =>
-        f.display_name.trim().toLowerCase() === proposedName
+      (f: { display_name: string }) => {
+        const existingName = f.display_name.trim().toLowerCase();
+        // Exact match
+        if (existingName === proposedName) return true;
+        // Substring match (either direction)
+        if (existingName.includes(proposedName) || proposedName.includes(existingName)) return true;
+        // Significant word overlap (>= 60% of words in common)
+        const existingWords = new Set(existingName.split(/\s+/).filter((w) => w.length > 3));
+        if (proposedWords.size === 0 || existingWords.size === 0) return false;
+        const overlap = [...proposedWords].filter((w) => existingWords.has(w)).length;
+        const similarity = overlap / Math.min(proposedWords.size, existingWords.size);
+        return similarity >= 0.6;
+      }
     );
 
     if (!alreadyExists) {
