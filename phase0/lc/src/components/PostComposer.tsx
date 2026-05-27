@@ -33,6 +33,7 @@ interface PostComposerProps {
   profile: Profile;
   onOptimisticPost: (post: PostWithAuthor) => void;
   onConfirmPost: (tempId: string, confirmed: PostWithAuthor) => void;
+  onSageInvoked?: (threadRootId: string) => void;
 }
 
 const PLACEHOLDERS = [
@@ -64,6 +65,7 @@ export default function PostComposer({
   profile,
   onOptimisticPost,
   onConfirmPost,
+  onSageInvoked,
 }: PostComposerProps) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -148,6 +150,10 @@ export default function PostComposer({
       // ── Fire-and-forget Sage evaluation ─────────────────────────
       // Don't await — Sage runs async, her response (if any) lands via
       // Realtime as a separate post.
+      const mentionsSage = /@sage\b/i.test(trimmed);
+      if (mentionsSage && onSageInvoked) {
+        onSageInvoked(inserted.id);
+      }
       void fetch(withBasePath("/api/sage/evaluate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -158,7 +164,7 @@ export default function PostComposer({
 
       setSubmitting(false);
     },
-    [content, submitting, userId, profile, onOptimisticPost, onConfirmPost]
+    [content, submitting, userId, profile, onOptimisticPost, onConfirmPost, onSageInvoked]
   );
 
   const handleTipMe = useCallback(async () => {

@@ -12,7 +12,7 @@
  * speaks first.
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRealtimePosts } from "@/hooks/useRealtimePosts";
 import PostCard from "./PostCard";
 import PostComposer from "./PostComposer";
@@ -30,9 +30,46 @@ export default function ClusterFeed({
   userId,
   profile,
 }: ClusterFeedProps) {
-  const { posts, addOptimisticPost, replaceOptimisticPost } = useRealtimePosts({
-    initialPosts,
-  });
+  const { posts, addOptimisticPost, replaceOptimisticPost, pollForSageReply } =
+    useRealtimePosts({ initialPosts });
+
+  // Track which top-level post IDs are awaiting a Sage response.
+  const [sageThinkingPosts, setSageThinkingPosts] = useState<Set<string>>(
+    new Set()
+  );
+
+  const handleSageInvoked = useCallback(
+    (threadRootId: string) => {
+      setSageThinkingPosts((prev) => new Set(prev).add(threadRootId));
+      // Start polling fallback — clear indicator when done regardless.
+      void pollForSageReply(threadRootId).finally(() => {
+        setSageThinkingPosts((prev) => {
+          const next = new Set(prev);
+          next.delete(threadRootId);
+          return next;
+        });
+      });
+    },
+    [pollForSageReply]
+  );
+
+  // Auto-clear thinking indicator when a Sage reply arrives via
+  // Realtime (before the polling fallback catches it).
+  useEffect(() => {
+    if (sageThinkingPosts.size === 0) return;
+    const sageReplies = posts.filter(
+      (p) => p.is_sage && p.parent_id && sageThinkingPosts.has(p.parent_id)
+    );
+    if (sageReplies.length > 0) {
+      setSageThinkingPosts((prev) => {
+        const next = new Set(prev);
+        for (const r of sageReplies) {
+          if (r.parent_id) next.delete(r.parent_id);
+        }
+        return next;
+      });
+    }
+  }, [posts, sageThinkingPosts]);
 
   // Group posts into top-level threads with their replies. A reply's
   // parent is found by matching parent_id; orphan replies (parent
@@ -106,6 +143,8 @@ export default function ClusterFeed({
               currentProfile={profile}
               onOptimisticReply={addOptimisticPost}
               onConfirmReply={replaceOptimisticPost}
+              sageThinking={sageThinkingPosts.has(post.id)}
+              onSageInvoked={handleSageInvoked}
             />
           ))
         )}
@@ -116,6 +155,7 @@ export default function ClusterFeed({
         profile={profile}
         onOptimisticPost={addOptimisticPost}
         onConfirmPost={replaceOptimisticPost}
+        onSageInvoked={handleSageInvoked}
       />
     </>
   );

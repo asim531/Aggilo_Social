@@ -135,9 +135,44 @@ export function useRealtimePosts({ initialPosts }: UseRealtimePostsArgs) {
     };
   }, [insertPost, updatePost, removePost]);
 
+  // Polling fallback for Sage replies. Realtime may silently fail for
+  // admin-inserted rows (service role bypasses RLS; Realtime RLS may
+  // filter them out). Poll every 3s for up to 30s after @Sage is invoked.
+  const pollForSageReply = useCallback(
+    async (parentId: string): Promise<boolean> => {
+      const supabase = createClient();
+      const start = Date.now();
+      const POLL_INTERVAL = 3000;
+      const POLL_TIMEOUT = 30000;
+
+      while (Date.now() - start < POLL_TIMEOUT) {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+        const { data } = await supabase
+          .from("posts")
+          .select("*")
+          .eq("cluster_id", CLUSTER_ID)
+          .eq("parent_id", parentId)
+          .eq("is_sage", true)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (data && data.length > 0) {
+          const sagePost = data[0] as PostWithAuthor;
+          // Only insert if we don't already have it (Realtime may have
+          // delivered it first).
+          insertPost(sagePost);
+          return true;
+        }
+      }
+      return false;
+    },
+    [insertPost]
+  );
+
   return {
     posts,
     addOptimisticPost,
     replaceOptimisticPost,
+    pollForSageReply,
   };
 }

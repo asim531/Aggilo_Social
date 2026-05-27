@@ -40,6 +40,10 @@ interface PostCardProps {
   /** Callback for the realtime hook to inject an optimistic reply. */
   onOptimisticReply?: (post: PostWithAuthor) => void;
   onConfirmReply?: (tempId: string, confirmed: PostWithAuthor) => void;
+  /** True when Sage is processing a response for this thread. */
+  sageThinking?: boolean;
+  /** Signal that @Sage was invoked for a given thread root id. */
+  onSageInvoked?: (threadRootId: string) => void;
 }
 
 function formatTimestamp(iso: string): string {
@@ -64,6 +68,8 @@ export default function PostCard({
   currentProfile,
   onOptimisticReply,
   onConfirmReply,
+  sageThinking,
+  onSageInvoked,
 }: PostCardProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState("");
@@ -141,6 +147,11 @@ export default function PostCard({
     track("reply_compose_confirmed");
 
     // Fire-and-forget Sage evaluation on the reply too.
+    const replyMentionsSage = /@sage\b/i.test(trimmed);
+    if (replyMentionsSage && onSageInvoked) {
+      // Reply's Sage response threads under the top-level post.
+      onSageInvoked(post.id);
+    }
     void fetch(withBasePath("/api/sage/evaluate"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -224,6 +235,21 @@ export default function PostCard({
           {replies.map((reply) => (
             <ReplyCard key={reply.id} post={reply} />
           ))}
+        </div>
+      )}
+
+      {/* Sage thinking indicator */}
+      {sageThinking && (
+        <div className="border-t border-stone-200 px-4 py-3 pl-8 bg-lc-sageSoft/20 flex items-center gap-2">
+          <div className="relative w-4 h-4 rounded-full overflow-hidden bg-lc-sageSoft shrink-0">
+            <img src={withBasePath("/characters/sage.png")} alt="Sage" className="object-contain w-full h-full" />
+          </div>
+          <span className="text-xs text-lc-sage font-medium">Sage is thinking</span>
+          <span className="flex gap-0.5 items-center" aria-label="Loading">
+            <span className="w-1 h-1 rounded-full bg-lc-sage/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-1 h-1 rounded-full bg-lc-sage/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-1 h-1 rounded-full bg-lc-sage/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </span>
         </div>
       )}
     </article>
