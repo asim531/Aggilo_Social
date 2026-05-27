@@ -70,6 +70,57 @@ export async function POST(request: Request) {
       );
     }
 
+    // Upsert the profile for Long Conversation since this flow bypasses auth/callback
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(data.user.id);
+      if (user) {
+        const { createAdminClient } = await import("@/lib/supabase-admin");
+        const { CLUSTER_ID } = await import("@/lib/cluster");
+        const admin = createAdminClient();
+        
+        const insertPayload: Record<string, unknown> = {
+          id: user.id,
+          cluster_id: CLUSTER_ID,
+          nickname: nickname ?? user.email?.split("@")[0] ?? "Member",
+          role: "member",
+        };
+        if (gender) insertPayload.gender = gender;
+        if (birth_year) insertPayload.birth_year = birth_year;
+        if (country) insertPayload.country = country;
+
+        await admin
+          .from("profiles")
+          .upsert(insertPayload, { onConflict: "id,cluster_id" });
+
+        const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+          .split(",")
+          .map((e) => e.trim().toLowerCase())
+          .filter(Boolean);
+        if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+          await admin
+            .from("profiles")
+            .update({ role: "admin" })
+            .eq("id", user.id)
+            .eq("cluster_id", CLUSTER_ID);
+        }
+
+        const foundingEmails = (process.env.FOUNDING_MEMBER_EMAILS ?? "")
+          .split(",")
+          .map((e) => e.trim().toLowerCase())
+          .filter(Boolean);
+        if (user.email && foundingEmails.includes(user.email.toLowerCase())) {
+          await admin
+            .from("profiles")
+            .update({ is_founding_member: true })
+            .eq("id", user.id)
+            .eq("cluster_id", CLUSTER_ID)
+            .eq("is_founding_member", false);
+        }
+      }
+    } catch (err) {
+      console.warn("[founder-login] profile upsert failed:", err);
+    }
+
     return NextResponse.json({ 
       session: {
         access_token,
