@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       messages,
       operationKey: "clio_chat",
       temperature: 0.7,
-      maxTokens: 300,
+      maxTokens: 180,
     });
 
     const reply = result.content.trim();

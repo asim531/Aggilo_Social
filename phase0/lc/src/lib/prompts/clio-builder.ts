@@ -82,6 +82,22 @@ export function buildClioClusterMessages(
     });
   }
 
+  // Anti-repetition: extract Clio's own past messages and inject a
+  // dedup reminder so the LLM is explicitly aware of what it already said.
+  const pastClioMessages = signals.history
+    .filter((t) => t.role === "assistant")
+    .map((t) => t.content);
+  if (pastClioMessages.length > 0) {
+    const lines = pastClioMessages.slice(-6).map((c, i) => {
+      const truncated = c.length > 180 ? c.slice(0, 180) + "…" : c;
+      return `${i + 1}. "${truncated}"`;
+    });
+    messages.push({
+      role: "system",
+      content: `## Your own messages in this conversation — NEVER repeat or echo these\n${lines.join("\n")}\n\nIf your next response would use the same idea, angle, question structure, or sentiment as any message above, find a completely different approach. The member notices monotony.`,
+    });
+  }
+
   // Conversation history.
   for (const turn of signals.history) {
     messages.push({ role: turn.role, content: turn.content });
