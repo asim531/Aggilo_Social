@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       options: {
         shouldCreateUser: false,
         emailRedirectTo: `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001"
+          process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === "production" ? "https://mvp.aggilo.in" : "http://localhost:3001")
         }${withBasePath("/auth/callback")}`,
       },
     });
