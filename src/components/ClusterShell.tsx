@@ -11,6 +11,7 @@ import ClusterFeed from "./ClusterFeed";
 import ClioWelcome from "./ClioWelcome";
 import ClioFab from "./ClioFab";
 import ClioShowAround from "./ClioShowAround";
+import ClioTipLayer from "./ClioTipLayer";
 
 interface ClusterShellProps {
   displayName: string;
@@ -248,6 +249,8 @@ export default function ClusterShell({
           <ClusterHeader />
           <ClusterFeed initialPosts={initialPosts} userId={userId} />
         </main>
+
+        <ClioTipLayer userId={userId} />
 
         <div className="cluster-clio-anchor">
           <ClioFab userId={userId} inCluster={true} />

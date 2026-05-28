@@ -196,3 +196,35 @@ export interface ClioHandoffGreeting {
   greeting_dismissed_at: string | null;
   created_at: string;
 }
+
+// ── Clio tip mechanic ────────────────────────────────────────────────────────
+//
+// Trigger types for the private tip mechanic. Each trigger maps to a
+// specific post-reading pattern where Clio may deliver a private FAB
+// nudge to the member. See `clusters/sisters_in_dua/clio.ts` §tip mechanic.
+
+export type ClioTipTrigger =
+  | "faith_intellectual"       // talks about faith theologically but emotionally closed
+  | "hedged_vulnerability"     // says something honest then walks it back
+  | "question_reveals_need"    // question reveals what she's actually carrying
+  | "no_post_48h";             // in cluster 48h without posting
+
+export type ClioTipSuppressionReason =
+  | "dependency_prevention"
+  | "cluster_repetition_limit"
+  | "welfare_flagged"
+  | "frequency_limit_24h"
+  | "pattern_repetition_14d";
+
+export interface ClioTipLogRow {
+  id: string;
+  cluster_id: string;
+  user_id: string;
+  trigger_type: ClioTipTrigger;
+  source_post_id: string | null;
+  tip_content: string;
+  tip_delivered_at: string;
+  member_acted: boolean | null;
+  suppression_reason: ClioTipSuppressionReason | null;
+  created_at: string;
+}
