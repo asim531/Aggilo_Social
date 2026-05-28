@@ -28,3 +28,6 @@ Thumbs.db
 
 # typescript build cache (regenerated on each build)
 tsconfig.tsbuildinfo
+
+# vercel build artifacts (never commit)
+.vercel/
