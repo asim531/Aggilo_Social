@@ -181,6 +181,7 @@ export function useRealtimePosts({ initialPosts }: UseRealtimePostsArgs) {
     posts,
     addOptimisticPost,
     replaceOptimisticPost,
+    updatePost,
     pollForSageReply,
   };
 }

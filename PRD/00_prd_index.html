@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Product Requirements Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 30%, #16213e 60%, #0f3460 100%);
+            padding: 80px 60px 60px;
+            text-align: center;
+            border-bottom: 3px solid #e94560;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(233, 69, 96, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(78, 205, 196, 0.08) 0%, transparent 50%);
+        }
+
+        .hero>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero .logo {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            color: #fff;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 span {
+            color: #e94560;
+        }
+
+        .hero .tagline {
+            font-size: 1.3rem;
+            color: #a0a0b8;
+            margin-bottom: 24px;
+        }
+
+        .hero .meta {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero .meta-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #2a2a3e;
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+        }
+
+        .hero .meta-item strong {
+            color: #e94560;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .workflow-card {
+            background: #12121e;
+            border: 2px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .workflow-card:hover {
+            border-color: #e94560;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(233, 69, 96, 0.15);
+        }
+
+        .workflow-card .num {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 3rem;
+            font-weight: 800;
+            color: rgba(233, 69, 96, 0.15);
+            line-height: 1;
+        }
+
+        .workflow-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .workflow-card h3 {
+            color: #fff;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .workflow-card p {
+            color: #a0a0b8;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .workflow-card .diagrams {
+            margin-top: 12px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .workflow-card .diagram-tag {
+            background: rgba(123, 140, 222, 0.15);
+            color: #7b8cde;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.72rem;
+        }
+
+        .workflow-card:nth-child(1) {
+            border-color: #e94560;
+        }
+
+        .workflow-card:nth-child(2) {
+            border-color: #7b8cde;
+        }
+
+        .workflow-card:nth-child(3) {
+            border-color: #4ecdc4;
+        }
+
+        .workflow-card:nth-child(4) {
+            border-color: #f9ca24;
+        }
+
+        .workflow-card:nth-child(5) {
+            border-color: #f9ca24;
+        }
+
+        .workflow-card:nth-child(6) {
+            border-color: #4ecdc4;
+        }
+
+        .workflow-card:nth-child(7) {
+            border-color: #e94560;
+        }
+
+        .workflow-card:nth-child(8) {
+            border-color: #7b8cde;
+        }
+
+        .workflow-card:nth-child(9) {
+            border-color: #f9ca24;
+        }
+
+        .workflow-card:nth-child(10) {
+            border-color: #4ecdc4;
+        }
+
+        .workflow-card:nth-child(11) {
+            border-color: #7b8cde;
+        }
+
+        .workflow-card:nth-child(12) {
+            border-color: #e94560;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .stat {
+            background: #12121e;
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e94560;
+        }
+
+        .stat .label {
+            font-size: 0.85rem;
+            color: #a0a0b8;
+            margin-top: 4px;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 6px 0;
+            color: #c0c0d0;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hero">
+        <div class="logo">🔴</div>
+        <h1>Aggilo <span>PRD</span></h1>
+        <p class="tagline">Product Requirements Document — AI-Native Social Network</p>
+        <div class="meta">
+            <span class="meta-item">📅 Version: <strong>1.0</strong></span>
+            <span class="meta-item">🎯 Launch: <strong>Hyderabad Colleges</strong></span>
+            <span class="meta-item">📱 Platform: <strong>Mobile-First (PWA)</strong></span>
+            <span class="meta-item">🏗️ Stack: <strong>Laravel + Supabase + Yantra VPS + Kimi/Claude</strong></span>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- EXECUTIVE SUMMARY -->
+        <div class="section">
+            <h2>Executive Summary</h2>
+            <p><strong>Aggilo</strong> is an AI-native social network that creates purpose-based communities
+                ("clusters") segmented by the <strong>AGGIL</strong> engine — <strong>A</strong>ge,
+                <strong>G</strong>ender, <strong>G</strong>eography, <strong>I</strong>nterest,
+                <strong>L</strong>anguage. Users discover clusters through AI suggestions, create clusters through
+                conversation with an AI agent (Clio), and find relevant people through an AI matchmaker (Premium).
+            </p>
+
+            <div class="callout">
+                <strong>Positioning & Messaging Strictures:</strong>
+                <ul>
+                    <li>Marketing must <strong>never</strong> lead with "AI" as the primary value proposition.</li>
+                    <li><strong>Terminology:</strong> The internal architectural term is "Cluster," but user-facing
+                        marketing and Clio's dialogue will lean towards using "Room" to describe these spaces, as it
+                        denotes a warmer, more human environment.</li>
+                    <li><strong>Valid Taglines:</strong> "Find the room you belong in. We handle the introductions." or
+                        "Stop shouting into the void. Let Clio find who is listening."</li>
+                </ul>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="value">12</div>
+                    <div class="label">Workflow Documents</div>
+                </div>
+                <div class="stat">
+                    <div class="value">30+</div>
+                    <div class="label">Mermaid Diagrams</div>
+                </div>
+                <div class="stat">
+                    <div class="value">60+</div>
+                    <div class="label">API Endpoints</div>
+                </div>
+                <div class="stat">
+                    <div class="value">72-80%</div>
+                    <div class="label">Success Probability</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SYSTEM ARCHITECTURE -->
+        <div class="section">
+            <h2>System Architecture Overview</h2>
+            <div class="mermaid">
+                flowchart TD
+                subgraph Client["Client Layer"]
+                A["📱 Progressive Web App<br />(Mobile-First)"]
+                B["🌐 Mobile Web<br />(aggilo.in)"]
+                end
+
+                subgraph API["API Layer — Hostinger KVM VPS (~₹830/mo)"]
+                C["Laravel REST API"]
+                D["Supabase Realtime<br />(WebSockets)"]
+                E["Supabase<br />(PostgreSQL)"]
+                F["Web Push API"]
+                end
+
+                subgraph AI["AI Layer — Yantra Runtime (Docker)<br />5-Agent Orchestration"]
+                G["🔍 Scout Agent<br />(Growth Intelligence)"]
+                H["💬 Clio Agent<br />(Orchestrator + User-facing)"]
+                I["📚 Sage Agent<br />(Cluster Host)"]
+                J["🗺️ Atlas Agent<br />(Content Intelligence)"]
+                OB["🟠 Observer<br />(Platform Intelligence)"]
+                end
+
+                subgraph External["External Services"]
+                K["Kimi K2.5<br />(via NVIDIA NIM)<br />→ General chat, Pulse"]
+                K2["Claude Opus 4.6<br />(via Bedrock/NIM)<br />→ Scoring, Moderation, Personas"]
+                K3["Groq (Llama 3)<br />→ Overflow / high-volume"]
+                L["Razorpay<br />(UPI Payments)"]
+                M["Google Play Billing"]
+                N["SMS Gateway<br />(OTP)"]
+                end
+
+                A --> C
+                A --> D
+                B --> C
+                C --> E
+                C --> F
+                F --> A
+
+                C --> G
+                C --> H
+                C --> I
+                C --> J
+
+                G --> K
+                H --> K
+                H --> K2
+                I --> K2
+                J --> K3
+
+                C --> L
+                C --> M
+                C --> N
+            </div>
+        </div>
+
+        <!-- WORKFLOW NAVIGATION -->
+        <div class="section">
+            <h2>📋 Workflow Documents</h2>
+            <p>Click each card to view the detailed workflow with Mermaid diagrams, data tables, edge cases, and API
+                endpoints.</p>
+
+            <div class="workflow-grid">
+                <a href="01_registration_onboarding.html" class="workflow-card">
+                    <span class="num">01</span>
+                    <div class="icon">📱</div>
+                    <h3>Registration & Onboarding</h3>
+                    <p>Phone OTP signup → Year of Birth + Gender → Language → Nickname + Purpose/Tags → Dashboard with AGGIL
+                        suggestions</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">Registration flow</span>
+                        <span class="diagram-tag">Returning user login</span>
+                        <span class="diagram-tag">Data model</span>
+                        <span class="diagram-tag">Edge cases</span>
+                    </div>
+                </a>
+
+                <a href="02_cluster_creation.html" class="workflow-card">
+                    <span class="num">02</span>
+                    <div class="icon">🔮</div>
+                    <h3>Cluster Creation</h3>
+                    <p>Three paths: Manual 4-step wizard, Clio conversational AI, or Scout auto-creation. All include
+                        duplicate detection.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">3-path branching</span>
+                        <span class="diagram-tag">Manual wizard</span>
+                        <span class="diagram-tag">Clio conversation</span>
+                        <span class="diagram-tag">Scout auto-create</span>
+                        <span class="diagram-tag">Location deep-dive</span>
+                    </div>
+                </a>
+
+                <a href="03_cluster_discovery.html" class="workflow-card">
+                    <span class="num">03</span>
+                    <div class="icon">🔍</div>
+                    <h3>Discovery & Joining</h3>
+                    <p>5 discovery channels, qualification engine (privacy gating), search, shared links,
+                        join/leave/rejoin lifecycle.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">5 discovery paths</span>
+                        <span class="diagram-tag">Qualification engine</span>
+                        <span class="diagram-tag">Shared link flow</span>
+                        <span class="diagram-tag">State machine</span>
+                    </div>
+                </a>
+
+                <a href="04_in_cluster_experience.html" class="workflow-card">
+                    <span class="num">04</span>
+                    <div class="icon">💬</div>
+                    <h3>In-Cluster Experience</h3>
+                    <p>Timeline (Instagram-style) + Members + Media + Direct Messaging + passive user value design.
+                    </p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">Cluster page tabs</span>
+                        <span class="diagram-tag">Feed creation</span>
+                        <span class="diagram-tag">Real-time chat</span>
+                        <span class="diagram-tag">DM flow</span>
+                        <span class="diagram-tag">Passive UX</span>
+                    </div>
+                </a>
+
+                <a href="05_premium_ai_matchmaker.html" class="workflow-card">
+                    <span class="num">05</span>
+                    <div class="icon">💎</div>
+                    <h3>Premium & AI Matchmaker</h3>
+                    <p>₹300/mo subscription, AI preference learning, questionnaire matching, private clusters,
+                        conversion funnel.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">Free vs Premium</span>
+                        <span class="diagram-tag">Subscription flow</span>
+                        <span class="diagram-tag">Matchmaker sequence</span>
+                        <span class="diagram-tag">Preference learning</span>
+                        <span class="diagram-tag">Conversion triggers</span>
+                    </div>
+                </a>
+
+                <a href="06_ai_agents.html" class="workflow-card">
+                    <span class="num">06</span>
+                    <div class="icon">🤖</div>
+                    <h3>AI Agent System</h3>
+                    <p>Five-agent Yantra orchestration: Clio (orchestrator), Sage (cluster host), Atlas (content intel), Scout (growth intel), Observer (platform intel). Tiered soul injection + LLM routing.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">Scout pipeline</span>
+                        <span class="diagram-tag">Scout data flow</span>
+                        <span class="diagram-tag">Clio decision tree</span>
+                        <span class="diagram-tag">Context injection</span>
+                        <span class="diagram-tag">Infrastructure</span>
+                    </div>
+                </a>
+
+                <a href="07_moderation_admin.html" class="workflow-card">
+                    <span class="num">07</span>
+                    <div class="icon">🛡️</div>
+                    <h3>Moderation, Admin & Notifications</h3>
+                    <p>AI moderation (3 severity levels), admin dashboard (8 panels), Firebase push system with
+                        frequency rules.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">Report flow</span>
+                        <span class="diagram-tag">Severity levels</span>
+                        <span class="diagram-tag">Admin dashboard</span>
+                        <span class="diagram-tag">Notification triggers</span>
+                        <span class="diagram-tag">User preferences</span>
+                    </div>
+                </a>
+
+                <a href="08_data_strategy.html" class="workflow-card">
+                    <span class="num">08</span>
+                    <div class="icon">📊</div>
+                    <h3>Non-PII Data Strategy</h3>
+                    <p>Behavioural intelligence strategy for calibrating Scout, Clio, and Matchmaker. Dual-layer data
+                        model (Segment vs Personal), Inaction signals, and Compounding Intelligence pipeline.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">AGGIL Behaviour Matrix</span>
+                        <span class="diagram-tag">Dual-layer data model</span>
+                        <span class="diagram-tag">Clio feedback loop</span>
+                        <span class="diagram-tag">Scout signal schema</span>
+                    </div>
+                </a>
+
+                <a href="09_admin_platform.html" class="workflow-card">
+                    <span class="num">09</span>
+                    <div class="icon">🖥️</div>
+                    <h3>Admin Platform</h3>
+                    <p>Unified admin intelligence dashboard: Persona Lab, Clio orchestrator monitoring, Scout controls,
+                        Matchmaker ops, persona lifecycle.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">Admin integration map</span>
+                        <span class="diagram-tag">Persona Lab UI</span>
+                        <span class="diagram-tag">Persona lifecycle</span>
+                        <span class="diagram-tag">Complete API surface</span>
+                    </div>
+                </a>
+
+                <a href="10_atlas_agent.html" class="workflow-card">
+                    <span class="num">10</span>
+                    <div class="icon">🗺️</div>
+                    <h3>Atlas Agent</h3>
+                    <p>Clio-orchestrated cluster content intelligence. Closes the post-join "now what?" gap with
+                        demographically-filtered content delivered directly into the cluster Timeline.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">Clio-Atlas orchestration</span>
+                        <span class="diagram-tag">Post-join UX</span>
+                        <span class="diagram-tag">Timeline delivery spec</span>
+                        <span class="diagram-tag">State machine</span>
+                    </div>
+                </a>
+
+                <a href="11_llm_admin_routing.html" class="workflow-card">
+                    <span class="num">11</span>
+                    <div class="icon">🧠</div>
+                    <h3>LLM Admin Routing</h3>
+                    <p>Multi-LLM routing architecture, response logging, user feedback (ratings & disagreement flags),
+                        admin quality review dashboard with A/B testing.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">LLM router flow</span>
+                        <span class="diagram-tag">Response logs schema</span>
+                        <span class="diagram-tag">User feedback UI</span>
+                        <span class="diagram-tag">Admin dashboard</span>
+                    </div>
+                </a>
+
+                <a href="12_premium_clusters.html" class="workflow-card">
+                    <span class="num">12</span>
+                    <div class="icon">🏠</div>
+                    <h3>Premium Clusters — Make Your Crowd</h3>
+                    <p>Cold-start supply strategy for Atomic Crowd Leaders. Credibility-gated creation brings
+                        pre-formed micro-communities (10–500 people) into Aggilo from Day 1.</p>
+                    <div class="diagrams">
+                        <span class="diagram-tag">Credibility evaluation</span>
+                        <span class="diagram-tag">Founder admin rights</span>
+                        <span class="diagram-tag">Hard location model</span>
+                        <span class="diagram-tag">Invite link onboarding</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- CORE DECISIONS -->
+        <div class="section">
+            <h2>Core Product Decisions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Decision</th>
+                        <th>Chosen</th>
+                        <th>Rationale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Signup method</td>
+                        <td>Phone OTP</td>
+                        <td>India-centric, fast, reduces fake accounts</td>
+                    </tr>
+                    <tr>
+                        <td>Identity</td>
+                        <td>Nickname only (no real names)</td>
+                        <td>Privacy-first, reduces harassment</td>
+                    </tr>
+                    <tr>
+                        <td>Cluster limits</td>
+                        <td>Unlimited for all users</td>
+                        <td>No friction for engagement</td>
+                    </tr>
+                    <tr>
+                        <td>Cluster deletion</td>
+                        <td>Not allowed</td>
+                        <td>Clusters persist and grow permanently</td>
+                    </tr>
+                    <tr>
+                        <td>Member removal</td>
+                        <td>Not allowed</td>
+                        <td>No gatekeeping by creators</td>
+                    </tr>
+                    <tr>
+                        <td>Purpose & Vibrant Tags</td>
+                        <td>Multiple per cluster</td>
+                        <td>Better discoverability</td>
+                    </tr>
+                    <tr>
+                        <td>In-cluster content</td>
+                        <td>4-Tab (Pulse, Timeline, Media, Members)</td>
+                        <td>Clean, persistent discussions + Clio-seeded content</td>
+                    </tr>
+                    <tr>
+                        <td>DMs</td>
+                        <td>Available</td>
+                        <td>Enables deeper connections</td>
+                    </tr>
+                    <tr>
+                        <td>Leave & Rejoin</td>
+                        <td>Both allowed, no cooldown</td>
+                        <td>Low friction</td>
+                    </tr>
+                    <tr>
+                        <td>Premium free users</td>
+                        <td>Can see questionnaires + join private clusters</td>
+                        <td>Natural conversion funnel</td>
+                    </tr>
+                    <tr>
+                        <td>Scout auto-create</td>
+                        <td>≥90% relevance only</td>
+                        <td>Quality over quantity</td>
+                    </tr>
+                    <tr>
+                        <td>Duplicate check</td>
+                        <td>Required before all cluster creation</td>
+                        <td>Prevents fragmentation</td>
+                    </tr>
+                    <tr>
+                        <td>Moderation</td>
+                        <td>AI flag + human review; auto-ban for high risk</td>
+                        <td>Fast response + safety net</td>
+                    </tr>
+                    <tr>
+                        <td>Notifications</td>
+                        <td>Web Push API</td>
+                        <td>Browser-native, no external dependency</td>
+                    </tr>
+                    <tr>
+                        <td>Payments</td>
+                        <td>Razorpay (UPI) + Google Play</td>
+                        <td>Both channels for maximum reach</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- TECH STACK SUMMARY -->
+        <div class="section">
+            <h2>Technology Stack</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Layer</th>
+                        <th>Technology</th>
+                        <th>Hosting</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Mobile App</td>
+                        <td>Progressive Web App (PWA)</td>
+                        <td>Mobile web (Phase 1)</td>
+                    </tr>
+                    <tr>
+                        <td>Backend API</td>
+                        <td>Laravel (PHP 8.2+)</td>
+                        <td>Hostinger KVM 4 VPS</td>
+                    </tr>
+                    <tr>
+                        <td>Database</td>
+                        <td>Supabase (PostgreSQL)</td>
+                        <td>Supabase Cloud</td>
+                    </tr>
+                    <tr>
+                        <td>Real-time</td>
+                        <td>Supabase Realtime (WebSockets)</td>
+                        <td>Supabase Cloud</td>
+                    </tr>
+                    <tr>
+                        <td>AI Agents</td>
+                        <td>Yantra Runtime (Docker)</td>
+                        <td>Hostinger Yantra VPS (₹999/mo)</td>
+                    </tr>
+                    <tr>
+                        <td>LLM (General)</td>
+                        <td>Kimi K2.5 (via NVIDIA NIM)</td>
+                        <td>External</td>
+                    </tr>
+                    <tr>
+                        <td>LLM (Critical)</td>
+                        <td>Claude Opus 4.6 (via Bedrock/NIM)</td>
+                        <td>External</td>
+                    </tr>
+                    <tr>
+                        <td>LLM (Overflow)</td>
+                        <td>Groq (Llama 3)</td>
+                        <td>External</td>
+                    </tr>
+                    <tr>
+                        <td>Push Notifications</td>
+                        <td>Web Push API</td>
+                        <td>Browser-native</td>
+                    </tr>
+                    <tr>
+                        <td>Payments</td>
+                        <td>Razorpay + Google Play Billing</td>
+                        <td>External</td>
+                    </tr>
+                    <tr>
+                        <td>OTP</td>
+                        <td>WhatsApp Business API / SMS</td>
+                        <td>External</td>
+                    </tr>
+                    <tr>
+                        <td>Domain</td>
+                        <td>aggilo.in</td>
+                        <td>Hostinger</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- WHAT'S NEXT -->
+        <div class="section">
+            <h2>🔜 What's Next</h2>
+            <div class="callout">
+                <strong>📱 Mobile UI Design & Features</strong> — The next milestone. This PRD defines WHAT the system
+                does. The mobile UI design phase will define HOW users interact with it — screens, navigation, UI
+                components, animations, and the visual design system.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ theme: 'dark', startOnLoad: true, themeVariables: { primaryColor: '#e94560', primaryTextColor: '#fff', primaryBorderColor: '#e94560', lineColor: '#7b8cde', secondaryColor: '#1a1a2e', tertiaryColor: '#2a2a3e', fontFamily: 'Segoe UI, system-ui, sans-serif' } });
+    </script>
+
+    <script>
+        // Diagram Zoom Functionality
+        const zoomState = {};
+
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(1)';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+
+        // Wrap diagrams after Mermaid renders
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

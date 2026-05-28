@@ -44,9 +44,11 @@ and at the page layer (route guards reject non-Aggilo-admin users).
 Aggilo Admin
 ├── Findings              (Observer's 10 domains; Phase 0 wave-status banner at top)
 ├── Demand                (Scout intelligence reports — gated to Wave 2)
+├── Waitlist              (Scored waitlist submissions; invite-link generator)
 ├── Tool proposals        (Cross-agent capability proposals)
 ├── Runtime               (Agent Runtime job state, queues, errors)
-├── LLM observability     (per-call logs, cost, latency, budget)
+├── LLM observability     (per-call logs, cost, latency, budget, prompt flows)
+├── Agent reliability     (RDC / GDS / MOP metrics per agent per operation — §Reliability)
 ├── Clusters              (cross-cluster index)
 ├── Members               (cross-cluster member directory)
 ├── Skills registry       (platform-wide skill catalog)
@@ -335,6 +337,8 @@ the three-layer inheritance — super-prompt + agent character +
 cluster fragment — confirms layer-3 cosmology delivery). Detail-modal
 view is read-only.
 
+> **See also §LLM Observability — Prompt Flows (expanded)** below for the full detail modal spec: 4-layer token attribution panel, reasoning traces, compaction event display, timeline stamps, and meltdown detection alerts. The expanded section supersedes the detail-modal description above.
+
 ---
 
 ## Clusters
@@ -456,6 +460,141 @@ validate role + log to `cluster_admin_actions`.
 
 ---
 
+## Waitlist
+
+> **Source spec:** `docs/WAITLIST_INTELLIGENCE_SPEC.md` (full scoring pipeline, form data, DeepSeek API integration). This section covers the admin dashboard surface only.
+
+Reads from `waitlist_submissions`. Two sub-tabs:
+
+### Find My People (mypeople@aggilo.in submissions)
+
+Each submission card:
+
+- **Name, email** (visible to platform_admin only — PII gate)
+- **Demographic tags:** birth year, life cohort, gender, languages, interest domain, location
+- **Score panel (4 dimensions):** Intent Signal, Cluster Fit, Urgency, Authenticity — each 0–10, sourced from DeepSeek scoring at submit time
+- **LLM reasoning summary** (collapsible — the score justification from DeepSeek, max 3 sentences)
+- **Status pill:** `new` / `reviewed` / `invited` / `joined` / `declined`
+- **Actions:**
+  - `Generate invite link` — constructs the pre-fill URL (`?email=X&gender=Y&birth_year=Z&country=W`) with the matching cluster slug. Admin copies and sends manually.
+  - `Mark as reviewed` — changes status to `reviewed` without inviting
+  - `Decline` — marks `declined`; removes from active view
+
+### Make Your Crowd (mycrowd@aggilo.in submissions)
+
+Same card format with BYC-specific fields (niche description, target demographic, involvement level, feasibility score instead of intent signal).
+
+### Conversion tracking
+
+Below both tabs: a summary strip:
+
+```
+Submitted: 143    Invited: 67    Joined: 41    Conversion: 61%
+```
+
+This is the single most important growth metric for Phase 0. It tells the admin how many invited waitlist users actually completed onboarding. Low conversion → investigate the invite link flow or the pre-fill path.
+
+---
+
+## LLM Observability — Prompt Flows (expanded)
+
+The existing LLM observability surface (per-call logs, cost, latency) is augmented with a **Prompt Flow** view per call.
+
+### Prompt Flow detail modal (per call)
+
+Each `llm_response_logs` row detail modal now shows:
+
+**Layer attribution panel** (collapsible, labelled sections):
+
+```
+┌─ Layer 1: Platform Super-Prompt ──────────────────── 523 tokens ─┐
+│  [view] [copy]                                                     │
+└────────────────────────────────────────────────────────────────────┘
+┌─ Layer 2: Agent Character (Clio) ─────────────────── 791 tokens ─┐
+│  [view] [copy]                                                     │
+└────────────────────────────────────────────────────────────────────┘
+┌─ Layer 3: Cluster Identity (long-conversation) ────── 388 tokens ─┐
+│  [view] [copy]                                                     │
+└────────────────────────────────────────────────────────────────────┘
+┌─ Layer 4: Per-call Signals ────────────────────────── 1,204 tokens ┐
+│  History: 8 turns (892t) · Welfare flags: 0 · @mentions: 0        │
+│  User message: 62 tokens                                          │
+│  [view] [copy]                                                     │
+└────────────────────────────────────────────────────────────────────┘
+Total context: 2,906 tokens / 4,096 target ceiling
+```
+
+The total bar turns amber above 80% of the context ceiling, red above 95%. This is the admin-visible signal for context rot risk (see `clio/AGENTS.md §Context Engineering Rules`).
+
+**Compaction events:** When a call's `request_type = 'clio_compaction'`, the detail modal shows the pre-compaction history length and post-compaction summary length side by side. This lets admin verify compaction is working as intended.
+
+**Extended thinking (reasoning trace):** When a call uses extended thinking mode (Observer introspection, agent goal parsing, Atlas source validation), the reasoning trace is stored in `llm_response_logs.reasoning_trace` (JSON) and shown in the detail modal as a collapsible "Reasoning" section. The admin can read the model's step-by-step reasoning before the output — this is the primary debugging surface for unexpected agent decisions.
+
+**Timeline stamps:** The detail modal shows a micro-timeline:
+
+```
+Request assembled  09:42:00.124
+LLM call sent      09:42:00.281  (+157ms assembly)
+First token        09:42:01.644  (+1,363ms TTFT)
+Response complete  09:42:04.912  (+3,268ms generation)
+Validator pass     09:42:04.988  (+76ms validation)
+Total              09:42:04.988  (4,864ms end-to-end)
+```
+
+### Meltdown detection
+
+When an `operation_key` fails the server-side validator twice in a row (retry 1 + retry 2 both fail), this is logged as a `micro_meltdown` event in `llm_response_logs.meta`. The LLM observability tab surfaces these prominently:
+
+```
+⚠ 3 meltdown events in the last 1h  (operation: clio_cluster_chat · cluster: sisters-in-dua)
+```
+
+Three meltdowns per operation key per hour auto-creates an Observer Domain 5 finding. The admin sees the finding in the Findings tab and can drill to the raw LLM logs.
+
+---
+
+## Agent Reliability
+
+> **Source:** "Beyond pass@1: A Reliability Science Framework for Long-Horizon LLM Agents" (Khanal, Tao, Zhou — arXiv:2603.29231). Applied to Aggilo's per-agent, per-operation monitoring.
+
+Reads from `llm_response_logs` (aggregated by operation_key + agent + time window). Four metrics displayed per operation:
+
+| Metric | What it measures | How it's calculated |
+|--------|-----------------|---------------------|
+| **RDC — Reliability Decay Curve** | How quickly reliability drops as session length (turn count) grows | Pass rate by turn bucket: 1-5 turns, 6-10, 11-15, 16-20, 20+ |
+| **VAF — Variance Amplification Factor** | How much output variance increases under longer sessions | Std deviation of validator score by turn bucket |
+| **GDS — Graceful Degradation Score** | When the agent fails, does it fail gracefully or catastrophically? | Ratio of (soft failures + fallbacks) to (hard failures + meltdowns) |
+| **MOP — Meltdown Onset Point** | At what turn count does meltdown rate spike? | First turn bucket where meltdown rate exceeds 5% |
+
+### View
+
+Filterable by:
+- Agent (Clio / Sage / Atlas / Scout / Observer)
+- Operation key (e.g. `clio_cluster_chat`, `sage_post_generation`, `atlas_scoring`)
+- Time window (7d / 30d / 90d)
+
+Each operation row shows:
+
+```
+clio_cluster_chat    GDS: 0.89 ✅    MOP: turn 18 🟡    VAF: low ✅    RDC: stable ✅
+sage_post_generation GDS: 0.94 ✅    MOP: n/a ✅        VAF: low ✅    RDC: stable ✅
+atlas_scoring        GDS: 0.71 🟡    MOP: turn 6 🔴     VAF: high 🟡   RDC: decay 🟠
+```
+
+**Alert thresholds:**
+- GDS < 0.70 → 🔴 Observer Domain 5 finding auto-created
+- MOP < turn 10 → 🔴 Observer Domain 5 finding auto-created (agent is spiralling too early)
+- GDS 0.70-0.80 → 🟡 dashboard warning, no auto-finding
+- RDC decay > 15% drop between buckets → 🟠 amber indicator
+
+The admin can click any operation row to see the full breakdown chart and drill to the failing individual calls in the LLM observability tab.
+
+### Model reliability vs. capability
+
+The table includes a **Model** column showing which LLM was used for each operation key. This creates a cross-reference: if changing a model (via `llm_routing_config`) causes GDS to drop, the admin sees it here. The correct model choice is the most reliable for this specific operation, not the most capable on benchmarks.
+
+---
+
 ## Out of scope for this spec
 
 - **Visual design system.** The dashboard inherits the platform's
@@ -475,13 +614,18 @@ validate role + log to `cluster_admin_actions`.
 The Aggilo admin dashboard ships as a single Next.js app section
 under `/admin/aggilo/*`. Done when:
 
-- [ ] All 10 navigation sections render correctly
+- [ ] All 12 navigation sections render correctly
 - [ ] Findings tab supports filter, approval, and rejection end-to-end
 - [ ] Demand tab supports active/calibration/directed flows
+- [ ] Waitlist tab: scoring panel, invite-link generator, conversion tracking strip
 - [ ] Tool proposals tab supports approve/activate/retire
 - [ ] Runtime tab live-feeds dispatch + completion events
-- [ ] LLM observability shows full system-message stack in detail
-      modal (verifies V3.12 inheritance contract)
+- [ ] LLM observability shows full 4-layer system-message stack with token counts per layer
+- [ ] LLM observability detail modal shows timeline stamps (assembly → TTFT → generation → validation)
+- [ ] LLM observability shows reasoning traces for extended-thinking calls
+- [ ] LLM observability shows compaction event summaries
+- [ ] Meltdown detection alerts surface on LLM observability tab (3/hour threshold)
+- [ ] Agent reliability tab shows RDC / VAF / GDS / MOP per operation key with correct alert thresholds
 - [ ] Clusters index links to per-cluster dashboards
 - [ ] Audit log is append-only and queryable
 - [ ] Settings changes write to `cluster_admin_actions`

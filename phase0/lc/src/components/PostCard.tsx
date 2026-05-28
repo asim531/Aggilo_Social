@@ -40,6 +40,8 @@ interface PostCardProps {
   /** Callback for the realtime hook to inject an optimistic reply. */
   onOptimisticReply?: (post: PostWithAuthor) => void;
   onConfirmReply?: (tempId: string, confirmed: PostWithAuthor) => void;
+  /** Called when a post is edited so the parent feed can update its state. */
+  onPostEdited?: (update: Partial<PostWithAuthor> & { id: string }) => void;
   /** True when Sage is processing a response for this thread. */
   sageThinking?: boolean;
   /** Signal that @Sage was invoked for a given thread root id. */
@@ -68,6 +70,7 @@ export default function PostCard({
   currentProfile,
   onOptimisticReply,
   onConfirmReply,
+  onPostEdited,
   sageThinking,
   onSageInvoked,
 }: PostCardProps) {
@@ -76,6 +79,11 @@ export default function PostCard({
   const [replying, setReplying] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   // Welfare-flagged posts get a rose accent (lowest-saturation; the
   // platform safety floor is calibrated to be present without alarming).
   const isWelfare = post.thread_state === "welfare_flagged";
@@ -83,6 +91,36 @@ export default function PostCard({
   const canReply = Boolean(
     userId && currentProfile && onOptimisticReply && onConfirmReply
   );
+
+  async function handleEditSubmit() {
+    if (!userId || post.author_id !== userId) return;
+    const trimmed = editContent.trim();
+    if (!trimmed || trimmed === post.content) {
+      setIsEditing(false);
+      return;
+    }
+    setEditSubmitting(true);
+    setEditError(null);
+    try {
+      const res = await fetch(withBasePath(`/api/posts/${post.id}`), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: trimmed }),
+      });
+      const data = (await res.json()) as { post?: PostWithAuthor; error?: string };
+      if (!res.ok || !data.post) {
+        setEditError(data.error ?? "Couldn't save changes.");
+        setEditSubmitting(false);
+        return;
+      }
+      setIsEditing(false);
+      onPostEdited?.(data.post);
+    } catch {
+      setEditError("Network error. Try again.");
+    } finally {
+      setEditSubmitting(false);
+    }
+  }
 
   async function handleReplySubmit() {
     if (!canReply) return;
@@ -170,11 +208,52 @@ export default function PostCard({
       }
       aria-label={isWelfare ? "Welfare-flagged thread" : undefined}
     >
-      {/* Top-level post body */}
-      <PostBody post={post} />
+      {/* Top-level post body — editable when user owns it */}
+      {isEditing ? (
+        <div className="p-4 bg-lc-card">
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            rows={3}
+            maxLength={2000}
+            className="w-full resize-none px-3 py-2 rounded-lg border border-stone-300 bg-lc-card focus:outline-none focus:ring-2 focus:ring-lc-clio focus:border-transparent text-sm text-lc-ink placeholder:text-stone-400"
+          />
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-[10px] text-lc-muted">
+              {editContent.length}/2000
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditContent(post.content);
+                  setEditError(null);
+                }}
+                className="text-xs text-lc-muted hover:text-lc-ink px-2 py-1 rounded hover:bg-stone-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleEditSubmit()}
+                disabled={!editContent.trim() || editSubmitting || editContent.trim() === post.content}
+                className="px-3 py-1.5 rounded bg-lc-clio text-white text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-700 transition-colors"
+              >
+                {editSubmitting ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+          {editError && (
+            <p className="mt-2 text-xs text-rose-600">{editError}</p>
+          )}
+        </div>
+      ) : (
+        <PostBody post={post} />
+      )}
 
       {/* Reply controls + count */}
-      {canReply && (
+      {!isEditing && canReply && (
         <div className="flex items-center gap-3 px-4 pb-3 -mt-1 text-xs">
           <button
             type="button"
@@ -184,9 +263,29 @@ export default function PostCard({
           >
             {showReplyForm ? "Cancel reply" : "Reply"}
           </button>
+          {post.author_id === userId && !post.is_sage && post.parent_id === null && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(true);
+                setEditContent(post.content);
+                setShowReplyForm(false);
+              }}
+              className="text-lc-muted hover:text-lc-clio transition-colors"
+            >
+              Edit
+            </button>
+          )}
           {replies.length > 0 && (
-            <span className="text-lc-muted">
+            <span className="text-lc-muted flex items-center gap-1.5">
               · {replies.length} {replies.length === 1 ? "reply" : "replies"}
+              {post.author_id === userId && (
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full bg-lc-clio"
+                  title="Someone replied to your post"
+                  aria-label="New reply"
+                />
+              )}
             </span>
           )}
         </div>
@@ -311,6 +410,9 @@ function PostBody({ post }: { post: PostWithAuthor }) {
           title={new Date(post.created_at).toLocaleString()}
         >
           {formatTimestamp(post.created_at)}
+          {post.edited_at && (
+            <span className="text-lc-clio"> · edited</span>
+          )}
         </time>
       </header>
       <p className="text-sm text-lc-ink leading-relaxed whitespace-pre-line break-words">

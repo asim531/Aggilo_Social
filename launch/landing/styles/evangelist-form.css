@@ -1,0 +1,393 @@
+/* ═══════════════════════════════ EVANGELIST FORM OVERLAY ═══════════════════════════════ */
+#efBackdrop {
+    position: fixed; inset: 0; z-index: 9500;
+    background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+}
+#efBackdrop.ef-open { opacity: 1; pointer-events: auto; }
+
+#evangelistFormOverlay {
+    position: fixed; inset: 0; z-index: 9600;
+    display: flex; flex-direction: column;
+    background: linear-gradient(180deg, #0a0e18 0%, #0d1117 30%, #10141f 100%);
+    overflow: hidden;
+    opacity: 0; pointer-events: none; transform: translateY(12px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+}
+#evangelistFormOverlay.ef-open {
+    opacity: 1; pointer-events: auto; transform: translateY(0);
+}
+
+/* Top bar */
+.ef-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 28px; position: relative; z-index: 2;
+}
+.ef-wordmark { font-size: 0.9rem; font-weight: 700; color: var(--teal); letter-spacing: 0.04em; }
+.ef-dots { display: flex; gap: 6px; }
+.ef-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12); transition: background 0.35s ease, box-shadow 0.35s ease;
+}
+.ef-dot.current { background: var(--teal); box-shadow: 0 0 12px var(--teal); }
+.ef-dot.past { background: rgba(45, 212, 191, 0.4); }
+
+/* Step counter — "Step 2 of 3" text alongside the dots */
+.ef-step-counter {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(45, 212, 191, 0.7);
+    letter-spacing: 0.04em;
+    margin-left: 10px;
+    display: none; /* shown by JS when on a data-collection screen */
+}
+
+.ef-close {
+    background: rgba(45, 212, 191, 0.08);
+    border: 1.5px solid rgba(45, 212, 191, 0.35);
+    color: var(--teal);
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; font-weight: 700;
+    transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+    box-shadow: 0 0 12px rgba(45, 212, 191, 0.15);
+    flex-shrink: 0;
+}
+.ef-close:hover {
+    background: rgba(45, 212, 191, 0.18);
+    border-color: var(--teal);
+    color: #fff;
+    box-shadow: 0 0 22px rgba(45, 212, 191, 0.35);
+    transform: scale(1.08);
+}
+
+/* Aside */
+.ef-aside {
+    padding: 0 28px; margin-bottom: 12px;
+    display: flex; gap: 10px; align-items: flex-start; min-height: 44px; visibility: hidden;
+}
+.ef-aside-av {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #38bdf8, #2dd4bf);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0; margin-top: 2px;
+    box-shadow: 0 0 8px rgba(45, 212, 191, 0.3);
+}
+.ef-aside-text {
+    font-size: 0.9rem; color: rgba(226, 234, 243, 0.6); font-style: italic; line-height: 1.6;
+    opacity: 0; transition: opacity 0.6s ease 0.15s;
+}
+.ef-aside-text.ef-aside-visible { opacity: 1; }
+
+/* Content area */
+.ef-content {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 0 28px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(45,212,191,0.15) transparent;
+}
+.ef-content::-webkit-scrollbar { width: 3px; }
+.ef-content::-webkit-scrollbar-thumb { background: rgba(45,212,191,0.2); border-radius: 2px; }
+
+/* Screen base */
+.ef-screen {
+    display: none; width: 100%; max-width: 540px;
+    animation: efFadeIn 0.45s ease;
+}
+.ef-screen.ef-active { display: flex; flex-direction: column; gap: 16px; }
+@keyframes efFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Screen 0 — The Offer */
+.ef-screen-0-inner { text-align: center; max-width: 480px; }
+.ef-hero-av {
+    font-size: 2.2rem; margin-bottom: 18px;
+    animation: efAvPulse 3s ease-in-out infinite;
+}
+@keyframes efAvPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.ef-offer-headline { font-size: clamp(1.3rem, 3vw, 1.8rem); font-weight: 700; color: var(--text); margin-bottom: 16px; line-height: 1.35; }
+.ef-offer-body { font-size: 0.95rem; color: rgba(226, 234, 243, 0.65); line-height: 1.7; }
+
+/* Question + inputs */
+.ef-question { font-size: clamp(1.15rem, 3vw, 1.5rem); font-weight: 600; color: var(--text); line-height: 1.35; }
+.ef-subhint { font-size: 0.88rem; color: var(--text-dim); line-height: 1.5; margin-top: -4px; }
+.ef-input {
+    width: 100%; box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px; color: var(--text); padding: 14px 18px;
+    font-family: var(--font); font-size: 1rem; outline: none;
+    transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+}
+.ef-input:focus { border-color: rgba(45, 212, 191, 0.5); background: rgba(45, 212, 191, 0.03); box-shadow: 0 0 20px rgba(45, 212, 191, 0.08); }
+.ef-input::placeholder { color: rgba(255, 255, 255, 0.55); }
+select.ef-input option { background-color: #0d1117; color: #e2eaf3; }
+.ef-input.ef-error { border-color: rgba(244, 114, 182, 0.6); }
+.ef-textarea { min-height: 100px; resize: vertical; line-height: 1.55; }
+.ef-inline-note { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; margin-top: -6px; }
+
+/* Error messages */
+.ef-error-msg {
+    display: none; font-size: 0.82rem; color: var(--pink);
+    padding-left: 2px; animation: efShake 0.35s ease;
+}
+.ef-error-msg.ef-visible { display: block; }
+@keyframes efShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
+
+/* ─── Chip selection groups (v2 form) ─── */
+.ef-chips { display: flex; flex-direction: column; gap: 8px; }
+.ef-chip {
+    background: rgba(45, 212, 191, 0.06); border: 1px solid rgba(45, 212, 191, 0.15);
+    border-radius: 14px; color: var(--text); font-size: 0.92rem; padding: 13px 18px;
+    cursor: pointer; text-align: left; font-family: var(--font);
+    transition: background 0.2s, border-color 0.2s, transform 0.2s; min-height: 46px;
+    display: flex; align-items: center;
+}
+.ef-chip:hover { background: rgba(45, 212, 191, 0.14); border-color: rgba(45, 212, 191, 0.4); transform: translateX(3px); }
+.ef-chip.selected { background: rgba(45, 212, 191, 0.16); border-color: var(--teal); color: var(--teal); pointer-events: none; }
+
+/* ─── Inline two-field row ─── */
+.ef-row { display: flex; gap: 12px; }
+.ef-row .ef-input { flex: 1; }
+
+/* Confirmation screen */
+.ef-confirm-inner { text-align: center; max-width: 480px; }
+.ef-confirm-headline { font-size: clamp(1.2rem, 3vw, 1.6rem); font-weight: 700; color: var(--text); margin-bottom: 16px; line-height: 1.35; }
+.ef-confirm-body { font-size: 0.95rem; color: rgba(226, 234, 243, 0.6); line-height: 1.7; }
+.ef-confirm-sep { width: 60px; height: 1px; background: var(--border-hi); margin: 24px auto; }
+.ef-confirm-note { font-size: 0.88rem; color: var(--text-dim); }
+
+/* Bottom bar */
+.ef-bottombar {
+    padding: 16px 28px; display: flex; gap: 12px; justify-content: center; align-items: center; position: relative; z-index: 2;
+}
+.ef-cta {
+    padding: 14px 36px; background: linear-gradient(135deg, var(--cyan), var(--teal));
+    color: #06101a; font-size: 0.95rem; font-weight: 700;
+    border-radius: 50px; border: none; cursor: pointer; font-family: var(--font);
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 24px rgba(45, 212, 191, 0.35);
+}
+.ef-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(45, 212, 191, 0.5); }
+.ef-skip {
+    padding: 10px 22px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px; color: var(--text-dim); font-size: 0.85rem; cursor: pointer; font-family: var(--font);
+    transition: border-color 0.2s, color 0.2s;
+}
+.ef-skip:hover { border-color: rgba(255, 255, 255, 0.25); color: var(--text-muted); }
+
+/* ═══════════════════════════════════════════════════════════════
+   Screen 3 additions — Language + Interest Domain
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Chip row — horizontal wrap (language chips) */
+.ef-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Smaller chip variant for language pills */
+.ef-chip.ef-chip-sm {
+    padding: 9px 14px;
+    font-size: 0.85rem;
+    min-height: 38px;
+    border-radius: 50px;   /* pill shape — visually distinct from interest chips */
+}
+
+/* Sub-label inside question heading */
+.ef-q-sub {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+/* Spacing between language block and interest block */
+.ef-question-spaced {
+    margin-top: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODE TABS — Find My People / Make Your Crowd switcher
+   ═══════════════════════════════════════════════════════════════ */
+.ef-mode-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px 28px 0;
+    margin-bottom: 6px;
+}
+.ef-mode-tab {
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.25s, border-color 0.25s, background 0.25s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border-radius: 10px 10px 0 0;
+}
+.ef-mode-tab:hover {
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+}
+.ef-mode-tab.ef-mode-active {
+    color: var(--teal);
+    border-bottom-color: var(--teal);
+    background: rgba(45, 212, 191, 0.05);
+}
+.ef-mode-icon {
+    font-size: 1rem;
+}
+/* Subtitle under each tab label — explains the distinction */
+.ef-mode-sub {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: rgba(226, 234, 243, 0.35);
+    line-height: 1.2;
+}
+.ef-mode-tab.ef-mode-active .ef-mode-sub {
+    color: rgba(45, 212, 191, 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MYC FORM — Make Your Crowd specific form elements
+   ═══════════════════════════════════════════════════════════════ */
+.byc-size-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 8px;
+}
+.byc-size-label {
+    font-size: 1rem !important;
+    white-space: nowrap;
+    margin: 0 !important;
+}
+.byc-size-input {
+    max-width: 120px;
+    text-align: center;
+}
+
+.byc-demo-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 14px;
+}
+.byc-demo-field {
+    flex: 1;
+}
+.byc-demo-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.byc-age-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.byc-age-input {
+    max-width: 72px;
+    text-align: center;
+    padding: 10px 8px !important;
+}
+.byc-age-dash {
+    color: var(--text-dim);
+    font-size: 1.2rem;
+}
+
+/* Multi-select chip variant (allow re-click in BYC platform chips) */
+.ef-chip.ef-chip-sm.selected {
+    pointer-events: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE OPTIMISATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* On mobile the overlay is full-screen. Vertically centre content on
+   tall viewports; switch to top-aligned on short ones so nothing
+   overflows above the fold. */
+@media (max-height: 700px) {
+    .ef-content {
+        justify-content: flex-start;
+        padding-top: 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Content area: top-aligned on mobile so nothing hides above fold */
+    .ef-content {
+        justify-content: flex-start;
+        padding-top: 8px;
+    }
+
+    /* CTA button: full-width on mobile for easier tapping */
+    .ef-cta {
+        width: 100%;
+        padding: 16px 24px;
+        font-size: 1rem;
+    }
+
+    /* Welcome screen: tighten vertical spacing on small viewports */
+    .ef-screen-0-inner {
+        padding-bottom: 8px;
+    }
+    .ef-offer-headline {
+        margin-bottom: 10px;
+    }
+
+    /* Mode tab subtitles: slightly larger on mobile for readability */
+    .ef-mode-sub {
+        font-size: 0.75rem;
+    }
+
+    /* Journey badge: ensure it doesn't overflow on 320px screens */
+    .ef-screen-0-inner > div[style*="inline-flex"] {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    /* BYC demographics row: stack on very small screens */
+    .byc-demo-row {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Size row: allow wrapping */
+    .byc-size-row {
+        flex-wrap: wrap;
+    }
+    .byc-size-label {
+        white-space: normal !important;
+    }
+
+    /* Aside: hide on very small screens to save vertical space.
+       The step counter and question text carry the context. */
+    .ef-aside {
+        display: none;
+    }
+
+    /* Step counter: slightly larger so it's readable */
+    .ef-step-counter {
+        font-size: 0.8rem;
+    }
+
+    /* Textarea: slightly shorter min-height on small screens */
+    .ef-textarea {
+        min-height: 80px;
+    }
+}

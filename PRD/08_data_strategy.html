@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo Data Strategy â€” Behavioural Intelligence & AI calibration</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 30%, #16213e 60%, #0f3460 100%);
+            padding: 80px 60px 60px;
+            text-align: center;
+            border-bottom: 3px solid #e94560;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(233, 69, 96, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(78, 205, 196, 0.08) 0%, transparent 50%);
+        }
+
+        .hero>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero .logo {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            color: #fff;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 span {
+            color: #e94560;
+        }
+
+        .hero .tagline {
+            font-size: 1.3rem;
+            color: #a0a0b8;
+            margin-bottom: 24px;
+        }
+
+        .hero .meta {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero .meta-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #2a2a3e;
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+        }
+
+        .hero .meta-item strong {
+            color: #e94560;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #fff;
+            margin: 24px 0 16px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        blockquote {
+            background: #1e1e32;
+            border-left: 4px solid #7b8cde;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        pre {
+            background: #12121e;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #2a2a3e;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #e0e0e8;
+            font-size: 0.85rem;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 6px 0;
+            color: #c0c0d0;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hero">
+        <div class="logo">ðŸ“Š</div>
+        <h1>Aggilo Data Strategy</h1>
+        <p class="tagline">Non-PII Behavioural Intelligence & AI calibration</p>
+        <div class="meta">
+            <span class="meta-item">ðŸ“… Version: <strong>1.0</strong></span>
+            <span class="meta-item">ðŸŽ¯ Focus: <strong>AI calibration</strong></span>
+            <span class="meta-item">ðŸ”’ Privacy: <strong>Strict Non-PII</strong></span>
+            <span class="meta-item">ðŸ—ï¸ Model: <strong>Dual-Layer (Segment + Personal)</strong></span>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- CORE THESIS -->
+        <div class="section">
+            <h2>Core Thesis</h2>
+            <blockquote>
+                <strong>Core Thesis</strong>: Every user action inside Aggilo generates a <i>behavioural signal</i> â€”
+                what they search for, how they interact with Clio, which Scout suggestions they accept or dismiss, what
+                cluster configs they choose, how they engage inside communities. These signals, segmented by
+                <strong>Location Ã— Age Ã— Gender Ã— Language Ã— Interest</strong>, become the calibration data that makes
+                Aggilo's AI agents progressively smarter at both the <strong>micro level</strong> (individual user
+                cohort) and the <strong>macro level</strong> (national/regional demographic trends). No competitor can
+                replicate this because the data is <i>earned</i> through usage, not purchased.
+            </blockquote>
+        </div>
+
+        <!-- PRIVACY MODEL -->
+        <div class="section">
+            <h2>Data Privacy Model â€” What Is and Isn't PII</h2>
+
+            <h3>The Simple Truth</h3>
+            <p>Aggilo collects very little PII. The entire AGGIL profile is <strong>inherently non-PII</strong>:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data Point</th>
+                        <th>PII?</th>
+                        <th>Why</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Email / Phone</td>
+                        <td>âœ… <strong>YES â€” the ONLY PII</strong></td>
+                        <td>Directly identifies a person</td>
+                    </tr>
+                    <tr>
+                        <td>Date of Birth</td>
+                        <td>âš ï¸ Borderline</td>
+                        <td>Stored for auth, used as age bracket in analytics. Never exposed.</td>
+                    </tr>
+                    <tr>
+                        <td>Gender (M/F/GQ)</td>
+                        <td>âŒ No</td>
+                        <td>Not identifying on its own</td>
+                    </tr>
+                    <tr>
+                        <td>City / Hyper-local Location</td>
+                        <td>âŒ No</td>
+                        <td>Not identifying (Campus, Tech Park, Neighbourhood, Building)</td>
+                    </tr>
+                    <tr>
+                        <td>Languages</td>
+                        <td>âŒ No</td>
+                        <td>Not identifying</td>
+                    </tr>
+                    <tr>
+                        <td>Interest Tags</td>
+                        <td>âŒ No</td>
+                        <td>User-chosen, not identifying</td>
+                    </tr>
+                    <tr>
+                        <td>Nickname</td>
+                        <td>âŒ No</td>
+                        <td>Pseudonymous by design</td>
+                    </tr>
+                    <tr>
+                        <td>All behavioural signals</td>
+                        <td>âŒ No</td>
+                        <td>Actions, not identity</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>IMPORTANT:</strong> The ONLY data point requiring PII protection is the
+                <code>email/mobile â†” account_id</code> link. This is isolated in the authentication database and
+                <strong>never enters the behavioural data pipeline.</strong> All other data â€” AGGIL dimensions, cluster
+                interactions, Clio conversations (LLM-classified), engagement patterns â€” is inherently non-PII and can
+                be captured, aggregated, and used freely for AI calibration.
+            </div>
+
+            <h3>Protection Architecture</h3>
+            <div class="mermaid">
+                flowchart LR
+                subgraph Auth["ðŸ”’ Auth Database (MySQL)"]
+                A["account_id â†” email/phone<br>(encrypted at rest,<br>access-controlled)"]
+                end
+
+                subgraph Behaviour["ðŸ“Š Behavioural Data Store"]
+                B["account_id + AGGIL dimensions +<br>all behavioural signals<br>(NO email/phone ever present)"]
+                end
+
+                Auth -.->|"NEVER connected"| Behaviour
+
+                style Auth fill:#e94560,color:#fff
+                style Behaviour fill:#4ecdc4,color:#000
+            </div>
+            <p>The two systems share <code>account_id</code> for functional purposes (the app needs to track which user
+                is doing what), but the behavioural data store <strong>cannot</strong> resolve <code>account_id</code> â†’
+                real identity because it never receives email/phone. A breach of the behavioural store reveals anonymous
+                behaviour patterns â€” nothing more.</p>
+        </div>
+
+        <!-- DUAL LAYER MODEL -->
+        <div class="section">
+            <h2>Dual-Layer Data Model â€” Free vs. Premium Intelligence</h2>
+
+            <h3>Why Two Layers</h3>
+            <p>Aggilo's premium product (â‚¹300/mo) promises <i>personal</i> preference learning â€” "AI learns YOUR
+                preferences." The free tier promises <i>segment-level</i> intelligence â€” "AI understands what people
+                like you want." These require different data approaches:</p>
+
+            <div class="mermaid">
+                flowchart TD
+                subgraph LayerA["Layer A: AGGIL Segment Intelligence<br>(All Users â€” Free + Premium)"]
+                A1["Aggregated behavioural patterns<br>per AGGIL segment"]
+                A2["No individual tracking â€” patterns<br>emerge from segment-level aggregation"]
+                A3["Fine-tunes: Scout crawl priorities,<br>Clio baseline register, general suggestions"]
+                end
+
+                subgraph LayerB["Layer B: Personal Preference Store<br>(Premium Users Only â€” Opt-in)"]
+                B1["Per-user preference history<br>(pseudonymized via account_id)"]
+                B2["Clio conversation memory,<br>matchmaker preferences,<br>personal AI calibration"]
+                B3["User-controlled: deleteable,<br>encrypted, portable"]
+                end
+
+                E["Behavioural Signals"] --> LayerA
+                E --> LayerB
+
+                LayerA --> F["Scout, Clio baseline,<br>general cluster suggestions"]
+                LayerB --> G["Premium Clio memory,<br>personal Matchmaker,<br>focused connection targeting"]
+
+                style LayerA fill:#4ecdc4,color:#000
+                style LayerB fill:#f9ca24,color:#000
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>Layer A (All Users)</th>
+                        <th>Layer B (Premium Only)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Scope</strong></td>
+                        <td>AGGIL segment-level patterns</td>
+                        <td>Per-user preference history</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Identity</strong></td>
+                        <td>Segment tags only (no user tracking)</td>
+                        <td>Pseudonymized account_id</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Purpose</strong></td>
+                        <td>Refine Scout, Clio, general suggestions based on demographics</td>
+                        <td>Power personal Clio memory, focused Matchmaker targeting</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Retention</strong></td>
+                        <td>Indefinite (aggregate data)</td>
+                        <td>User-controlled; deleted on request</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DPDPA</strong></td>
+                        <td>No consent needed (aggregate)</td>
+                        <td>Explicit opt-in at premium activation</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>NOTE:</strong> No arbitrary cohort minimums. Layer A aggregates naturally â€” the more users in a
+                segment, the stronger the signal. Even small segments produce useful directional data.
+            </div>
+        </div>
+
+        <!-- AGGIL MATRIX -->
+        <div class="section">
+            <h2>The AGGIL Behaviour Matrix â€” Micro & Macro Segmentation</h2>
+            <p>Every behavioural signal is tagged with the user's AGGIL dimensions and analyzed at multiple levels:</p>
+
+            <div class="mermaid">
+                flowchart TD
+                subgraph Signal["Raw Behavioural Signal"]
+                A["User dismisses Scout suggestion<br>'Anime Club Bangalore'"]
+                end
+
+                subgraph Micro["ðŸ”¬ MICRO â€” Cohort-Level calibration"]
+                B["Segment: 18-22 Ã— Male Ã— Bangalore Ã— English+Kannada Ã— Anime"]
+                C["Learning: This cohort rejects broad anime clusters<br>â†’ Scout should suggest niche sub-genres
+                instead"]
+                end
+
+                subgraph Macro["ðŸŒ MACRO â€” Demographic-Level calibration"]
+                D["Aggregate: 18-22 Ã— Male Ã— South India Ã— Entertainment"]
+                E["Learning: Entertainment clusters for young men in South India<br>need genre specificity to gain
+                traction"]
+                end
+
+                A --> B
+                A --> D
+                B --> C
+                D --> E
+
+                style C fill:#4ecdc4,color:#000
+                style E fill:#f9ca24,color:#000
+            </div>
+
+            <h3>The Segmentation Hierarchy</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>Granularity</th>
+                        <th>Example Segment</th>
+                        <th>Used For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>L1 â€” Hyper-micro</strong></td>
+                        <td>Age Ã— Gender Ã— <strong>Location (Building/Street/Area)</strong> Ã— Language Ã— Interest</td>
+                        <td>18-22 Ã— F Ã— <strong>T-Hub Phase 2</strong> Ã— Telugu+English Ã— K-Drama</td>
+                        <td>Per-cohort Clio register tuning, Scout topic selection</td>
+                    </tr>
+                    <tr>
+                        <td><strong>L2 â€” Micro</strong></td>
+                        <td>Age Ã— Gender Ã— <strong>Neighbourhood/City</strong> Ã— Language family</td>
+                        <td>18-22 Ã— F Ã— <strong>Hitech City</strong> Ã— Telugu+English</td>
+                        <td>Cluster suggestion ranking</td>
+                    </tr>
+                    <tr>
+                        <td><strong>L3 â€” Meso</strong></td>
+                        <td>Age Ã— Gender Ã— State/Region Ã— Interest category</td>
+                        <td>18-22 Ã— F Ã— Telangana Ã— Entertainment</td>
+                        <td>Scout crawl source prioritization</td>
+                    </tr>
+                    <tr>
+                        <td><strong>L4 â€” Macro</strong></td>
+                        <td>Age Ã— Gender Ã— National</td>
+                        <td>18-22 Ã— F Ã— India</td>
+                        <td>National trend forecasting, content category strategy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>L5 â€” Cross-cutting</strong></td>
+                        <td>Language Ã— Interest (age/gender agnostic)</td>
+                        <td>Telugu Ã— Fitness</td>
+                        <td>Language-community formation patterns</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>The magic is in the combinations.</strong> A 22-year-old Telugu-speaking woman in <strong>T-Hub
+                    Phase 2</strong>
+                interested in K-Drama has different behavioural patterns than a 22-year-old Telugu-speaking woman in
+                <strong>Secunderabad</strong> interested in K-Drama. The AGGIL matrix captures these hyper-local
+                differences. Even when the same demographics share similar interests, <strong>location context creates
+                    different clusters</strong> â€” startup founders in Hitech City and startup founders in Jubilee Hills
+                are naturally separated by the hyper-local dimension, ensuring each community gets intelligence
+                calibrated to <i>their</i> specific context. Over time, Aggilo knows exactly what each micro-segment
+                wants â€” down to the building or street level.
+            </div>
+        </div>
+
+        <!-- SIGNAL DOMAIN 1: DEMOGRAPHIC -->
+        <div class="section">
+            <h2>Signal Domain 1: Demographic Behaviour Patterns</h2>
+            <p><strong>What people <i>do</i> based on who they are â€” without knowing who they are.</strong></p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Behaviour</th>
+                        <th>What It Tells Us</th>
+                        <th>Fine-Tunes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Cluster join velocity</strong></td>
+                        <td>Which segments are decisive vs. exploratory</td>
+                        <td>Scout: push aggressively vs. gently</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cluster creation vs. joining ratio</strong></td>
+                        <td>Community builders vs. members</td>
+                        <td>Scout: seed more clusters for consumers</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Multi-cluster join patterns</strong></td>
+                        <td>Interest breadth vs. depth</td>
+                        <td>Clio: recommend breadth vs. depth</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Session timing patterns</strong></td>
+                        <td>Activity windows</td>
+                        <td>Scout: time injections optimally</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Platform entry point</strong></td>
+                        <td>Discovery preference (Search vs. Dashboard)</td>
+                        <td>Clio: prioritize preferred channel</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>calibration Output Example</h3>
+            <pre><code>SEGMENT: 23-27 Ã— Male Ã— Hyderabad Ã— English+Hindi Ã— Tech
+LEARNED BEHAVIOUR:
+  - join_velocity: fast (< 30s) â†’ push Scout suggestions confidently
+  - creation_ratio: high (38% create) â†’ suggest "create your own" to this cohort
+  - peak_activity: 9pm-12am weekdays â†’ time Scout injections for 8:30pm
+  - entry_point: 62% Search â†’ invest in search quality for this segment
+  - bounce_clusters: broad "Tech" clusters â†’ suggest niche (DevOps, ML, etc.)</code></pre>
+        </div>
+
+        <!-- SIGNAL DOMAIN 2: PREFERENCE -->
+        <div class="section">
+            <h2>Signal Domain 2: Personal Preference Signals</h2>
+            <p><strong>What people <i>choose</i>, <i>reject</i>, and <i>gravitate toward</i> â€” the taste profile without
+                    the identity.</strong></p>
+
+            <h3>Onboarding Preference Signals</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Signal</th>
+                        <th>Collection Point</th>
+                        <th>calibration Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Tags selected</strong></td>
+                        <td>Step 4 (Purpose & Tags)</td>
+                        <td>Initial interest vector</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tags viewed but NOT selected</strong></td>
+                        <td>Step 4 scroll/browse</td>
+                        <td><i>Negative</i> preference signal</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Custom tags created</strong></td>
+                        <td>Step 4 (typed tags)</td>
+                        <td>Unmet demand</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Purpose text intent</strong></td>
+                        <td>LLM-classified from purpose field</td>
+                        <td>Primary motivation</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Preference Embedding Architecture</h3>
+            <div class="mermaid">
+                flowchart LR
+                subgraph Raw["Raw Preference Signals"]
+                A["Tags: #KDrama #Anime #Manga"]
+                B["Dismissed: broad entertainment clusters"]
+                C["Joined: niche genre clusters"]
+                D["Created: Shounen-only Hyderabad cluster"]
+                E["Engaged most: discussion posts > image posts"]
+                end
+
+                subgraph Embed["Preference Embedding<br>(per AGGIL segment for free users /<br>per user for premium)"]
+                F["Vector: [0.92 niche, 0.15 broad,<br>0.87 Japanese_media, 0.34 Korean_media,<br>0.78
+                discussion_preference, 0.22 visual_preference,<br>0.91 hyper_local, 0.12 regional]"]
+                end
+
+                subgraph Apply["Applied To"]
+                G["Scout: crawl Shounen-specific<br>sources for this segment"]
+                H["Clio: recommend niche sub-genre<br>clusters, not broad anime"]
+                I["Premium Matchmaker: match on genre<br>preference depth, not surface tag"]
+                end
+
+                Raw --> Embed
+                Embed --> Apply
+            </div>
+        </div>
+
+        <!-- SIGNAL DOMAIN 3: SCOUT -->
+        <div class="section">
+            <h2>Signal Domain 3: Scout Learning Loop</h2>
+            <p><strong>How the autonomous discovery engine gets smarter with every cycle.</strong></p>
+
+            <div class="mermaid">
+                flowchart TD
+                A["Scout crawls trends<br>for segment L1: 18-22 Ã— M Ã— Hyderabad Ã— Telugu Ã— Cricket"]
+                --> B["Discovers 8 topics<br>Scores them 50-95%"]
+                B --> C["Creates 2 clusters (â‰¥90%)<br>Shows 4 suggestion cards (50-89%)"]
+
+                C --> D["CAPTURE: What happens next?"]
+
+                D --> E["Cluster 'IPL 2026 Hyd Fans'<br>gained 45 members in 48h âœ…"]
+                D --> F["Cluster 'Cricket Analytics Nerds'<br>gained 2 members in 48h âŒ"]
+                D --> G["Suggestion 'T20 World Cup Watch Party'<br>accepted by 12 users âœ…"]
+                D --> H["Suggestion 'Ranji Trophy Discussion'<br>dismissed by 90% âŒ"]
+
+                E --> I["LEARN: Event-based cricket > Analytical cricket<br>for 18-22 Telugu males in Hyderabad"]
+                F --> I
+                G --> I
+                H --> I
+
+                I --> J["FINE-TUNE Scout for next cycle:<br>â€¢ Prioritize event/social cricket topics<br>â€¢ Deprioritize
+                analytical/stats topics<br>â€¢ For this AGGIL segment specifically"]
+
+                J --> K["Next cycle: Scout crawls with<br>calibrated relevance scoring<br>for this segment"]
+                K --> A
+
+                style I fill:#4ecdc4,color:#000
+                style J fill:#f9ca24,color:#000
+            </div>
+
+            <h3>Scout calibration Data Schema</h3>
+            <pre><code>fine_tuning_record: scout
+  segment_l1: "18-22_M_hyderabad_telugu_cricket"
+  topic_category: "cricket_events"
+  source: "twitter"
+  relevance_score_predicted: 92
+  relevance_score_actual: 87       â† calibrated from adoption data
+
+  cluster_created: true
+  members_48h: 45
+  members_7d: 112
+  
+  LEARNING_DELTA:
+    - increase_weight: "event_cricket" +0.15
+    - decrease_weight: "analytical_cricket" -0.22
+    - source_quality_adjustment: "twitter" +0.08 for this segment</code></pre>
+        </div>
+
+        <!-- SIGNAL DOMAIN 4: CLIO -->
+        <div class="section">
+            <h2>Signal Domain 4: Clio Interaction Intelligence</h2>
+            <p><strong>How conversational behaviour reveals preferences that explicit choices cannot.</strong></p>
+
+            <h3>Clio as Central Orchestrator</h3>
+            <div class="mermaid">
+                flowchart TD
+                subgraph User["ðŸ‘¤ User"]
+                U["Interacts only with Clio"]
+                end
+
+                subgraph Clio["ðŸ’¬ Clio â€” The Orchestrator"]
+                C["Central intelligence layer<br>Synthesizes all signals<br>Decides what to surface, when, how"]
+                end
+
+                subgraph SubAgents["Sub-Agent Capabilities<br>(work FOR Clio)"]
+                S["ðŸ” Scout<br>Trend discovery"]
+                M["ðŸ¤– Matchmaker<br>Connection targeting<br>(future â€” premium phase)"]
+                end
+
+                subgraph Data["Behavioural Intelligence"]
+                D["All 4 signal domains<br>feed into Clio's<br>decision-making"]
+                end
+
+                U <--> Clio
+                    Clio --> S
+                    Clio --> M
+                    Data --> Clio
+
+                    style Clio fill:#4ecdc4,color:#000
+            </div>
+
+            <h3>Clio Interaction Signals</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Signal</th>
+                        <th>LLM Classification</th>
+                        <th>calibration Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Intent category</strong></td>
+                        <td>find / create / question / explore</td>
+                        <td>What each segment actually uses Clio for</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Emotional register</strong></td>
+                        <td>curious / excited / exploratory / goal-oriented</td>
+                        <td>Tone calibration per segment</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Specificity level</strong></td>
+                        <td>vague â†’ precise</td>
+                        <td>When to probe vs. act</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rejection patterns</strong></td>
+                        <td>Suggestion â†’ "no" â†’ reason</td>
+                        <td>Critical negative signal</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Clio override rate</strong></td>
+                        <td>User corrects Clio's AGGIL deduction</td>
+                        <td>Highest fidelity signal (3-5Ã— weight)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Clio calibration Data Schema</h3>
+            <pre><code>fine_tuning_record: clio
+  segment_l1: "23-27_F_hyderabad_telugu+english_professional_reinvention"
+  
+  conversation_context: "cluster_discovery"
+  intent_classified: "find_community"
+  emotional_register_detected: "goal_oriented"
+  
+  clio_deduced_aggil: {age: "23-30", gender: "F", loc: "Hyderabad", interest: "business"}
+  user_modified_aggil: {age: "25-32", interest: "women_in_business"}  â† override (3-5Ã— weight)
+  
+  LEARNING_DELTA:
+    - register_adjustment: "momentum" confirmed effective
+    - deduction_fix: widen default age range for professional reinvention
+    - specificity_signal: suggest "women in X" first</code></pre>
+        </div>
+
+        <!-- SIGNAL DOMAIN 5: INACTION -->
+        <div class="section">
+            <h2>Signal Domain 5: Inaction Intelligence</h2>
+            <p><strong>What people DON'T do is often more revealing than what they do.</strong></p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Inaction Signal</th>
+                        <th>What It Reveals</th>
+                        <th>Clio's Proactive Response</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Suggestion shown but completely ignored</strong></td>
+                        <td>Irrelevance (worse than dismiss)</td>
+                        <td>Clio adjusts future suggestions silently</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cluster joined but never opened</strong></td>
+                        <td>Aspiration vs. reality gap</td>
+                        <td>Clio: <i>"I noticed you joined... discussion there right now about [topic] â€” worth a
+                                look?"</i></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Search with 0 results â†’ no creation</strong></td>
+                        <td>Unmet demand + friction</td>
+                        <td>Clio: <i>"I remember you searched for [X]. I'm working on finding the right people for
+                                that."</i></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dormant user</strong></td>
+                        <td>Churn precursor</td>
+                        <td>Clio: <i>"The people in [cluster] have been posting about [topic]. Just flagging."</i></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- EARLY ADOPTER -->
+        <div class="section">
+            <h2>Early Adopter Strategy â€” Clio Builds Momentum</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Early adopter joins<br>(platform has few users)"]
+                --> B["Clio acknowledges the stage:<br>'You're early. That's actually better â€”<br>you get to shape what
+                this becomes.'"]
+                B --> C["Clio encourages cluster creation:<br>'Tell me what you're looking for.<br>I'll build it and
+                find your people.'"]
+                C --> D["User creates clusters<br>with Clio's help"]
+                D --> E["Scout begins crawling<br>for this user's segment"]
+                E --> F["Clio reassures:<br>'I found 3 people nearby with<br>similar interests. Give me a few<br>more
+                days â€” momentum is building.'"]
+                F --> G["As users trickle in,<br>Clio connects them:<br>'Someone just joined [cluster].<br>They're into
+                the same thing.'"]
+                G --> H["Community reaches<br>critical mass"]
+
+                style B fill:#4ecdc4,color:#000
+                style F fill:#f9ca24,color:#000
+            </div>
+            <p>The early stage isn't a weakness â€” <strong>it's an opportunity for Clio to build deep trust with early
+                    adopters who become evangelists.</strong></p>
+        </div>
+
+        <!-- MASTER ARCHITECTURE -->
+        <div class="section">
+            <h2>The Master calibration Architecture</h2>
+            <div class="mermaid">
+                flowchart TD
+                subgraph Signals["Behavioural Signal Domains"]
+                S1["Domain 1: Demographic Behaviour"]
+                S2["Domain 2: Preference Signals"]
+                S3["Domain 3: Scout Feedback"]
+                S4["Domain 4: Clio Interactions"]
+                S5["Domain 5: Inaction Intelligence"]
+                end
+
+                subgraph Matrix["AGGIL Behaviour Matrix"]
+                M["Segmented at L1-L5<br>Location Ã— Age Ã— Gender Ã—<br>Language Ã— Interest"]
+                end
+
+                subgraph Clio["ðŸ’¬ Clio â€” The Orchestrator"]
+                A2["Clio Intelligence Layer<br>â€¢ Synthesizes all signals<br>â€¢ Calibrates register per segment<br>â€¢
+                Corrects deduction via overrides<br>â€¢ Decides when to be proactive"]
+                end
+
+                subgraph SubCapabilities["Clio's Sub-Capabilities"]
+                A1["ðŸ” Scout Capability<br>â€¢ Trend discovery<br>â€¢ Source prioritization"]
+                A3["ðŸ¤– Matchmaker Capability<br>â€¢ Connection targeting"]
+                end
+
+                S1 --> M
+                S2 --> M
+                S3 --> M
+                S4 --> M
+                S5 --> M
+
+                M --> Clio
+                Clio --> A1
+                Clio --> A3
+
+                style M fill:#e94560,color:#fff
+                style Clio fill:#4ecdc4,color:#000
+            </div>
+        </div>
+
+        <!-- TECHNICAL FLOW -->
+        <div class="section">
+            <h2>calibration Data Flow â€” Technical Architecture</h2>
+            <div class="mermaid">
+                flowchart TD
+                subgraph App["ðŸ“± App Events"]
+                E1["join, dismiss, search,<br>create, engage, leave,<br>inaction signals"]
+                end
+
+                subgraph Backend["Laravel Backend"]
+                E3["AGGIL Tagger<br>(attaches L1-L5 segment tags<br>to every event)"]
+                end
+
+                subgraph AuthDB["ðŸ”’ Auth DB (Isolated)"]
+                AUTH["email/phone â†” account_id<br>(NEVER enters this pipeline)"]
+                end
+
+                subgraph Store["Behavioural Data Store"]
+                D1["Event Stream<br>(ClickHouse â€” time-series)"]
+                D2["Segment Aggregations<br>(pre-computed per L1-L5)"]
+                D3["calibration Records<br>(per capability, per segment)"]
+                end
+
+                subgraph Calibration["calibration Engine<br>(batch job â€” runs daily)"]
+                F1["Scout Recalibrator<br>reads adoption data â†’ adjusts<br>relevance weights per segment"]
+                F2["Clio Calibrator<br>reads conversation outcomes â†’<br>updates register/deduction/ranking"]
+                end
+
+                subgraph Output["Applied Next Cycle"]
+                O1["Scout's segment-specific<br>relevance scoring model"]
+                O2["Clio's segment-specific<br>system prompt calibration layer"]
+                end
+
+                E1 --> E3 --> D1
+                D1 --> D2
+                D2 --> D3
+                D3 --> F1
+                D3 --> F2
+                F1 --> O1
+                F2 --> O2
+
+                AUTH -.->|"NEVER connected<br>to behavioural pipeline"| D1
+
+                style AUTH fill:#e94560,color:#fff
+                style E3 fill:#f9ca24,color:#000
+                style D3 fill:#4ecdc4,color:#000
+            </div>
+        </div>
+
+        <!-- COMPOUNDING EFFECT -->
+        <div class="section">
+            <h2>The Compounding Intelligence Effect</h2>
+            <p><strong>A new competitor starting from zero would need 24 months of usage data from the same demographics
+                    to reach parity â€” by which time, Aggilo has 48 months of data.</strong></p>
+
+            <div class="mermaid">
+                flowchart LR
+                A["Month 0:<br>AI guesses<br>Clio builds trust"] --> B["Month 6:<br>AI knows categories"]
+                B --> C["Month 12:<br>AI predicts"]
+                C --> D["Month 24:<br>AI anticipates"]
+                D --> E["Month 36+:<br>AI understands<br>Indian youth communities<br>better than any<br>human could"]
+
+                style A fill:#ff6b6b,color:#fff
+                style B fill:#f9ca24,color:#000
+                style C fill:#4ecdc4,color:#000
+                style D fill:#7b8cde,color:#fff
+                style E fill:#4ecdc4,color:#000
+            </div>
+        </div>
+
+        <!-- DEFERRED ITEMS -->
+        <div class="section">
+            <h2>Deferred Items â€” Future Phases</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Phase</th>
+                        <th>Rationale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Matchmaker Intelligence</strong></td>
+                        <td>Premium Feature Launch</td>
+                        <td>Requires premium user base</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Seasonal Behaviour Calendar</strong></td>
+                        <td>12+ Months</td>
+                        <td>Need full year of data</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data quality mitigation</strong></td>
+                        <td>Scale Phase</td>
+                        <td>Relevant at high volume</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        mermaid.initialize({ theme: 'dark', startOnLoad: true, themeVariables: { primaryColor: '#e94560', primaryTextColor: '#fff', primaryBorderColor: '#e94560', lineColor: '#7b8cde', secondaryColor: '#1a1a2e', tertiaryColor: '#2a2a3e', fontFamily: 'Segoe UI, system-ui, sans-serif' } });
+    </script>
+
+    <script>
+        // Diagram Zoom Functionality
+        const zoomState = {};
+
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(1)';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+
+        // Wrap diagrams after Mermaid renders
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

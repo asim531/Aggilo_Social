@@ -549,10 +549,21 @@ A new member arriving in a cluster sees, in priority order:
 2. **Pinned anchor** — Sage's seed post, expanded on first visit, collapsed thereafter. Per-device preference.
 3. **Timeline** — newest first.
 4. **Compose bar** — sticky bottom, with a daily nudge prompt and an anonymous typing indicator ("someone is writing…", or in a faith cluster "a sister is writing…") when other members are typing.
-5. **Clio FAB** — top-right, dual-tab (Just Clio · forgets / Just Clio · remembers). The button breathes gently with a soft halo while idle to communicate that the intelligence layer is alive without demanding attention.
-6. **Room Workshop** — **collapsed by default**. A one-line strip that members can expand if curious. Shows what Clio and Sage are building for the room: tools they run, features for member voting. Never the foreground; never about members.
+5. **Clio FAB** — top-right, 40px circle, 16px from right edge, 8px below the cluster top bar. Dual-tab panel: **Clio** tab (cluster-scoped, conversation does not persist beyond session — ephemeral in front-end state) and **Private 🔒** tab (12h TTL, Redis-backed, content never stored server-side). The button breathes gently with a soft halo while idle to communicate that the intelligence layer is alive without demanding attention. Tips from Clio (see §7.11) appear as a floating notification above the FAB, distinct from the chat panel.
+6. **Help chip** — top-right of the navbar, adjacent to the Clio FAB. A quiet `?` pill. On first visit the chip carries a small dot indicator. Tap → popover with three actions: *Show me around* (3-step orientation modal), *Take the tour* (contextual spotlight tour), *Room Workshop* (links to full features page). First-open indicator clears and persists per device.
+7. **Room Workshop** — **collapsed by default**. A one-line strip that members can expand if curious. Shows what Clio and Sage are building for the room: tools they run, features for member voting. Never the foreground; never about members.
 
 The Workshop and admin link only surface when the user has earned their way to them (3+ posts, role=admin/manager).
+
+#### Cluster header presence indicators (live, total, growth)
+
+Three signals displayed in the cluster header, each visually distinct:
+
+1. **Live now** — animated pulsing dot (teal) + count + cluster-specific noun ("members live now", "sisters live now"). The warmest, most prominent element on the header — this is the social-proof heartbeat.
+2. **Total members** — quieter styling (muted gray, group icon). Shows how many have joined overall.
+3. **Joined this week** — shown **only when count > 0**. Teal color, smaller font. Growth signal that reinforces momentum without fabricating it when there is none.
+
+Live count derives from a Supabase Realtime presence channel (one per cluster). Total count and weekly-join count come from a one-time DB query on mount. All three are read from the same presence context — the component does not subscribe independently.
 
 ### 7.6 Welcome Surface (New Members)
 
@@ -564,6 +575,28 @@ When a new profile is created (via auth callback), the platform fires `POST /api
 - Otherwise posts one short, restrained line ("A new member joined this room" — exact wording is cluster-specific) and records a behavioural event
 
 The wording is intentionally non-performative. No exclamation marks. No "welcome!". Sage's voice. The point is social proof for the rest of the room — "people are arriving" — not making the new member feel scripted at.
+
+### 7.6a Member Orientation System (User-Invoked, Per-Device)
+
+The platform does **not** auto-fire a welcome modal. Members arrive directly in the cluster. Orientation is user-invoked via the Help chip (§7.5 item 6), available at any time, not once.
+
+**Three-step orientation modal (Clio-narrated):**
+
+| Step | Title | What it says |
+|------|-------|-------------|
+| 1 — Intro | `Hey, {nickname}.` | Room name, text-only format, no photos/likes, private-channel mechanic when a spark emerges |
+| 2 — Agents | `Two of us in here.` | Sage (cluster anchor, speaks rarely, adds when she has something) and Clio (for you, top-right button, private mode in same panel) |
+| 3 — Dynamics | `How it works.` | Posts are public, Workshop strip shows what Clio and Sage are working on |
+
+The modal shows step-dot progress indicators; user advances at their own pace. Dismissed state persists per device (localStorage). Re-opening from Help chip replays from step 1 — the intent is orientation, not a one-time tutorial gate.
+
+**Help popover items (in order):**
+
+1. *Show me around* — opens the 3-step orientation modal
+2. *Take the tour* — fires the contextual spotlight tour (highlights Compose bar → Clio FAB → Room Workshop → Members surface in sequence)
+3. *Room Workshop* — navigates to the full features page
+
+The popover closes on any action selection or click-outside. The new-indicator dot vanishes after first open and does not reappear.
 
 ### 7.7 Demographic Restriction Chips (Cluster Header)
 
@@ -736,6 +769,78 @@ This applies to **every cluster** on Aggilo — generic and Premium — once its
 
 The full DDL for `cluster_config` extensions, `cluster_demand_signals`, `atlas_pulses`, `public_cluster_view`, and the V3.6 additions to `skill_registry`, lives in `supabase/APPLY_NOW.sql` v1.9.
 
+
+### 7.11 Clio Tip Delivery System (V3.5)
+
+Clio can proactively push a **contextual tip** to an individual member without requiring them to open the FAB. Tips appear as a floating notification card anchored bottom-right above the Clio FAB, with a distinct amber left-border accent and the Clio avatar icon. They are visually and semantically separate from the chat panel.
+
+#### Trigger model
+
+Clio may generate a tip when:
+- A member has been active in the cluster (recent posts or logins) and Clio has a relevant observation about room dynamics, an upcoming discussion thread, or a content item she thinks the member would find valuable
+- A member's recent message (in the cluster Clio tab) surfaces a follow-up that would be better served as a push rather than a reply
+
+Tips are **not general announcements**. Every tip is targeted to one member for one reason. The `clio_tip_log` table stores tips with `user_id` + `cluster_id` + `tip_content` so each tip is person-specific and cluster-specific.
+
+#### Member interaction
+
+- Tip card appears with slide-in animation (bottom of viewport, above FAB)
+- Member can **dismiss** by tapping the × — sets `member_acted = true` on the row
+- Member can **tap to open** — opens the Clio FAB panel with context; also sets `member_acted = true`
+- If the member takes no action within 12h, the tip is auto-expired (TTL enforced server-side)
+
+#### Chatbox tip variant
+
+When Clio produces a tip **as part of a chat response** in the FAB panel, the tip portion of the reply is rendered visually distinct: amber background card, smaller 12px font, `border-amber-200` styling. The regular chat reply and the inline tip card are returned as separate fields (`reply` and `tip`) from the `/api/clio/chat` endpoint.
+
+#### Schema
+
+```sql
+CREATE TABLE clio_tip_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  user_id UUID NOT NULL REFERENCES profiles(id),
+  tip_content TEXT NOT NULL,
+  tip_source VARCHAR(32) DEFAULT 'proactive',  -- 'proactive' | 'chat_inline'
+  member_acted BOOLEAN,                         -- NULL = not yet interacted, TRUE = acted, FALSE = dismissed
+  acted_at TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '12 hours',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_clio_tip_log_user_pending
+  ON clio_tip_log(user_id, cluster_id)
+  WHERE member_acted IS NULL;
+```
+
+RLS: member reads own tips only (`user_id = auth.uid()`). Service role writes. Admin reads all for analytics.
+
+#### Admin visibility
+
+Tip delivery rate, act-through rate, and dismiss rate are surfaced in the LLM observability tab under `operation_key = 'clio_tip'`. This is a closed-loop signal — low act-through rate on a cluster is an Observer Domain 5 signal (Agent Performance).
+
+---
+
+### 7.12 Conversation History & Repetition Avoidance
+
+Every Clio chat request includes the full in-session conversation history as a `history` array (`[{role, content}, ...]`). The server assembles system context + history + new message for each LLM call. This ensures:
+
+1. **Clio never repeats herself within a session** — she reads her own prior responses and avoids restating what has already been said.
+2. **Context continuity** — she can reference earlier turns naturally ("as we were just discussing…") without the member having to re-state context.
+3. **Anti-sycophancy continuity** — the history surfaces if she slipped into a sycophantic phrase in a prior turn and the validator can catch the pattern.
+
+For the **Private 🔒 tab** (ephemeral mode), history persists in `sessionStorage` keyed to the session ID. On browser close or 12h expiry, the history is gone. The server receives history per-call but does not write it to the DB — only session metadata (`clio_ephemeral_sessions`) is persisted.
+
+For the **Clio tab** (cluster mode), history lives in component state only — it does not survive a page reload. This is intentional: the cluster is the persistent record; Clio's in-cluster conversation is ambient context, not a stored relationship ledger.
+
+#### Repetition guard — agent chatbox
+
+The Workshop panel tracks the last exchange number each member viewed (stored in localStorage keyed to `cluster_id`). When the panel re-opens after new exchanges have arrived:
+- The new-exchange count (`exchanges since last_viewed`) is shown as a badge on the collapsed strip
+- Opening the panel marks all exchanges up to the current latest as viewed
+- The full-history sheet shows exchanges **most recent first** to avoid requiring the member to scroll to find new content
+
+This avoids the failure mode where a member opens the Workshop panel, sees the same exchange they read last week, and concludes the agents are idle.
 
 ---
 

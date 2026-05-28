@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aggilo — Agentic Workflow Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a12;--bg2:#10101c;--bg3:#16162a;--card:#1a1a2e;--border:#2a2a4a;--teal:#2dd4bf;--peach:#ffb094;--purple:#8b5cf6;--blue:#3b82f6;--amber:#f59e0b;--red:#ef4444;--text:#e2e8f0;--dim:#94a3b8;--green:#22c55e}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+.hero{min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:60px 24px;background:radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.15),transparent 70%),radial-gradient(ellipse at 80% 100%,rgba(45,212,191,0.1),transparent 60%)}
+.hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--teal),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
+.hero p{font-size:1.1rem;color:var(--dim);max-width:700px;margin:0 auto}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:80px 0}
+.sec-label{text-transform:uppercase;letter-spacing:0.15em;font-size:0.75rem;color:var(--teal);font-weight:600;display:block;margin-bottom:12px}
+h2{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;letter-spacing:-0.02em;margin-bottom:24px}
+h3{font-size:1.15rem;font-weight:600;margin-bottom:12px;color:var(--peach)}
+.flow-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:32px}
+.flow-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;position:relative;transition:transform 0.3s,border-color 0.3s}
+.flow-card:hover{transform:translateY(-4px);border-color:var(--teal)}
+.flow-card .badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px}
+.badge-teal{background:rgba(45,212,191,0.15);color:var(--teal)}
+.badge-purple{background:rgba(139,92,246,0.15);color:var(--purple)}
+.badge-amber{background:rgba(245,158,11,0.15);color:var(--amber)}
+.badge-blue{background:rgba(59,130,246,0.15);color:var(--blue)}
+.badge-red{background:rgba(239,68,68,0.15);color:var(--red)}
+.badge-green{background:rgba(34,197,94,0.15);color:var(--green)}
+.flow-card p{color:var(--dim);font-size:0.9rem}
+.flow-card ul{list-style:none;margin-top:12px}
+.flow-card li{color:var(--dim);font-size:0.85rem;padding:4px 0;padding-left:18px;position:relative}
+.flow-card li::before{content:"→";position:absolute;left:0;color:var(--teal);font-size:0.8rem}
+.arch-row{display:flex;flex-wrap:wrap;gap:20px;margin-top:24px;align-items:stretch}
+.arch-box{flex:1;min-width:260px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:24px}
+.arch-box h4{font-size:0.95rem;font-weight:600;margin-bottom:10px;color:var(--text)}
+.arch-box p,.arch-box li{font-size:0.85rem;color:var(--dim)}
+.connector{text-align:center;padding:16px 0;font-size:1.5rem;color:var(--teal);opacity:0.6}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:0.85rem}
+th{text-align:left;padding:10px 14px;background:var(--bg3);color:var(--teal);font-weight:600;border-bottom:2px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid rgba(42,42,74,0.5);color:var(--dim)}
+tr:hover td{background:rgba(45,212,191,0.03)}
+.soul-tier{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:8px;font-size:0.75rem;font-weight:600}
+.tier0{background:rgba(45,212,191,0.12);color:var(--teal)}
+.tier1{background:rgba(255,176,148,0.12);color:var(--peach)}
+.tier2{background:rgba(139,92,246,0.12);color:var(--purple)}
+.tier3{background:rgba(59,130,246,0.12);color:var(--blue)}
+.phase-timeline{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+.phase-item{flex:1;min-width:180px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+.phase-item .num{font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,var(--teal),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.phase-item .label{font-size:0.8rem;color:var(--dim);margin-top:4px}
+footer{text-align:center;padding:40px 24px;color:var(--dim);font-size:0.8rem;border-top:1px solid var(--border)}
+@media(max-width:768px){.flow-grid{grid-template-columns:1fr}.arch-row{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+<div>
+<h1>Aggilo Agentic Workflow</h1>
+<p>Complete reference for the five-agent orchestrated system that powers Aggilo — from soul injection to cluster-level intelligence.</p>
+</div>
+</div>
+
+<section>
+<div class="container">
+<span class="sec-label">Interactive Diagram</span>
+<h2>Complete System Architecture</h2>
+<p style="color:var(--dim);margin-bottom:24px">Pan and zoom to explore the full Aggilo agentic workflow, from PWA users down to the LLM router and database.</p>
+<div style="background:var(--bg3); border:1px solid var(--border); border-radius:14px; height: 650px; overflow: hidden; position: relative; margin-bottom: 24px;">
+<div id="mermaid-target" style="width:100%; height:100%;"></div>
+</div>
+<script type="text/template" id="mermaid-source">
+%%{init: {'theme': 'dark', 'fontFamily': 'Inter, sans-serif', 'flowchart': {'curve': 'basis'}}}%%
+graph TD
+    classDef user fill:#2dd4bf,stroke:#0a0a12,stroke-width:2px,color:#0a0a12,font-weight:bold;
+    classDef backend fill:#8b5cf6,stroke:#0a0a12,stroke-width:2px,color:#fff,font-weight:bold;
+    classDef db fill:#f59e0b,stroke:#0a0a12,stroke-width:2px,color:#0a0a12,font-weight:bold;
+    classDef agent fill:#1a1a2e,stroke:#2dd4bf,stroke-width:2px,color:#e2e8f0,font-weight:bold;
+    classDef llm fill:#3b82f6,stroke:#0a0a12,stroke-width:2px,color:#fff,font-weight:bold;
+    classDef ext fill:#ef4444,stroke:#0a0a12,stroke-width:2px,color:#fff,font-weight:bold;
+    classDef error fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#fca5a5;
+
+    U((PWA User)):::user
+    ADMIN((Admin\nDashboard)):::user
+
+    U <-->|Authenticated request\nHMAC-signed callback| API[Laravel API\nYantraDispatcher]:::backend
+    API -->|LPUSH job to lane| Q[(Redis Queues\nhigh / medium / low\nBLPOP consumer)]:::db
+    Q -->|Valid job| ASM[Yantra\nContext Assembler\nSOUL tier + IDENTITY\n+ USER context]:::backend
+    Q -.->|Malformed / expired| DLQ[(Dead Letter\nQueue)]:::error
+
+    subgraph Agents [Five-Agent Orchestration Layer]
+        direction TB
+        CLIO["🟢 Clio  —  Tier 0 Full Soul\nOrchestrator · User-facing via FAB\nPersonas: campus_18_24 active\nCrisis protocol overrides all"]:::agent
+        SAGE["🟢 Sage  —  Tier 1 Community Soul\nCluster Host · Interventionist\nArc A→E · Crowdfund · Refinement\nWelfare escalation non-negotiable"]:::agent
+        ATLAS["🟢 Atlas  —  Tier 3 Minimal Soul\nContent Intel · Fetch + Score\nBrief variants · Zero-Content Protocol\nPoll RL injection"]:::agent
+        SCOUT["🟢 Scout  —  Tier 2 Ethical Soul\nGrowth Intel · Read-only\n20-post rule · PII-free\n3 signal types"]:::agent
+        OBS["🟠 Observer  —  One Line Only\nPlatform Intel · 9 Domains\nRead + Act (admin approval)\nfindings dedup hash"]:::agent
+
+        CLIO -->|Opt-in handoff\nN≥5 interactions| SAGE
+        SAGE -->|Issues brief\nup to 3 iterative rounds| ATLAS
+        ATLAS -.->|Returns scored\ncontent cards| SAGE
+        SAGE -->|SageWelfareEscalation\nhigh lane 15s TTL| CLIO
+        SCOUT -.->|PII-free intelligence\nreports to Supabase| CLIO
+        CLIO -->|ScoutDirectedJob\nunmet user need| SCOUT
+        OBS -.->|Findings + severity| ADMIN
+        ADMIN -->|Approve action| OBS
+        OBS -->|Triggers approved job| Q
+    end
+
+    ASM --> CLIO
+    ASM --> SAGE
+    ASM --> ATLAS
+    ASM --> SCOUT
+    ASM --> OBS
+
+    CLIO --> LLM{LLM Router\n12 op keys\nrouting_table.json}:::llm
+    SAGE --> LLM
+    ATLAS --> LLM
+    SCOUT --> LLM
+    OBS --> LLM
+
+    LLM -->|clio_onboarding_turn\nclio_connection_introduction| CLAUDE[Claude Opus 4.6\nHigh-stakes]:::llm
+    LLM -->|clio_standard_turn\nsage_standard_post\natlas_hook_generation| NIM[Kimi K2.5\nvia NVIDIA NIM\n40 RPM cap]:::llm
+    LLM -->|atlas_relevance_scoring\nscout_community_read\ncluster_health_score| GROQ[Groq / Llama 3 8B\nBatch + Scoring\n100 RPM cap]:::llm
+    NIM -.->|Fallback on failure| MOON[Moonshot\nDirect API]:::llm
+
+    CLIO --> DB[(Supabase\nPostgreSQL\nRLS policies)]:::db
+    SAGE --> DB
+    ATLAS --> DB
+    SCOUT --> DB
+    OBS --> DB
+    API <-->|Read state start\nWrite result end| DB
+    DB -->|Supabase Realtime\nlive push| U
+    DB -->|Firebase Cloud\nMessaging push\nmax 5/day/user| U
+
+    EXT[Public Web\nReddit / LinkedIn / Twitter]:::ext -.->|20-post rule\nno PII stored| SCOUT
+    EXT -.->|API / RSS first\nChrome fallback| ATLAS
+</script>
+</div>
+</section>
+
+<section>
+<div class="container">
+<span class="sec-label">Agent Hierarchy</span>
+<h2>The Five Agents — Soul to Action</h2>
+<p style="color:var(--dim);max-width:800px;margin-bottom:8px">Every agent inherits from <strong style="color:var(--teal)">AGGILO_SOUL.md</strong> — the philosophical root — via a tiered injection system that gives each agent exactly the soul material it needs.</p>
+
+<div class="flow-grid">
+<div class="flow-card">
+<span class="badge badge-teal">Tier 0 — Full Soul</span>
+<h3>🟢 Clio — Orchestrator</h3>
+<p>The only agent users ever meet. Personal companion, cluster creator, and emotional intelligence layer. She orchestrates all other agents.</p>
+<ul>
+<li>User-facing conversational AI via FAB</li>
+<li>Demographic persona system (Campus 18-24, Momentum 25-35, Anchor 36-50+)</li>
+<li>Platform rollout arc 1–10 (feature tiers per cohort: cluster discovery → matchmaking → DMs → premium)</li>
+<li>Introduces Sage after N≥5 interactions + user opt-in</li>
+<li>Crisis response protocol (overrides all other rules)</li>
+<li>2-message limit per cluster per 24h</li>
+<li>LLM: Claude for onboarding/intros, Kimi K2.5 for standard turns</li>
+</ul>
+</div>
+
+<div class="flow-card">
+<span class="badge badge-amber">Tier 1 — Community Soul</span>
+<h3>🟢 Sage — Cluster Host</h3>
+<p>Active interventionist growth guide for clusters. Shapes direction using three navigational coordinates: purpose, demographic, present moment.</p>
+<ul>
+<li>Cluster-scoped only — zero cross-cluster awareness</li>
+<li>Arc phases A→E (Cold Start → Self-Sustaining)</li>
+<li>Issues content briefs to Atlas (up to 3 iterative rounds)</li>
+<li>Polls for RL signal, description refinement proposals</li>
+<li>Welfare escalation to Clio (non-negotiable)</li>
+<li>Register adjusts by arc phase: patient → honest → playful → direct → minimal</li>
+<li>LLM: Kimi K2.5 standard, Claude for conflict intervention</li>
+</ul>
+</div>
+
+<div class="flow-card">
+<span class="badge badge-blue">Tier 3 — Minimal Soul</span>
+<h3>🟢 Atlas — Content Intelligence</h3>
+<p>Background content fetch and scoring engine. Finds real-world content for clusters via API/RSS-first, Chrome fallback. Never user-facing — all output goes through Sage.</p>
+<ul>
+<li>Briefed exclusively by Sage (sole principal)</li>
+<li>Relevance ≥0.80 + Demographic ≥0.80 scoring thresholds</li>
+<li>Brief variants: cold / warm / depth / reengagement / synthesis_request</li>
+<li>Zero-Content Protocol: synthesis_mode: true with transparent framing</li>
+<li>Format detection: article, video, data snippet, thread</li>
+<li>Shared Redis crawl cache (1h TTL) across overlapping clusters</li>
+<li>Poll RL context injected into every Atlas brief from cluster_polls</li>
+<li>LLM: Kimi K2.5 for hooks, Groq/Llama 3 8B for scoring</li>
+</ul>
+</div>
+
+<div class="flow-card">
+<span class="badge badge-purple">Tier 2 — Ethical Soul</span>
+<h3>🟢 Scout — Growth Intelligence</h3>
+<p>Read-only internet intelligence agent. Reads Reddit, LinkedIn, Twitter/X. Produces structured reports. Never posts externally — structurally cannot.</p>
+<ul>
+<li>20-post minimum observation threshold per community</li>
+<li>Zero PII storage — paraphrased patterns only</li>
+<li>3 signal types: people, community, gap intelligence</li>
+<li>Monthly accuracy calibration against real conversions</li>
+<li>Clio-triggered directed discovery for unmet needs</li>
+<li>30-day stale window auto-expiry on findings</li>
+<li>LLM: Kimi K2.5 for analysis, Groq for scoring</li>
+</ul>
+</div>
+
+<div class="flow-card">
+<span class="badge badge-red">One Line Only</span>
+<h3>🟠 Aggilo Observer — Platform Intelligence</h3>
+<p>Platform-wide AI inference across 9 observation domains. Reads everything, surfaces findings to admin dashboard. Never interacts with users.</p>
+<ul>
+<li>9 domains: Cluster Health, Growth, Monetisation, Crowdfund, Agent Perf, Content Gaps, Underserved Demo, Safety, Scout Pipeline</li>
+<li>Read + Act authority with mandatory admin approval</li>
+<li>Severity tiers: Critical → High → Medium → Low</li>
+<li>Safety domain runs every 2 hours</li>
+<li>Daily digest aggregation to admin</li>
+<li>LLM: Kimi K2.5 for inference, Groq for scoring</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+
+<section style="background:var(--bg2)">
+<div class="container">
+<span class="sec-label">Data Flow</span>
+<h2>How a User Message Becomes a Connection</h2>
+<div class="arch-row">
+<div class="arch-box">
+<h4>1. User → Laravel</h4>
+<p>Authenticated PWA user sends message. Laravel's YantraDispatcher creates a job with HMAC-signed callback URL.</p>
+</div>
+<div class="arch-box">
+<h4>2. Redis Queue</h4>
+<p>Job dispatched to priority lanes: <code>high</code> (real-time), <code>medium</code> (scheduled), <code>low</code> (batch). BLPOP consumer pops by priority.</p>
+</div>
+<div class="arch-box">
+<h4>3. Yantra Assembly</h4>
+<p>Context assembler builds prompt: Soul tier → Agent SOUL → IDENTITY → USER context → Job payload. Version header injected.</p>
+</div>
+</div>
+<div class="connector">↓</div>
+<div class="arch-row">
+<div class="arch-box">
+<h4>4. LLM Router</h4>
+<p>Admin-configurable routing table. 12 operation keys mapped to providers. Claude for high-stakes, Kimi K2.5 for volume, Groq for overflow.</p>
+</div>
+<div class="arch-box">
+<h4>5. Supabase State</h4>
+<p>All state persisted: sessions, cluster data, agent memory, findings. Yantra is stateless between turns — reads at start, writes at end.</p>
+</div>
+<div class="arch-box">
+<h4>6. Response → User</h4>
+<p>Callback to Laravel with HMAC verification. Response written to Supabase. Supabase Realtime pushes to user's PWA. Latency target: &lt;30s.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<span class="sec-label">Agent Interactions</span>
+<h2>The Sage ↔ Atlas Content Loop</h2>
+<p style="color:var(--dim);margin-bottom:24px">The most complex inter-agent workflow: Sage briefs Atlas, reviews cards, refines iteratively, then posts editorially to the cluster.</p>
+<div class="arch-row">
+<div class="arch-box" style="border-color:var(--peach)">
+<h4 style="color:var(--peach)">Sage Issues Brief</h4>
+<p>Contains: cluster AGGIL segment, arc phase, format preference, 72h exclusion list, poll RL context, refinement feedback from prior rounds.</p>
+</div>
+<div class="arch-box" style="border-color:var(--blue)">
+<h4 style="color:var(--blue)">Atlas Returns Cards</h4>
+<p>Scored batch with relevance + demographic confidence. Each card: headline, source URL, conversation hook, format, synthesis flag.</p>
+</div>
+<div class="arch-box" style="border-color:var(--peach)">
+<h4 style="color:var(--peach)">Sage Reviews</h4>
+<p>Checks: right depth for arc phase? Right format? Specific hooks? Local sources where relevant? No 72h repeats? May request up to 2 more rounds.</p>
+</div>
+<div class="arch-box" style="border-color:var(--green)">
+<h4 style="color:var(--green)">Editorial Post</h4>
+<p>Sage writes the cluster post in her communal voice ("we"), with source attribution. If synthesis, transparent framing + follow-up poll.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section style="background:var(--bg2)">
+<div class="container">
+<span class="sec-label">Cluster Lifecycle</span>
+<h2>Arc Phase Progression (A → E)</h2>
+<div class="phase-timeline">
+<div class="phase-item"><div class="num">A</div><div class="label">Cold Start</div><p style="font-size:0.75rem;color:var(--dim);margin-top:6px">Orienting, patient. Clio holds space. Atlas serves accessible content.</p></div>
+<div class="phase-item"><div class="num">B</div><div class="label">First Friction</div><p style="font-size:0.75rem;color:var(--dim);margin-top:6px">Honest, steady. Real opinions emerging. Sage holds conflict without anxiety.</p></div>
+<div class="phase-item"><div class="num">C</div><div class="label">Cohesion</div><p style="font-size:0.75rem;color:var(--dim);margin-top:6px">Lighter, celebratory. Shared vocabulary forming. Deeper references.</p></div>
+<div class="phase-item"><div class="num">D</div><div class="label">Depth</div><p style="font-size:0.75rem;color:var(--dim);margin-top:6px">Direct, substantive. Hard questions. Research-grade Atlas content.</p></div>
+<div class="phase-item"><div class="num">E</div><div class="label">Self-Sustaining</div><p style="font-size:0.75rem;color:var(--dim);margin-top:6px">Minimal presence. Members self-initiate. Sage's highest success state.</p></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<span class="sec-label">Soul Injection</span>
+<h2>Tiered Soul Architecture</h2>
+<table>
+<thead><tr><th>Tier</th><th>Agent</th><th>Token Budget</th><th>What Gets Injected</th></tr></thead>
+<tbody>
+<tr><td><span class="soul-tier tier0">Tier 0</span></td><td>Clio</td><td>~3,200</td><td>Full AGGILO_SOUL.md — all 9 sections. Cosmology, Creed, Sacred, Scripture, Prohibitions, Silence, Situations, Duties, The Line.</td></tr>
+<tr><td><span class="soul-tier tier1">Tier 1</span></td><td>Sage</td><td>~900</td><td>Community extract: Creed items 2-7, Sacred (3 of 4), 5 Prohibitions, Silence (full), Situation 02 only, Group Duties row, The Line.</td></tr>
+<tr><td><span class="soul-tier tier2">Tier 2</span></td><td>Scout</td><td>~400</td><td>Ethical constraints: Creed items 2+7, All 8 Prohibitions, The Line.</td></tr>
+<tr><td><span class="soul-tier tier3">Tier 3</span></td><td>Atlas</td><td>~180</td><td>Minimal floor: Creed item 2 (adapted), 2 Prohibitions, The Line.</td></tr>
+</tbody>
+</table>
+<p style="color:var(--dim);font-size:0.85rem;margin-top:16px"><strong>The One Line</strong> — injected at every tier without exception: <em>"The agent must never treat a human being as a means to a metric."</em></p>
+</div>
+</section>
+
+<section style="background:var(--bg2)">
+<div class="container">
+<span class="sec-label">Infrastructure</span>
+<h2>Technology Stack</h2>
+<table>
+<thead><tr><th>Component</th><th>Technology</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td>Mobile App</td><td>PWA (Progressive Web App)</td><td>Browser-based, mobile-first</td></tr>
+<tr><td>Backend API</td><td>Laravel (PHP 8.2+)</td><td>Auth, routing, job dispatch, callbacks</td></tr>
+<tr><td>Database</td><td>Supabase (PostgreSQL)</td><td>All state, agent memory, RLS policies</td></tr>
+<tr><td>Real-time</td><td>Supabase Realtime</td><td>DMs, live updates to PWA</td></tr>
+<tr><td>AI Agents</td><td>Yantra (Docker)</td><td>FastAPI workers, context assembly</td></tr>
+<tr><td>Queue</td><td>Redis (3 lanes)</td><td>high/medium/low priority BLPOP</td></tr>
+<tr><td>LLM Primary</td><td>Kimi K2.5 via NVIDIA NIM</td><td>High-volume: standard turns, posts, hooks</td></tr>
+<tr><td>LLM High-stakes</td><td>Claude Opus 4.6</td><td>Onboarding, introductions, conflict</td></tr>
+<tr><td>LLM Overflow</td><td>Groq / Llama 3 8B</td><td>Scoring, batch, Scout reads</td></tr>
+<tr><td>Push</td><td>Firebase Cloud Messaging</td><td>Notifications (max 5/day/user)</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="container">
+<span class="sec-label">Document Authority</span>
+<h2>Authority Hierarchy</h2>
+<div class="arch-row">
+<div class="arch-box" style="border-left:3px solid var(--teal)">
+<h4>1. AGGILO_SOUL.md <span style="color:var(--teal);font-size:0.75rem">Root — overrides everything</span></h4>
+<p>Philosophical foundation. What the agent believes before it does anything.</p>
+</div>
+<div class="arch-box" style="border-left:3px solid var(--purple)">
+<h4>2. SOUL_INJECTION_MAP.md</h4>
+<p>Governs which soul sections each agent receives.</p>
+</div>
+<div class="arch-box" style="border-left:3px solid var(--blue)">
+<h4>3. SPEC_ADDENDUM.md</h4>
+<p>Scout outreach, card model, privacy gate, calibration queue.</p>
+</div>
+</div>
+<div class="arch-row" style="margin-top:12px">
+<div class="arch-box" style="border-left:3px solid var(--amber)">
+<h4>4. YANTRA_BRIDGE_SPEC.md</h4>
+<p>Laravel ↔ Python inter-service contract.</p>
+</div>
+<div class="arch-box" style="border-left:3px solid var(--peach)">
+<h4>5. CLIO_SAGE_HANDOFF.md</h4>
+<p>Opt-in flow, handoff packet, persona signal.</p>
+</div>
+<div class="arch-box" style="border-left:3px solid var(--dim)">
+<h4>6–8. Agent SOULs → AGENTS → Feature Specs</h4>
+<p>Each level narrower in scope. Conflicts resolved upward.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section style="background:var(--bg2)">
+<div class="container">
+<span class="sec-label">Implementation Phases</span>
+<h2>Build Sequence</h2>
+<table>
+<thead><tr><th>Phase</th><th>What</th><th>Key Deliverable</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>Foundation</td><td>Read SOUL, set secrets, confirm LLM keys</td></tr>
+<tr><td>1</td><td>Infrastructure</td><td>Redis queues, Supabase schema, Yantra skeleton, full loop test</td></tr>
+<tr><td>2</td><td>Soul Injection</td><td>Section alias files, soul_loader.py, version headers</td></tr>
+<tr><td>3</td><td>Clio</td><td>Worker, persona selection, Sage introduction logic, ≤30s latency</td></tr>
+<tr><td>4</td><td>Atlas</td><td>API/RSS crawl, relevance scoring, synthesis mode, poll RL injection, Zero-Content Protocol</td></tr>
+<tr><td>5</td><td>Sage</td><td>Cluster context, Atlas dialogue, arc phases, description refinement</td></tr>
+<tr><td>6</td><td>Scout</td><td>Platform reads, PII-free reports, Clio intelligence feed</td></tr>
+<tr><td>7</td><td>Observer</td><td>9 domains, admin dashboard, approval → job pipeline</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="container">
+<span class="sec-label">Queue Job Registry</span>
+<h2>All Job Types — Priority, TTL &amp; Payload</h2>
+<p style="color:var(--dim);margin-bottom:16px">Every job dispatched by <code>YantraDispatcher</code> conforms to this registry. Malformed or expired jobs route to the Dead Letter Queue.</p>
+<table>
+<thead><tr><th>job_type</th><th>Lane</th><th>TTL</th><th>Callback</th><th>Worker</th></tr></thead>
+<tbody>
+<tr><td>clio_turn</td><td><span style="color:var(--teal)">high</span></td><td>30s</td><td>required</td><td>ClioWorker</td></tr>
+<tr><td>sage_cluster_event</td><td><span style="color:var(--teal)">high</span></td><td>30s</td><td>required</td><td>SageWorker</td></tr>
+<tr><td>SageWelfareEscalation</td><td><span style="color:var(--teal)">high</span></td><td>15s</td><td>none</td><td>SageWorker</td></tr>
+<tr><td>atlas_brief</td><td><span style="color:var(--amber)">medium</span></td><td>30s</td><td>none</td><td>AtlasWorker</td></tr>
+<tr><td>sage_reengagement</td><td><span style="color:var(--amber)">medium</span></td><td>45s</td><td>none</td><td>SageWorker</td></tr>
+<tr><td>SageDescriptionProposal</td><td><span style="color:var(--amber)">medium</span></td><td>30s</td><td>none</td><td>SageWorker</td></tr>
+<tr><td>SageCrowdfundPromptJob</td><td><span style="color:var(--amber)">medium</span></td><td>45s</td><td>none</td><td>SageWorker</td></tr>
+<tr><td>SagePollAcknowledgement</td><td><span style="color:var(--amber)">medium</span></td><td>30s</td><td>none</td><td>SageWorker</td></tr>
+<tr><td>ScoutDirectedJob</td><td><span style="color:var(--amber)">medium</span></td><td>60s</td><td>none</td><td>ScoutWorker</td></tr>
+<tr><td>atlas_pulse_refresh</td><td><span style="color:var(--dim)">low</span></td><td>120s</td><td>none</td><td>AtlasWorker</td></tr>
+<tr><td>scout_discovery</td><td><span style="color:var(--dim)">low</span></td><td>120s</td><td>none</td><td>ScoutWorker</td></tr>
+<tr><td>ScoutAccuracyCalibrationJob</td><td><span style="color:var(--dim)">low</span></td><td>120s</td><td>none</td><td>ScoutWorker</td></tr>
+<tr><td>ScoutStaleCheck</td><td><span style="color:var(--dim)">low</span></td><td>30s</td><td>none</td><td>ScoutWorker</td></tr>
+<tr><td>Observer* (all 9 domains)</td><td><span style="color:var(--dim)">low</span></td><td>varies</td><td>none</td><td>ObserverWorker</td></tr>
+<tr><td>ObserverSafety</td><td><span style="color:var(--amber)">medium</span></td><td>—</td><td>none</td><td>ObserverWorker</td></tr>
+<tr><td>ObserverDailyDigest</td><td><span style="color:var(--dim)">low</span></td><td>—</td><td>none</td><td>ObserverWorker</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section style="background:var(--bg2)">
+<div class="container">
+<span class="sec-label">LLM Routing</span>
+<h2>14 Operation Keys — Provider Mapping</h2>
+<p style="color:var(--dim);margin-bottom:16px">Admin-managed <code>routing_table.json</code>. Rate limits enforced via Redis token bucket: NIM 40 RPM · Claude 5 RPM · Groq 100 RPM. NIM fallback → Moonshot direct API.</p>
+<table>
+<thead><tr><th>op_id</th><th>Primary</th><th>Fallback</th><th>Temp</th><th>Max Tokens</th></tr></thead>
+<tbody>
+<tr><td>clio_onboarding_turn</td><td><span style="color:var(--peach)">anthropic_claude</span></td><td>nvidia_nim_kimi</td><td>0.7</td><td>600</td></tr>
+<tr><td>clio_standard_turn</td><td><span style="color:var(--teal)">nvidia_nim_kimi</span></td><td>moonshot_direct</td><td>0.7</td><td>500</td></tr>
+<tr><td>clio_connection_introduction</td><td><span style="color:var(--peach)">anthropic_claude</span></td><td>nvidia_nim_kimi</td><td>0.6</td><td>400</td></tr>
+<tr><td>sage_arc_transition</td><td><span style="color:var(--teal)">nvidia_nim_kimi</span></td><td>moonshot_direct</td><td>0.65</td><td>500</td></tr>
+<tr><td>sage_conflict_intervention</td><td><span style="color:var(--peach)">anthropic_claude</span></td><td>nvidia_nim_kimi</td><td>0.6</td><td>400</td></tr>
+<tr><td>sage_standard_post</td><td><span style="color:var(--teal)">nvidia_nim_kimi</span></td><td>groq_llama3</td><td>0.7</td><td>300</td></tr>
+<tr><td>atlas_hook_generation</td><td><span style="color:var(--teal)">nvidia_nim_kimi</span></td><td>groq_llama3</td><td>0.3</td><td>256</td></tr>
+<tr><td>atlas_relevance_scoring</td><td><span style="color:var(--blue)">groq_llama3</span></td><td>groq_llama3</td><td>0.1</td><td>64</td></tr>
+<tr><td>scout_community_read</td><td><span style="color:var(--blue)">groq_llama3</span></td><td>nvidia_nim_kimi</td><td>0.2</td><td>500</td></tr>
+<tr><td>scout_placement_write</td><td><span style="color:var(--teal)">nvidia_nim_kimi</span></td><td>moonshot_direct</td><td>0.5</td><td>400</td></tr>
+<tr><td>user_md_compression</td><td><span style="color:var(--teal)">nvidia_nim_kimi</span></td><td>groq_llama3</td><td>0.3</td><td>600</td></tr>
+<tr><td>cluster_health_score</td><td><span style="color:var(--blue)">groq_llama3</span></td><td>—</td><td>0.1</td><td>200</td></tr>
+<tr><td>tool_proposal_analysis</td><td><span style="color:var(--peach)">anthropic_claude</span></td><td>nvidia_nim_kimi</td><td>0.4</td><td>800</td></tr>
+<tr><td>pre_check_structured</td><td><span style="color:var(--blue)">groq_llama3</span></td><td>groq_llama3</td><td>0.1</td><td>128</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="container">
+<span class="sec-label">Observer Domains</span>
+<h2>9 Observation Domains — Cadences &amp; Findings</h2>
+<table>
+<thead><tr><th>Domain</th><th>Job Name</th><th>Cadence</th><th>Severity Cap</th><th>Sample Finding</th></tr></thead>
+<tbody>
+<tr><td>Cluster Health</td><td><code>ObserverClusterHealth</code></td><td>Every 6h</td><td>medium</td><td>Phase B stall &gt;18 days, member concentration &gt;60%</td></tr>
+<tr><td>User Growth &amp; Retention</td><td><code>ObserverGrowthRetention</code></td><td>Daily 06:00</td><td>high</td><td>Gachibowli 22-26 cohort: high registration, 19% cluster join</td></tr>
+<tr><td>Monetisation Gaps</td><td><code>ObserverMonetisation</code></td><td>Weekly Mon</td><td>low</td><td>4 clusters show latent demand for private sub-groups</td></tr>
+<tr><td>Crowdfund Opportunities</td><td><code>ObserverCrowdfund</code></td><td>Weekly Mon</td><td>medium</td><td>Phase C+ cluster: 9 members with financial willingness language</td></tr>
+<tr><td>Agent Performance</td><td><code>ObserverAgentPerformance</code></td><td>Daily 06:00</td><td>high</td><td>Atlas synthesis rate &gt;20% threshold — source coverage gap</td></tr>
+<tr><td>Content Gaps</td><td><code>ObserverContentGaps</code></td><td>Every 6h</td><td>medium</td><td>Telugu-language content absent across 12 clusters, 45 days</td></tr>
+<tr><td>Underserved Demographics</td><td><code>ObserverUnderservedDemo</code></td><td>Weekly Tue</td><td>medium</td><td>31 female founders 25-32 Hyderabad — no cluster exists</td></tr>
+<tr><td style="color:var(--red)">Abuse &amp; Safety</td><td><code>ObserverSafety</code></td><td><strong>Every 2h</strong></td><td><strong>critical</strong></td><td>Account velocity anomaly — 7 clusters in 4 min + 23 identical DMs</td></tr>
+<tr><td>Scout Pipeline</td><td><code>ObserverScoutPipeline</code></td><td>Weekly Wed</td><td>medium</td><td>High-confidence finding aging &gt;30 days — act or lose window</td></tr>
+</tbody>
+</table>
+<p style="color:var(--dim);font-size:0.85rem;margin-top:16px"><strong>Deduplication:</strong> Each finding has a <code>finding_signature</code> hash. At 3× same high-severity finding pending → escalation tier. <code>ObserverDailyDigest</code> aggregates all findings daily at 07:00.</p>
+</div>
+</section>
+
+<section style="background:var(--bg2)">
+<div class="container">
+<span class="sec-label">Persona Registry</span>
+<h2>Clio Persona System</h2>
+<p style="color:var(--dim);margin-bottom:16px">Only personas with <code>status: active</code> may be loaded by Yantra. Anchor is the safe fallback for any unmatched demographic.</p>
+<table>
+<thead><tr><th>Persona</th><th>Age Bracket</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Explorer</td><td>13–17</td><td><span style="color:var(--dim)">draft</span></td><td>Not loadable. Falls back to Anchor.</td></tr>
+<tr><td>Campus Connect</td><td>18–24</td><td><span style="color:var(--green)">✓ active</span></td><td>Primary launch persona. Path: <code>personas/campus_18_24/IDENTITY.md</code></td></tr>
+<tr><td>Momentum</td><td>25–35</td><td><span style="color:var(--green)">✓ active</span></td><td>Primary demographic persona. Path: <code>personas/momentum_25_35/IDENTITY.md</code></td></tr>
+<tr><td>Anchor <em>(fallback)</em></td><td>36–50+</td><td><span style="color:var(--green)">✓ active</span></td><td>Mandatory neutral/safe fallback. Zero slang, professional tone. Path: <code>personas/anchor_36_50/IDENTITY.md</code></td></tr>
+</tbody>
+</table>
+<p style="color:var(--dim);font-size:0.85rem;margin-top:16px">Persona status lifecycle: <code>draft → review → approved → active</code>. Only one persona per demographic may be <code>active</code> at any time. <code>SOUL_EXTRACT.md</code> is loaded as long-context compression fallback when token pressure approaches model window limits.</p>
+</div>
+</section>
+
+<footer>
+<p>Aggilo Agentic Workflow Reference · Internal Architecture Document · v1.2 · Updated 2026-05-07</p>
+<p style="margin-top:8px;color:var(--teal)">Source of truth: docs/MASTER_INSTRUCTIONS.md</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+    mermaid.initialize({ startOnLoad: false, theme: 'dark', fontFamily: 'Inter, sans-serif' });
+    
+    document.addEventListener("DOMContentLoaded", async function() {
+        const element = document.getElementById('mermaid-source');
+        const graphDefinition = element.textContent;
+        const container = document.getElementById('mermaid-target');
+        
+        try {
+            const { svg } = await mermaid.render('mermaid-svg', graphDefinition);
+            container.innerHTML = svg;
+            
+            const svgElement = container.querySelector('svg');
+            svgElement.style.width = '100%';
+            svgElement.style.height = '100%';
+            
+            svgPanZoom(svgElement, {
+                zoomEnabled: true,
+                controlIconsEnabled: true,
+                fit: true,
+                center: true,
+                minZoom: 0.1,
+                maxZoom: 10
+            });
+        } catch (e) {
+            console.error('Mermaid rendering failed', e);
+            container.innerHTML = '<p style="color:var(--red);padding:20px;">Diagram rendering failed.</p>';
+        }
+    });
+</script>
+</body>
+</html>

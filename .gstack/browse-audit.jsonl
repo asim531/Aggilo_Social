@@ -1,0 +1,12 @@
+{"ts":"2026-05-14T12:33:01.638Z","cmd":"goto","args":"http://localhost:3000","origin":"http://localhost:3000/","durationMs":331,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:33:10.508Z","cmd":"screenshot","args":"C:/Users/HP/AppData/Local/Temp/sisters-landing.png","origin":"http://localhost:3000/","durationMs":116,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:33:28.311Z","cmd":"snapshot","args":"-i","origin":"http://localhost:3000/","durationMs":20,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:33:36.642Z","cmd":"fill","args":"@e1 test@example.com","origin":"http://localhost:3000/","durationMs":17,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:33:36.825Z","cmd":"click","args":"@e2","origin":"http://localhost:3000/","durationMs":42,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:33:51.350Z","cmd":"screenshot","args":"C:/Users/HP/AppData/Local/Temp/sisters-nickname.png","origin":"http://localhost:3000/","durationMs":82,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:34:08.442Z","cmd":"snapshot","args":"-i","origin":"http://localhost:3000/","durationMs":8,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:34:15.427Z","cmd":"fill","args":"@e1 Noor","origin":"http://localhost:3000/","durationMs":9,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:34:15.604Z","cmd":"click","args":"@e2","origin":"http://localhost:3000/","durationMs":38,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T12:34:22.165Z","cmd":"screenshot","args":"C:/Users/HP/AppData/Local/Temp/sisters-gender.png","origin":"http://localhost:3000/","durationMs":80,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T14:38:28.792Z","cmd":"goto","args":"http://localhost:3000/cluster","origin":"http://localhost:3000/","durationMs":162,"status":"ok","hasCookies":false,"mode":"launched"}
+{"ts":"2026-05-14T14:38:29.395Z","cmd":"screenshot","args":"C:/Users/HP/AppData/Local/Temp/sisters-cluster.png","origin":"http://localhost:3000/","durationMs":106,"status":"ok","hasCookies":false,"mode":"launched"}

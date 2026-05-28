@@ -207,7 +207,115 @@ When a coding agent encounters a contradiction between this part and parts 1–5
 
 ---
 
-## 42. Done criteria for "the architecture is current"
+## 42. Context Engineering Contract (V3.7)
+
+> **Source:** Anthropic Engineering — *Effective context engineering for AI agents* (2025).
+> **Applied to:** Every agent LLM call on the platform.
+> **Authority:** This section governs how all four layers (§33) are assembled, budgeted, and managed at runtime.
+
+Context is a finite resource with diminishing marginal returns. The transformer architecture's pairwise attention relationships mean that as token count grows, the model's ability to accurately recall and reason over earlier content degrades ("context rot"). **Every agent LLM call must treat context as an attention budget, not a dump of everything that might be relevant.**
+
+### 42.1 The right altitude rule
+
+System prompts must occupy the Goldilocks zone between two failure modes:
+
+| Failure mode | Description | Consequence |
+|---|---|---|
+| **Over-prescriptive** | Hardcoded complex logic for every edge case | Fragile; breaks when the world changes; maintenance complexity compounds |
+| **Under-specified** | Vague high-level guidance with no concrete signals | Model cannot infer desired behaviour; output variance is high |
+
+The right altitude: **specific enough to guide behaviour, flexible enough to let the model reason**. Concrete heuristics, not decision trees. Examples (few-shot) for the canonical cases, not laundry lists of edge cases.
+
+### 42.2 Enforced token ceilings per layer
+
+| Layer | Content | Ceiling |
+|-------|---------|---------|
+| 1 — Platform super-prompt | Soul, safety floor, voice baseline, forbidden list | ≤ 600 tokens |
+| 2 — Agent character | Agent-specific character + decision framework | ≤ 800 tokens |
+| 3 — Cluster identity | Name, purpose, vocab, arc phase, member count | ≤ 400 tokens |
+| 4 — Per-call signals | History, welfare flags, @mentions, user message | Variable; trim oldest turns first |
+
+**80% rule:** When total assembled context exceeds 80% of the model's context window, Layer 4 history is trimmed from oldest turns first. If still over 80%, Layer 3 is compressed to key fields only. Layer 1 and Layer 2 are never trimmed — they are the immutable character contract.
+
+**Ceiling enforcement is the builder's responsibility.** Every `*-builder.ts` file (§35) must check token counts at assembly time and apply trimming before calling `llmCall()`. The ceiling violations are logged as `meta.context_trim_applied = true` in `llm_response_logs`.
+
+### 42.3 Just-in-time context loading
+
+Agents load identifiers, not pre-loaded data. At call time:
+
+- `cluster_id` → triggers dynamic fetch of arc phase, member count, purpose (from cache + DB)
+- `user_id` → triggers dynamic fetch of profile, premium status, key flags
+- `session_id` → client provides the history array; server does not re-fetch from DB
+
+The cold-start call (session turn 1, no history) is lean by construction. Context grows only as the conversation grows. This mirrors the "just in time" agentic pattern — agents navigate to what they need, rather than pre-loading everything.
+
+**Metadata as signal:** File paths, operation keys, cluster IDs, and turn numbers are all context signals. A request with `operation_key = 'sage_post_generation'` and `arc_phase = 'A'` already narrows the agent's task space before Layer 1 is read. Use these signals deliberately in tool design.
+
+### 42.4 Minimal viable tool set
+
+**Bloated tool sets cause ambiguous decision points.** If a human engineer cannot definitively say which tool should be used in a given situation, neither can the agent.
+
+Rules for the skill catalogue (`skill_registry`) and per-cluster tool sets:
+
+- Each tool must have a single, clearly defined purpose with no overlap with other tools
+- If two tools produce the same result, retire one
+- When adding a tool, the builder must name one existing tool that becomes either unnecessary or narrower in scope — tool addition must not increase total tool set complexity
+- Tool descriptions must be self-contained: the agent should never need to read two tool descriptions to know which to use
+
+### 42.5 Compaction for long-horizon sessions
+
+Sessions approaching the context window limit (>15 turns in Private tab; >20 turns in persistent Clio sessions) trigger compaction:
+
+```
+Compaction prompt: 
+"Summarise this conversation. Preserve: open questions, stated preferences, 
+key decisions made, key context Clio would need to continue. 
+Discard: pleasantries, acknowledgements, repeated points, tool output verbatim."
+
+Result: [compaction_summary] + last 3 turns replaces full history
+Logged: request_type = 'clio_compaction' in llm_response_logs
+```
+
+Compaction is tuned starting from maximum recall (ensure nothing critical is lost), then iterated toward precision (eliminate superfluous content). Tool results — once acted on — are candidates for first-pass discarding.
+
+### 42.6 Sub-agent architecture validates the hierarchy
+
+The platform's agent hierarchy (Clio orchestrates → Sage operates at cluster level → Atlas/Scout work in background) is structurally a sub-agent architecture:
+
+- Clio (lead agent): maintains high-level plan and user context; routes to sub-agents
+- Sage (sub-agent): performs focused cluster-level operations; returns condensed output to Clio
+- Atlas/Scout (sub-agents): explore content/community spaces; return scored summaries (not raw data) to their upstream agents
+
+Each sub-agent returns distilled summaries (target: 500–1,500 tokens), not raw exploration context. This keeps the lead agent's context lean and focused on synthesis, not raw data.
+
+### 42.7 Memory scaffolds — the reliability warning
+
+> **Research finding (arXiv:2603.29231):** Memory scaffolds universally hurt long-horizon performance across 10 models. Injecting accumulated raw memory into context degrades reliability even when it improves apparent context continuity.
+
+**Platform rule:** Persisted memory is **structured summaries only**, not raw conversation transcripts or log dumps.
+
+| Persist | Do not persist |
+|---------|---------------|
+| Key facts, preferences, cluster affiliations | Raw message history |
+| Relationship arc beat (1-10 scalar) | Redundant observations about the same topic |
+| Stated goals and open questions | Verbatim tool outputs |
+| Clio-noted welfare signals | Per-turn acknowledgements and pleasantries |
+
+The `MEMORY.md` files and `clio_conversations` table store structured facts, not transcripts. Any implementation that injects raw history into a persistent memory store violates this contract and must be refactored.
+
+### 42.8 Done criteria for context engineering compliance
+
+- [ ] Every `*-builder.ts` enforces token ceilings per layer (§42.2)
+- [ ] Context ceiling violations log `meta.context_trim_applied = true` to `llm_response_logs`
+- [ ] Compaction triggers at >15 turns (Private tab) and >20 turns (persistent)
+- [ ] Compaction events log as `request_type = 'clio_compaction'`
+- [ ] Every tool in `skill_registry` has a single-purpose description with no overlap
+- [ ] No agent loads raw conversation history from DB into the persistent memory context
+- [ ] Sub-agent results (Atlas, Scout) are condensed before delivery to the orchestrating agent
+
+---
+
+## 43. Done criteria for "the architecture is current"
 
 The platform's architecture corpus is current when:
 

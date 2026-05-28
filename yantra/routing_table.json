@@ -1,0 +1,184 @@
+{
+  "_meta": {
+    "description": "Admin-managed LLM operation routing table. Edit this file to change which model handles which operation. This is the canonical location — do not hardcode model selections in agent skill files.",
+    "canonical_doc": "architecture/system_implementation_prompt_part4.md §17 (LLM Router)",
+    "version": "2.0",
+    "last_updated": "2026-05-18",
+    "authority": "MASTER_INSTRUCTIONS.md §Document Authority Hierarchy"
+  },
+  "routing_table_version": "2.0",
+  "ops": [
+    {
+      "op_id": "clio_onboarding_turn",
+      "description": "Clio's first 3 turns with a new user — highest quality required",
+      "primary": "anthropic_claude",
+      "fallback": "nvidia_nim_kimi",
+      "max_tokens": 600,
+      "temperature": 0.7,
+      "quality_tier": "high_stakes"
+    },
+    {
+      "op_id": "clio_standard_turn",
+      "description": "Standard Clio chat turn",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "moonshot_direct",
+      "max_tokens": 500,
+      "temperature": 0.7,
+      "quality_tier": "high_volume"
+    },
+    {
+      "op_id": "clio_connection_introduction",
+      "description": "Clio introduces two users — requires nuanced, high-quality output",
+      "primary": "anthropic_claude",
+      "fallback": "nvidia_nim_kimi",
+      "max_tokens": 400,
+      "temperature": 0.6,
+      "quality_tier": "high_stakes"
+    },
+    {
+      "op_id": "sage_arc_transition",
+      "description": "Sage facilitates a cluster arc phase transition",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "moonshot_direct",
+      "max_tokens": 500,
+      "temperature": 0.65,
+      "quality_tier": "high_volume"
+    },
+    {
+      "op_id": "sage_conflict_intervention",
+      "description": "Sage intervenes in a cluster values conflict",
+      "primary": "anthropic_claude",
+      "fallback": "nvidia_nim_kimi",
+      "max_tokens": 400,
+      "temperature": 0.6,
+      "quality_tier": "high_stakes"
+    },
+    {
+      "op_id": "sage_standard_post",
+      "description": "Sage posts to cluster Pulse tab",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "groq_llama3",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "quality_tier": "high_volume"
+    },
+    {
+      "op_id": "atlas_hook_generation",
+      "description": "Atlas generates conversation hook per content card",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "groq_llama3",
+      "max_tokens": 256,
+      "temperature": 0.3,
+      "quality_tier": "high_volume"
+    },
+    {
+      "op_id": "atlas_relevance_scoring",
+      "description": "Atlas scores content relevance against AGGIL segment",
+      "primary": "groq_llama3",
+      "fallback": "groq_llama3",
+      "max_tokens": 64,
+      "temperature": 0.1,
+      "quality_tier": "batch"
+    },
+    {
+      "op_id": "scout_community_read",
+      "description": "Scout reads public internet signals and applies LLM inference to calibrate community patterns",
+      "primary": "groq_llama3",
+      "fallback": "nvidia_nim_kimi",
+      "max_tokens": 500,
+      "temperature": 0.2,
+      "quality_tier": "batch"
+    },
+    {
+      "op_id": "scout_placement_write",
+      "description": "Scout generates intelligence report for Clio based on observed signals + LLM inference",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "moonshot_direct",
+      "max_tokens": 400,
+      "temperature": 0.5,
+      "quality_tier": "high_volume"
+    },
+    {
+      "op_id": "user_md_compression",
+      "description": "Compress USER.md interaction history after 90 days",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "groq_llama3",
+      "max_tokens": 600,
+      "temperature": 0.3,
+      "quality_tier": "batch"
+    },
+    {
+      "op_id": "cluster_health_score",
+      "description": "Daily cluster health scoring job",
+      "primary": "groq_llama3",
+      "fallback": null,
+      "max_tokens": 200,
+      "temperature": 0.1,
+      "quality_tier": "batch"
+    },
+    {
+      "op_id": "tool_proposal_analysis",
+      "description": "Superior agent analyzes gaps and proposes tools for its subordinate agent — high reasoning task",
+      "primary": "anthropic_claude",
+      "fallback": "nvidia_nim_kimi",
+      "max_tokens": 800,
+      "temperature": 0.4,
+      "quality_tier": "high_stakes",
+      "_note": "Used when: Sage proposes Atlas tools, Clio proposes Sage/Scout tools, Observer proposes Clio tools"
+    },
+    {
+      "op_id": "pre_check_structured",
+      "description": "Lightweight structured pre-check — radical shift gate, scope preservation, PII scan",
+      "primary": "groq_llama3",
+      "fallback": "groq_llama3",
+      "max_tokens": 128,
+      "temperature": 0.1,
+      "quality_tier": "batch",
+      "_note": "Returns structured boolean + reason. Fast and cheap — must not block real-time flows."
+    },
+    {
+      "op_id": "agent_chatbox_exchange",
+      "description": "Agent Collaboration Chatbox — Clio+Sage exchange generation (dual-agent prompt)",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "groq_llama3",
+      "max_tokens": 600,
+      "temperature": 0.7,
+      "quality_tier": "high_volume",
+      "latency_target_ms": 8000,
+      "_note": "Generates both Sage's observation and Clio's response in a single structured call. Used by AgentChatboxExchange worker."
+    },
+    {
+      "op_id": "sage_feature_evaluation",
+      "description": "Sage 48h feature intelligence evaluation — signal aggregation + disqualification check",
+      "primary": "groq_llama3",
+      "fallback": "nvidia_nim_kimi",
+      "max_tokens": 400,
+      "temperature": 0.3,
+      "quality_tier": "batch",
+      "latency_target_ms": 15000,
+      "_note": "Runs every 48h per cluster. Evaluates accumulated feature signals against four disqualifying conditions."
+    },
+    {
+      "op_id": "sage_at_mention",
+      "description": "Sage response to @Sage mention — deduplication-aware, cluster-context-rich",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "groq_llama3",
+      "max_tokens": 400,
+      "temperature": 0.65,
+      "quality_tier": "high_volume",
+      "latency_target_ms": 8000,
+      "_note": "SLA: 30 seconds. Includes deduplication step (embedding similarity check) before generation."
+    },
+    {
+      "op_id": "sage_bridge_message",
+      "description": "Sage bridge message when human response is delayed on an escalated thread",
+      "primary": "nvidia_nim_kimi",
+      "fallback": "groq_llama3",
+      "max_tokens": 200,
+      "temperature": 0.6,
+      "quality_tier": "high_volume",
+      "latency_target_ms": 3000,
+      "_note": "Short, empathetic acknowledgement. Must never say 'the founder has been notified'. See SAGE_ANCHOR_PROTOCOL.md."
+    }
+  ]
+}

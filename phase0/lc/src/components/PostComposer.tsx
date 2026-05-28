@@ -222,9 +222,14 @@ export default function PostComposer({
           <p className="mt-2 text-xs text-rose-600">{error}</p>
         )}
         <div className="mt-1.5 flex items-center justify-between">
-          <p className="text-[11px] text-lc-muted">
-            Words are your entire presence here. Cmd/Ctrl + Enter to send.
-          </p>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-[11px] text-lc-muted">
+              Words are your entire presence here. Cmd/Ctrl + Enter to send.
+            </p>
+            <p className="text-[10px] text-lc-clio/80">
+              Mention @Sage if you want a thoughtful response.
+            </p>
+          </div>
           <button
             type="button"
             onClick={handleTipMe}

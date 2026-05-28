@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(gstack)",
+      "Bash(copy *)",
+      "PowerShell(Copy-Item *)",
+      "Bash(npx supabase *)",
+      "Bash(ping *)",
+      "Bash(grep \\\\\\\\1 *)",
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "PowerShell(\\(Get-Content 'C:\\\\Users\\\\HP\\\\.claude\\\\projects\\\\D--Aggilo-Social\\\\03c3ba28-f611-4806-843e-7a9711c8b871.jsonl'\\)[98] | ConvertFrom-Json | ForEach-Object { $_.message.content | Where-Object { $_.type -eq 'text' } | ForEach-Object { $_.text.Substring\\(0, [Math]::Min\\(2000, $_.text.Length\\)\\) } })",
+      "PowerShell($lines = Get-Content 'C:\\\\Users\\\\HP\\\\.claude\\\\projects\\\\D--Aggilo-Social\\\\03c3ba28-f611-4806-843e-7a9711c8b871.jsonl'; foreach \\($i in @\\(90,91,94,95,96,97,98,99,100\\)\\) { $obj = $lines[$i] | ConvertFrom-Json; $role = $obj.message.role; $texts = $obj.message.content | Where-Object { $_.type -eq 'text' }; foreach \\($t in $texts\\) { $preview = $t.text.Substring\\(0, [Math]::Min\\(500, $t.text.Length\\)\\); Write-Output \"--- Line $\\($i+1\\) [$role] ---\"; Write-Output $preview; Write-Output \"\" } })",
+      "PowerShell($lines = Get-Content 'C:\\\\Users\\\\HP\\\\.claude\\\\projects\\\\D--Aggilo-Social\\\\03c3ba28-f611-4806-843e-7a9711c8b871.jsonl'; foreach \\($i in @\\(100,102,104,106,108,110,112,114,116,118,120\\)\\) { $obj = $lines[$i] | ConvertFrom-Json; $role = $obj.message.role; $texts = $obj.message.content | Where-Object { $_.type -eq 'text' }; foreach \\($t in $texts\\) { $preview = $t.text.Substring\\(0, [Math]::Min\\(800, $t.text.Length\\)\\); Write-Output \"--- Line $\\($i+1\\) [$role] ---\"; Write-Output $preview; Write-Output \"\" } })"
+    ]
+  }
+}

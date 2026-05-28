@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Cluster Discovery Workflow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout.warning {
+            border-left-color: #f9ca24;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .callout.warning strong {
+            color: #f9ca24;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #e94560;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #c73a52;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🔍 Workflow 3: Cluster Discovery & Joining</h1>
+        <p class="subtitle">How users find, qualify for, join, leave, and re-join clusters</p>
+        <span class="badge">PRD — Aggilo Social Network</span>
+    </div>
+
+    <div class="container">
+
+        <!-- 5 WAYS -->
+        <div class="section">
+            <h2>5 Ways to Discover Clusters</h2>
+            <div class="mermaid">
+                flowchart LR
+                U["👤 User"] --> A["🏠 Dashboard<br>AGGIL Suggestions"]
+                U --> B["🔍 Search<br>Text + Filters"]
+                U --> C["🌐 Public Shareable Link<br>Searchable on Internet"]
+                U --> D["📊 Discovery Feed<br>Multiple vibrant tags"]
+                U --> E["📍 GPS Nearby<br>Mutual opt-in clusters"]
+
+                A --> Q["Qualification<br>Check"]
+                B --> Q
+                C --> Q
+                D --> Q
+                E --> Q
+
+                Q --> R{"Qualified?"}
+                R -->|Yes| S["✅ Can Join"]
+                R -->|No| T["❌ Not Visible<br>or Rejected"]
+
+                style S fill:#4ecdc4,color:#000
+                style T fill:#ff6b6b,color:#fff
+            </div>
+        </div>
+
+        <!-- QUALIFICATION -->
+        <div class="section">
+            <h2>🔒 Qualification Engine (Privacy Gating)</h2>
+            <p>Every cluster has privacy gates. A user must pass ALL gates to see or join a cluster:</p>
+            <div class="mermaid">
+                flowchart TD
+                A["User tries to<br>view/join cluster"] --> B{"Gate 1: Gender<br>Does user's gender<br>match cluster
+                setting?"}
+                B -->|"Cluster = Anyone"| C["✅ Pass"]
+                B -->|"Cluster = Male Only<br>User = Female"| Z1["🚫 INVISIBLE<br>Cluster not shown"]
+                B -->|"Cluster = Female Only<br>User = Male"| Z1
+                B -->|"Gender matches"| C
+
+                C --> D{"Gate 2: Age<br>Is user's current age<br>within cluster's range?"}
+                D -->|"Within range"| E["✅ Pass"]
+                D -->|"Outside range"| Z2["🚫 INVISIBLE<br>Cluster not shown"]
+
+                E --> F{"Gate 3: Location<br>What location<br>mode?"}
+                F -->|"Named/Regional/Hyper-local"| G{"User in<br>that area?"}
+                G -->|Yes| H["✅ Pass"]
+                G -->|No| I["Cluster still visible<br>(Relevance Score Lower)<br>Outsiders can join"]
+
+                F -->|"GPS + Landmark"| J{"User has<br>GPS shared?"}
+                J -->|No| Z3["🚫 INVISIBLE<br>Must share GPS"]
+                J -->|Yes| K{"User within<br>landmark range?"}
+                K -->|No| Z4["🚫 INVISIBLE<br>Out of range"]
+                K -->|Yes| H
+
+                H --> L["✅ CLUSTER VISIBLE<br>User can join"]
+
+                style L fill:#4ecdc4,color:#000
+                style Z1 fill:#ff6b6b,color:#fff
+                style Z2 fill:#ff6b6b,color:#fff
+                style Z3 fill:#ff6b6b,color:#fff
+                style Z4 fill:#ff6b6b,color:#fff
+            </div>
+
+            <div class="callout warning">
+                <strong>⚡ Key Rule:</strong> Gender and Age gates make clusters completely INVISIBLE — the user doesn't
+                even know they exist. This is privacy by design, not rejection. The "Oops!" screen only appears when
+                accessing via a direct shared link.
+            </div>
+            <div class="callout info">
+                <strong>🗣️ Clio & Observer Language Suggestion Behaviour (Phase 1):</strong> Language is a soft-match signal — no language gate is active in Phase 1 (except for Premium Clusters). However, the system proactively suggests language-specific clusters via two mechanisms:<br>
+                1. <strong>Clio Intelligence:</strong> Clio may suggest creating/joining language-specific clusters when she detects high gravity of need. Clio also surfaces the language context of recommended clusters.<br>
+                2. <strong>Observer Passive Detection:</strong> Aggilo Observer continuously monitors language distribution. If ≥8 members in a primary cluster share a secondary language (e.g., Telugu), AND ≥3 of them post in that language, Observer automatically queues a recommendation to spawn a Telugu-parallel instance of that cluster. There is no manual 'Request Language' button.
+            </div>
+        </div>
+
+        <!-- SEARCH -->
+        <div class="section">
+            <h2>🔍 Search Workflow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User taps Search icon"] --> B["Basic Search:<br>Text input field"]
+                B --> C["Results filtered by<br>qualification gates<br>(only qualified clusters shown)"]
+
+                A --> D["Advanced Search:<br>AGGIL Filter Panel"]
+                D --> D1["Filter: Age Range"]
+                D --> D2["Filter: Gender"]
+                D --> D3["Filter: Location (City/Area)"]
+                D --> D4["Filter: Interest Tags"]
+                D --> D5["Filter: Language"]
+                D1 --> E["Combined filter<br>applied to search"]
+                D2 --> E
+                D3 --> E
+                D4 --> E
+                D5 --> E
+                E --> C
+
+                C --> F["Search Results List"]
+                F --> G["Each result shows:<br>• Cluster name<br>• Member count<br>• Interest tags<br>• Cluster
+                Score<br>• Location chips"]
+                G --> H["Tap → Cluster Preview"]
+                H --> I["Join or Back"]
+            </div>
+
+            <h3>Search Result Ranking</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Factor</th>
+                        <th>Weight</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AGGIL match score</td>
+                        <td>40%</td>
+                        <td>Hyper-local + Interest overlap</td>
+                    </tr>
+                    <tr>
+                        <td>Member activity</td>
+                        <td>25%</td>
+                        <td>Recent posts + chat activity</td>
+                    </tr>
+                    <tr>
+                        <td>Member count</td>
+                        <td>15%</td>
+                        <td>Larger = more value, but not overwhelming</td>
+                    </tr>
+                    <tr>
+                        <td>Cluster Score</td>
+                        <td>10%</td>
+                        <td>Quality indicator</td>
+                    </tr>
+                    <tr>
+                        <td>Recency</td>
+                        <td>10%</td>
+                        <td>Newer clusters get a slight boost</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SHARED LINK -->
+        <div class="section">
+            <h2>🌐 Shared Link Flow (External Invitation)</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User shares cluster link<br>via WhatsApp/social media"] --> B["Recipient taps
+                link<br>aggilo.in/cluster/xyz"]
+                B --> C{"Recipient has<br>Aggilo account?"}
+                C -->|No| D["Show Shared Cluster<br>Web Page (public preview)"]
+                D --> E["See cluster name,<br>description, member count,<br>interest tags"]
+                E --> F["CTA: 'Download Aggilo<br>to join this cluster'"]
+                F --> G["App store / direct APK"]
+                G --> H["Register → then<br>qualification check"]
+
+                C -->|Yes| I{"Qualification<br>check passes?"}
+                I -->|Yes| J["✅ Cluster page opens<br>with 'Join' button"]
+                I -->|No| K["❌ 'This cluster has<br>different age/gender settings'<br>Show similar clusters<br>you DO
+                qualify for"]
+
+                J --> L["Tap Join → Joined!"]
+
+                style L fill:#4ecdc4,color:#000
+                style K fill:#ff6b6b,color:#fff
+            </div>
+
+            <div class="callout info">
+                <strong>🌐 Public Gateway:</strong> The public cluster preview page is the primary "Internet Gateway".
+                <br>1. <strong>Searchable Public Link:</strong> Every cluster has a unique, searchable link.
+                <br>2. <strong>Blind Qualification Gate:</strong> Visitors see meta-data but CANNOT see specific
+                criteria (Age/Gender) until they register.
+                <br>3. <strong>Conditional Gating:</strong> Qualification check only triggers if applicable.
+            </div>
+
+            <h3>Leave & Rejoin Rules</h3>
+            <div class="mermaid">
+                stateDiagram-v2
+                [*] --> Discovered : User finds cluster
+                Discovered --> Qualified : Passes qualification
+                Discovered --> Blocked : Fails qualification
+                Qualified --> Joined : Taps "Join"
+                Joined --> Active : Posts / chats
+                Joined --> Passive : Just browses
+                Active --> Left : Taps "Leave"
+                Passive --> Left : Taps "Leave"
+                Left --> Rejoined : Qualifies again + taps "Rejoin"
+                Rejoined --> Active
+                Rejoined --> Passive
+                Blocked --> [*] : Cluster invisible
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Rules</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Join</strong></td>
+                        <td>Instant. No approval needed. User must pass qualification gates.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Leave</strong></td>
+                        <td>User can leave at any time. Departure is silent.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rejoin</strong></td>
+                        <td>Allowed if user still qualifies. Previous posts visible. No cooldown.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Founder leaves</strong></td>
+                        <td>Founder can leave but retains Founder badge. Cluster continues.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- DASHBOARD SUGGESTIONS -->
+        <div class="section">
+            <h2>🏠 Dashboard AGGIL Suggestions</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User opens Dashboard"] --> B["Backend calculates<br>AGGIL suggestions"]
+                B --> C["Pull user's:<br>• DOB → current age<br>• Gender<br>• Location (named or GPS)<br>•
+                Interests<br>• Languages<br>• Saved preferences"]
+                C --> D["Query: clusters matching<br>≥60% AGGIL overlap<br>that user hasn't joined"]
+                D --> E["Merge with Scout<br>AI-Created clusters<br>for user's segment"]
+                E --> F["Rank by:<br>AGGIL match + activity<br>+ member count"]
+                F --> G["Display on Dashboard<br>sidebar as cards"]
+                G --> H["Each card shows:<br>• Cluster name<br>• AGGIL summary line<br>• Member count<br>• 'Take this'
+                button"]
+                H --> I{"User taps card"}
+                I -->|"Take this"| J["Join cluster immediately"]
+                I -->|"View details"| K["Open cluster preview"]
+                I -->|"Dismiss"| L["Remove from suggestions<br>+ learn preference"]
+            </div>
+        </div>
+
+        <!-- API -->
+        <div class="section">
+            <h2>API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/clusters/search?q=&filters=</code></td>
+                        <td>GET</td>
+                        <td>Search clusters with text + AGGIL filters</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/clusters/suggestions</code></td>
+                        <td>GET</td>
+                        <td>Get AGGIL-matched suggestions for dashboard</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/clusters/nearby</code></td>
+                        <td>GET</td>
+                        <td>GPS-based nearby cluster discovery</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/clusters/{id}/join</code></td>
+                        <td>POST</td>
+                        <td>Join a cluster (includes qualification check)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/clusters/{id}/leave</code></td>
+                        <td>POST</td>
+                        <td>Leave a cluster</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/clusters/{id}/qualify</code></td>
+                        <td>GET</td>
+                        <td>Check if user qualifies for a specific cluster</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/clusters/{id}/preview</code></td>
+                        <td>GET</td>
+                        <td>Public cluster preview (for shared links)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="02_cluster_creation.html" class="secondary">← Creation</a>
+        <a href="04_in_cluster_experience.html">Next: Experience →</a>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                primaryColor: '#e94560',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#e94560',
+                lineColor: '#7b8cde',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#2a2a3e',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }
+        });
+
+        // Diagram Zoom Functionality
+        const zoomState = {};
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) { diagrams[idx].style.transform = 'scale(1)'; }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

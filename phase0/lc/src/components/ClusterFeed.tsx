@@ -30,7 +30,7 @@ export default function ClusterFeed({
   userId,
   profile,
 }: ClusterFeedProps) {
-  const { posts, addOptimisticPost, replaceOptimisticPost, pollForSageReply } =
+  const { posts, addOptimisticPost, replaceOptimisticPost, updatePost, pollForSageReply } =
     useRealtimePosts({ initialPosts });
 
   // Track which top-level post IDs are awaiting a Sage response.
@@ -143,6 +143,7 @@ export default function ClusterFeed({
               currentProfile={profile}
               onOptimisticReply={addOptimisticPost}
               onConfirmReply={replaceOptimisticPost}
+              onPostEdited={updatePost}
               sageThinking={sageThinkingPosts.has(post.id)}
               onSageInvoked={handleSageInvoked}
             />

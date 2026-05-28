@@ -1,0 +1,14 @@
+node_modules/
+**/node_modules/
+**/.next/
+.git/
+Ideal_user/
+PRD/
+phase0/mvp/
+Revised_Screen_Prompts/
+docs/
+clio/
+sage/
+launch/
+architecture/
+atlas/

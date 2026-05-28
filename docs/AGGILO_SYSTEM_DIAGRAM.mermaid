@@ -1,0 +1,123 @@
+﻿```mermaid
+flowchart TD
+    %% ─── SOUL ROOT ───────────────────────────────────────────────
+    SOUL["🌐 AGGILO_SOUL.md\nPhilosophical root · v1.0\nAll agents inherit from this"]
+
+    %% ─── EXTERNAL ACTORS ─────────────────────────────────────────
+    USER["👤 User / PWA\nMobile web · Free tier"]
+    ADMIN["🔧 Admin\nConfig · Approvals · Dashboard"]
+
+    %% ─── ENTRY LAYER ─────────────────────────────────────────────
+    LANDING["📋 Landing Form\nPhase 1 signal → Supabase"]
+    LARAVEL["⚙️ Laravel API\nAuth · Routing · Job dispatch\nYantraDispatcher"]
+
+    %% ─── SOUL INJECTION ──────────────────────────────────────────
+    SMAP["📌 SOUL_INJECTION_MAP\nTier 0: Clio full\nTier 1: Sage community\nTier 2: Scout ethical\nTier 3: Atlas minimal"]
+
+    %% ─── AGENTS ──────────────────────────────────────────────────
+    CLIO["🟢 Clio\nOrchestrator · User voice\nDemographic register\nFree tier: AGGIL + clusters only\nSoul Tier 0 — Full"]
+    SAGE["🟢 Sage\nCluster host · Growth guide\nInterventionist · Cluster-scoped\nSoul Tier 1 — Community"]
+    ATLAS["🟢 Atlas\nContent intelligence\nFetch + AutoResearch + Score\nSoul Tier 3 — Minimal"]
+    SCOUT["🟢 Scout\nGrowth intelligence\nReads internet · Reports to Clio\nSoul Tier 2 — Ethical"]
+    OBSERVER["🟠 Aggilo Observer\nPlatform-wide AI inference\n9 observation domains\nPopulates admin dashboard"]
+
+    %% ─── INFRASTRUCTURE ──────────────────────────────────────────
+    REDIS["⚡ Redis Queue\nhigh · medium · low\nBLPOP consumer"]
+    SUPABASE["🗄️ Supabase\nAll state · Agent memory\nCluster data · Findings"]
+    LLMROUTER["🔀 LLM Router\nrouting_table.json\n12 admin-routed ops"]
+
+    %% ─── LLM PROVIDERS ───────────────────────────────────────────
+    CLAUDE["🔵 Claude Opus 4.6\nHigh-stakes ops\nOnboarding · Introductions\nConflict intervention"]
+    KIMI["🟣 Kimi K2.5\nHigh-volume ops\nStandard turns · Sage posts\nAtlas hooks"]
+    GROQ["⚫ Groq / Llama 3\nOverflow · Batch\nScoring · Scout reads\nObserver inference"]
+
+    %% ─── SOUL FLOWS ──────────────────────────────────────────────
+    SOUL -.->|"Tier 0 Full"| CLIO
+    SOUL -.->|"Tier 1 Community"| SAGE
+    SOUL -.->|"Tier 2 Ethical"| SCOUT
+    SOUL -.->|"Tier 3 Minimal"| ATLAS
+    SOUL -.->|"One Line only"| OBSERVER
+    SMAP -->|"resolves injection"| CLIO
+    SMAP -->|"resolves injection"| SAGE
+    SMAP -->|"resolves injection"| ATLAS
+    SMAP -->|"resolves injection"| SCOUT
+
+    %% ─── USER FLOWS ──────────────────────────────────────────────
+    USER -->|"message / session"| LARAVEL
+    USER -->|"onboarding form"| LANDING
+    LANDING -->|"AGGIL signal"| SUPABASE
+    LARAVEL -->|"clio_turn job"| REDIS
+    CLIO -->|"response callback"| LARAVEL
+    LARAVEL -->|"rendered response"| USER
+
+    %% ─── CLIO HANDOFF TO SAGE ────────────────────────────────────
+    CLIO -->|"Sage opt-in intro\nN≥5 interactions\nUser agrees"| SAGE
+    CLIO -.->|"FAB available always\nWelfare escalation"| SAGE
+
+    %% ─── SAGE ↔ ATLAS LOOP ───────────────────────────────────────
+    SAGE -->|"issues content brief\narc phase · AGGIL · format\npoll RL context"| ATLAS
+    ATLAS -->|"scored card batch\nAutoResearch verified\nup to 3 rounds"| SAGE
+    SAGE -->|"refinement feedback\ngo deeper · swap format\nregenerate hook"| ATLAS
+
+    %% ─── SAGE → CLUSTER ──────────────────────────────────────────
+    SAGE -->|"posts to cluster\nPulse tab · Posts feed\ntransparent if synthesis"| USER
+    SAGE -->|"description refinement\nproposal"| CLIO
+    CLIO -->|"scope + privacy check\napproves / returns"| SAGE
+
+    %% ─── CLIO → SCOUT ────────────────────────────────────────────
+    CLIO -->|"intelligence request"| SCOUT
+    SCOUT -->|"intelligence report\npatterns · communities\nnot named individuals"| CLIO
+    SCOUT -->|"reads public platforms\nReddit · LinkedIn · Twitter\nnever posts"| SCOUT
+
+    %% ─── OBSERVER ────────────────────────────────────────────────
+    SUPABASE -->|"all platform data\nread continuously"| OBSERVER
+    OBSERVER -->|"structured findings\n9 domains · severity scored"| ADMIN
+    ADMIN -->|"approves action"| OBSERVER
+    OBSERVER -->|"triggers job\nwith approval"| REDIS
+
+    %% ─── ADMIN ───────────────────────────────────────────────────
+    ADMIN -->|"routing_table.json\nLLM op config"| LLMROUTER
+    ADMIN -->|"Atlas source list\nconfig changes"| ATLAS
+    ADMIN -->|"cluster creation\npolicy decisions"| LARAVEL
+
+    %% ─── QUEUE → WORKERS ─────────────────────────────────────────
+    REDIS -->|"BLPOP · priority order"| CLIO
+    REDIS -->|"BLPOP · priority order"| SAGE
+    REDIS -->|"BLPOP · priority order"| ATLAS
+    REDIS -->|"BLPOP · priority order"| SCOUT
+    REDIS -->|"BLPOP · priority order"| OBSERVER
+
+    %% ─── LLM ROUTING ─────────────────────────────────────────────
+    CLIO -->|"LLM call"| LLMROUTER
+    SAGE -->|"LLM call"| LLMROUTER
+    ATLAS -->|"LLM call"| LLMROUTER
+    SCOUT -->|"LLM call"| LLMROUTER
+    OBSERVER -->|"LLM call"| LLMROUTER
+    LLMROUTER -->|"high-stakes ops"| CLAUDE
+    LLMROUTER -->|"high-volume ops"| KIMI
+    LLMROUTER -->|"batch · overflow"| GROQ
+
+    %% ─── SUPABASE READS/WRITES ───────────────────────────────────
+    CLIO <-->|"USER context\nsession state"| SUPABASE
+    SAGE <-->|"cluster state\narc phase\ndescription history"| SUPABASE
+    ATLAS <-->|"pulse cards\nengagement weights\ncalibration data"| SUPABASE
+    SCOUT -->|"intelligence reports"| SUPABASE
+    OBSERVER <-->|"findings\napproval state"| SUPABASE
+
+    %% ─── STYLES ──────────────────────────────────────────────────
+    classDef soul fill:#6B46C1,stroke:#553C9A,color:#fff,font-weight:bold
+    classDef agent fill:#1A6B5A,stroke:#145247,color:#fff
+    classDef infra fill:#374151,stroke:#1F2937,color:#fff
+    classDef llm fill:#1E40AF,stroke:#1E3A8A,color:#fff
+    classDef external fill:#92400E,stroke:#78350F,color:#fff
+    classDef observer fill:#B45309,stroke:#92400E,color:#fff
+    classDef map fill:#4B5563,stroke:#374151,color:#fff
+
+    class SOUL soul
+    class CLIO,SAGE,ATLAS,SCOUT agent
+    class OBSERVER observer
+    class REDIS,SUPABASE,LARAVEL,LLMROUTER infra
+    class CLAUDE,KIMI,GROQ llm
+    class USER,ADMIN,LANDING external
+    class SMAP map
+```

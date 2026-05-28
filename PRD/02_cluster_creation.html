@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Cluster Creation Workflow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout.warning {
+            border-left-color: #f9ca24;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .callout.warning strong {
+            color: #f9ca24;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #e94560;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #c73a52;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🔮 Workflow 2: Cluster Creation</h1>
+        <p class="subtitle">Three paths to creating a cluster: Manual Wizard, Clio Conversation, or Scout Auto-Creation
+        </p>
+        <span class="badge">PRD — Aggilo Social Network</span>
+    </div>
+
+    <div class="container">
+
+        <!-- THREE PATHS -->
+        <div class="section">
+            <h2>Three Paths to Cluster Creation</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User wants a<br>new cluster"] --> B{"How?"}
+                B -->|"Manual"| C["📝 4-Step Wizard<br>User fills AGGIL settings"]
+                B -->|"Conversational"| D["🤖 Clio Agent<br>Natural language chat"]
+                B -->|"AI-Discovered"| E["🔍 Scout Agent<br>Auto-creates trending clusters"]
+
+                C --> F["🔍 Duplicate Check"]
+                D --> F
+                E --> F
+
+                F --> G{"Similar cluster<br>exists?"}
+                G -->|Yes| H["Show existing clusters<br>'Want to join instead?'"]
+                H --> I{"User's choice"}
+                I -->|"Join existing"| J["✅ User joins<br>existing cluster"]
+                I -->|"Create anyway"| K["Discuss with Clio:<br>'What makes yours different?'"]
+                K --> L{"Clio convinced<br>it's different?"}
+                L -->|Yes| M["✅ Cluster Created"]
+                L -->|No| N["Clio recommends joining<br>existing cluster instead"]
+                G -->|No| M
+
+                style A fill:#e94560,color:#fff
+                style M fill:#4ecdc4,color:#000
+                style J fill:#4ecdc4,color:#000
+                style C fill:#1a1a2e,stroke:#e94560,color:#e0e0e8
+                style D fill:#1a1a2e,stroke:#4ecdc4,color:#e0e0e8
+                style E fill:#1a1a2e,stroke:#f9ca24,color:#e0e0e8
+            </div>
+
+            <div class="callout warning">
+                <strong>⚡ Critical Rule — Duplicate Prevention:</strong> Before ANY cluster is created (regardless of
+                method), the system MUST check for existing clusters with similar AGGIL settings and topics. This
+                prevents fragmentation and concentrates users into stronger communities.
+            </div>
+        </div>
+
+        <!-- AGGIL SETTINGS -->
+        <div class="section">
+            <h2>AGGIL Settings Configuration</h2>
+            <p>Every cluster is defined by these 5 dimensions:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dimension</th>
+                        <th>Icon</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Age</strong></td>
+                        <td>🎂</td>
+                        <td>DOB-based range. Manual or AI-suggested.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gender</strong></td>
+                        <td>👤</td>
+                        <td>Default: Anyone. Optional: Male/Female. Privacy-gated.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Geography</strong></td>
+                        <td>📍</td>
+                        <td>Multiple Hyper-local locations (Building/Campus), Regional scope, GPS.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Purpose</strong></td>
+                        <td>💡</td>
+                        <td>Core reason for connection. Drivers Scout discovery.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tags</strong></td>
+                        <td>#</td>
+                        <td>Multiple vibrant hashtags (Hooks). Captures emotions/needs.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Language</strong></td>
+                        <td>🗣️</td>
+                        <td>Multi-language support. Primary + secondary.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- MANUAL PATH -->
+        <div class="section">
+            <h2>`MANUAL` Path 1: 4-Step Wizard</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Tap 'Create Cluster' button"] --> B["Step 1: Purpose of Connection"]
+                B --> C["Step 2: Add Tags<br>(multiple allowed)"]
+                C --> D["Step 3: AGGIL Settings"]
+                D --> D1["Age Range:<br>Manual entry OR<br>AI suggestion based on DOB"]
+                D --> D2["Gender:<br>Anyone (default)<br>Male only / Female only"]
+                D --> D3["Location:<br>Hyper-local (Building/Street)<br>Named cities / areas<br>Region / state<br>GPS
+                landmark + range"]
+                D --> D4["Language:<br>Select supported languages"]
+                D1 --> E["Step 4: Review + Cluster Score"]
+                D2 --> E
+                D3 --> E
+                D4 --> E
+                E --> F["Cluster Score: XX%<br>(quality indicator)"]
+                F --> G["Tap 'Create'"]
+                G --> H["🔍 Duplicate Check<br>(API call)"]
+                H --> I{"Duplicates<br>found?"}
+                I -->|No| J["✅ Cluster Created!<br>User is auto-joined as Founder"]
+                I -->|Yes| K["Show similar clusters<br>'Join or create new?'"]
+
+                style A fill:#e94560,color:#fff
+                style J fill:#4ecdc4,color:#000
+            </div>
+
+            <h3>Cluster Score Calculation</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Factor</th>
+                        <th>Weight</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Purpose & Vibrant Tags</td>
+                        <td>25%</td>
+                        <td>Clear purpose + 3+ vibrant emotional tags = higher score</td>
+                    </tr>
+                    <tr>
+                        <td>Location precision</td>
+                        <td>20%</td>
+                        <td>Hyper-local/GPS > named city > state</td>
+                    </tr>
+                    <tr>
+                        <td>Age range width</td>
+                        <td>20%</td>
+                        <td>Narrower = more focused = higher score</td>
+                    </tr>
+                    <tr>
+                        <td>Name + Description quality</td>
+                        <td>15%</td>
+                        <td>AI checks for clarity and uniqueness</td>
+                    </tr>
+                    <tr>
+                        <td>Estimated audience size</td>
+                        <td>20%</td>
+                        <td>Balance between too narrow and too broad</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CLIO PATH -->
+        <div class="section">
+            <h2>`CLIO` Path 2: Conversational Creation</h2>
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as 👤 User
+                participant C as 🤖 Clio Agent
+                participant DB as 🗄️ Database
+                participant S as 🔍 Scout
+
+                U->>C: "I want a cluster for people who love hiking near Hyderabad"
+                C->>C: Extract intent: Interest=Hiking, Location=Hyderabad
+                C->>DB: Search existing clusters (hiking + Hyderabad)
+                DB-->>C: Found 1: "Trail Runners Hyd" (12 members)
+                C->>U: "I found 'Trail Runners Hyd' with 12 members. Want to join, or create something different?"
+                U->>C: "I want something specifically for weekend treks, not running"
+                C->>C: Refine: Interest=Weekend Trekking (distinct from running)
+                C->>U: "Got it! Let me set this up. A few questions:"
+                C->>U: "1. Age range? I'd suggest 20-40 based on trekking activity patterns"
+                U->>C: "Yes, that works"
+                C->>U: "2. Open to all genders or specific?"
+                U->>C: "All genders"
+                C->>U: "3. Languages?"
+                U->>C: "English and Telugu"
+                C->>S: Get trending topics for trekking + Hyderabad + 20-40
+                S-->>C: 3 trending topics found
+                C->>U: "Here's what I've configured:<br>Name: Weekend Trekkers Hyderabad<br>Interest: Trekking, Hiking,
+                Outdoors<br>Age: 20-40<br>Location: Hyderabad<br>Gender: All<br>Languages: English, Telugu<br>Cluster
+                Score: 84%<br><br>I also found 3 discussions to seed:<br>1. Best monsoon treks near Ananthagiri<br>2.
+                Gear checklist for Nallamala Hills<br>3. Safety tips for solo trekking<br><br>Ready to create?"
+                U->>C: "Perfect, create it!"
+                C->>DB: Create cluster with settings
+                DB-->>C: Cluster created
+                C->>U: "✅ 'Weekend Trekkers Hyderabad' is live! I've added 3 discussion starters. Share it to get your
+                first members."
+            </div>
+
+            <div class="callout info">
+                <strong>🤖 Collaborative Clio:</strong> Clio extracts AGGIL parameters from natural language and
+                <strong>deduces</strong> the ideal settings. She then presents these for user acceptance or editing
+                before proceeding to creation. The user remains the driver, with Clio providing deep-intelligence
+                suggestions and seeding Scout-discovered topics.
+                <br><br>
+                <strong>Voice (per Character Bible):</strong> Clio's conversational creation dialogue must follow the
+                Bible's principles: she has <em>opinions</em> about cluster design ("I'd tighten the age range — broader
+                sounds inclusive but it dilutes the signal"), she uses <em>specificity over warmth</em> ("Weekend treks,
+                not running — that distinction matters"), and she gently <em>challenges</em> when duplicates are
+                near-matches ("What makes yours different?"). she does NOT say "Got it!", "Amazing!", or manufacture
+                urgency. Voice specifics are in the active <code>clio/personas/*/IDENTITY.md</code>.
+            </div>
+        </div>
+
+        <!-- SCOUT PATH -->
+        <div class="section">
+            <h2>`SCOUT` Path 3: AI Auto-Creation</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Scout Agent<br>(runs every 6 hours)"] --> B["Crawl internet for<br>trending topics per<br>AGGIL
+                segment"]
+                B --> C["Score topics by<br>relevance to segment"]
+                C --> D{"Relevance score<br>for user/segment?"}
+
+                D -->|"≥90%"| E["Create cluster with<br>public shareable link"]
+                E --> F["🔍 Duplicate Check"]
+                F --> G{"Similar exists?"}
+                G -->|Yes| H["Do NOT create.<br>Add topic as discussion<br>to existing cluster"]
+                G -->|No| I["✅ Cluster created<br>with AI-seeded discussions"]
+                I --> J["Appears in Dashboard<br>AGGIL Suggestions"]
+
+                D -->|"<90%"| K["Show as suggestion card<br>on user's dashboard"]
+                    K --> L{"User taps<br>'Create this'?"}
+                    L -->|Yes| M["🔍 Duplicate Check"]
+                    M --> N{"Similar exists?"}
+                    N -->|Yes| O["Show similar clusters<br>User discusses with Clio"]
+                    N -->|No| P["✅ Cluster created<br>User is Founder"]
+                    L -->|No| Q["Card dismissed<br>or saved for later"]
+
+                    style A fill:#f9ca24,color:#000
+                    style I fill:#4ecdc4,color:#000
+                    style P fill:#4ecdc4,color:#000
+                    style H fill:#7b8cde,color:#fff
+            </div>
+
+            <h3>Scout Auto-Creation Rules</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rule</th>
+                        <th>Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Relevance ≥90%</td>
+                        <td>Create cluster with public link. No user action needed.</td>
+                    </tr>
+                    <tr>
+                        <td>Relevance <90%< /td>
+                        <td>Show as suggestion card. User decides.</td>
+                    </tr>
+                    <tr>
+                        <td>Duplicate detected</td>
+                        <td>Add the trending topic as a discussion to the existing cluster instead</td>
+                    </tr>
+                    <tr>
+                        <td>No AI badge</td>
+                        <td>AI-created clusters appear exactly like user-created ones.</td>
+                    </tr>
+                    <tr>
+                        <td>No creator/founder</td>
+                        <td>First active member can claim Founder status</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- LOCATION -->
+        <div class="section">
+            <h2>📍 Location Configuration — Deep Dive</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Location Setting<br>during creation"] --> B{"Which mode?"}
+
+                B -->|"Named"| C["Select specific cities/areas<br>e.g., Hyderabad + Bangalore"]
+                B -->|"Regional"| D["Select state/country<br>e.g., Telangana or India"]
+                B -->|"GPS"| E["Set landmark location<br>+ radius in km"]
+
+                C --> F["Cluster visible to<br>all users in those cities"]
+                D --> G["Cluster visible to<br>all users in that region"]
+                E --> H["Cluster visible ONLY to<br>users who also share GPS<br>AND are within range<br>AND match
+                demographics"]
+
+                F --> I["✅ No special<br>privacy requirements"]
+                G --> I
+                H --> J["🔒 Mutual GPS opt-in<br>required from both sides"]
+
+                style E fill:#f9ca24,color:#000
+                style J fill:#e94560,color:#fff
+            </div>
+
+            <div class="callout warning">
+                <strong>📍 GPS Landmark Rule:</strong> The GPS range is measured from a <em>fixed landmark</em> (e.g.,
+                "Charminar" or "HITEC City"), NOT from the creator's live GPS position. Both cluster creator AND the
+                visitor must have shared their GPS for the cluster to be visible.
+            </div>
+        </div>
+
+        <!-- POST-SPAWN EDITING RULES -->
+        <div class="section">
+            <h2>Post-Spawn Editing Rules</h2>
+            <p>Once a cluster has members, the Founder enters <strong>Window 2 (Post-Spawn)</strong> refinement. The
+                governing principle: <strong>no change may retroactively harm, eject, or disadvantage a member who
+                    joined in good faith.</strong> Clio enforces these rules automatically and will not process a
+                disallowed change.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Allowed Post-Spawn?</th>
+                        <th>Constraint</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Description text &amp; tone</td>
+                        <td>✅ Yes</td>
+                        <td>No restriction</td>
+                    </tr>
+                    <tr>
+                        <td>Seed questions</td>
+                        <td>✅ Yes</td>
+                        <td>Full rewrite allowed</td>
+                    </tr>
+                    <tr>
+                        <td>Interest tags — add / broaden</td>
+                        <td>✅ Yes</td>
+                        <td>Can only expand discoverability, not restrict it</td>
+                    </tr>
+                    <tr>
+                        <td>Cluster name</td>
+                        <td>✅ Yes</td>
+                        <td>Clio notifies existing members of the change</td>
+                    </tr>
+                    <tr>
+                        <td>Interest tags — narrow / remove</td>
+                        <td>❌ No</td>
+                        <td>Would disadvantage members who joined for those tags</td>
+                    </tr>
+                    <tr>
+                        <td>Age range — tighten</td>
+                        <td>❌ No</td>
+                        <td>Would retroactively exclude current members</td>
+                    </tr>
+                    <tr>
+                        <td>Gender filter — add restriction</td>
+                        <td>❌ No</td>
+                        <td>Cannot apply to a cluster members joined as open</td>
+                    </tr>
+                    <tr>
+                        <td>Core topic pivot</td>
+                        <td>❌ No</td>
+                        <td>Changes the fundamental identity members agreed to</td>
+                    </tr>
+                    <tr>
+                        <td>Geographic scope — tighten</td>
+                        <td>❌ No</td>
+                        <td>May exclude members in previously valid zones</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="callout info">
+                <strong>🤖 Clio's enforcement behaviour:</strong> When a Founder requests a disallowed change, Clio
+                explains the member-protection principle once, offers alternatives within the allowed scope, and stops.
+                She does not lecture. Pre-spawn (Stages 01–02 of the cluster card lifecycle), all parameters remain
+                fully editable — the constraint only applies after the first member joins.
+            </div>
+        </div>
+
+        <!-- API -->
+
+        <div class="section">
+            <h2>API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>POST /api/cluster/create</code></td>
+                        <td>POST</td>
+                        <td>Create a new cluster with AGGIL settings</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/cluster/check-duplicate</code></td>
+                        <td>POST</td>
+                        <td>Check for similar existing clusters</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/cluster/score</code></td>
+                        <td>GET</td>
+                        <td>Calculate cluster quality score</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/clio/chat</code></td>
+                        <td>POST</td>
+                        <td>Send message to Clio for conversational creation</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/scout/suggestions</code></td>
+                        <td>GET</td>
+                        <td>Get Scout-generated cluster suggestions</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/scout/claim-founder</code></td>
+                        <td>POST</td>
+                        <td>Claim Founder status on an AI-created cluster</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="01_registration_onboarding.html" class="secondary">← Registration</a>
+        <a href="03_cluster_discovery.html">Next: Discovery →</a>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                primaryColor: '#e94560',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#e94560',
+                lineColor: '#7b8cde',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#2a2a3e',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }
+        });
+
+        // Diagram Zoom Functionality
+        const zoomState = {};
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) { diagrams[idx].style.transform = 'scale(1)'; }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

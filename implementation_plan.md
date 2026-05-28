@@ -1,0 +1,34 @@
+# Implementation Plan
+
+## Goal
+1. Update the founder invite email link to include URL parameters (`founder=tas&email=...&gender=...&birth_year=...&country=...`).
+2. Modify the `AuthForm` component to automatically default to the `signup` mode and `nickname` step if the `founder=tas` URL parameter is present. Display a special message from Clio.
+3. Fix the auth redirect issue where users are dumped back onto the sign-up page after clicking a magic link, before being eventually redirected to the cluster.
+
+## Proposed Changes
+
+### Modify Email Template
+#### [MODIFY] `emails/clio-invite-email.html`
+- Update the "Enter the room" link to: `https://mvp.aggilo.in/c/long-conversation/cluster?founder=tas&email=world.asim@gmail.com&gender=male&birth_year=1990&country=India`
+- This ensures that when Tas clicks the link, they land on the page with pre-filled attributes.
+
+### Modify Auth Form
+#### [MODIFY] `src/components/AuthForm.tsx`
+- Read `searchParams` for `founder`, `email`, `gender`, `birth_year`, and `country`.
+- If `founder === 'tas'`, set `mode` to `'signup'` and `step` to `'nickname'` by default.
+- Pre-fill the state variables with the URL parameters.
+- In the `nickname` step UI, if `founder === 'tas'`, display a special message: *"Tas, we have already filled the information that you provided us. We only need you to choose your suitable nickname. — Clio"*
+- Change the "Continue" button text to "Send Link" (or directly submit) so it skips the rest of the steps and calls `sendOtp()`.
+- Update the `onAuthStateChange` to redirect to `/cluster` if `session` exists, not just on `SIGNED_IN` event, preventing the "stuck on sign-up page" issue.
+
+### Fix Auth Redirect Bug
+#### [MODIFY] `src/middleware.ts`
+- Preserve `searchParams` when redirecting to `/` or `/cluster` so that the `?founder=tas` URL doesn't get stripped.
+
+#### [MODIFY] `src/app/auth/callback/route.ts`
+- The issue where the user is redirected to the sign-up page after clicking the magic link is often caused by the Route Handler (`NextResponse.redirect`) dropping cookies set via `cookies().set()` in Next.js 14. 
+- Ensure that the callback explicitly copies the `setAll` cookies into the `NextResponse` redirect using `response.cookies.set(...)`.
+
+## User Review Required
+- Is the gender `male`, birth year `1990` and country `India` correct for Tas? I will default to these in the email link, but they can be adjusted if needed.
+- Let me know if the message from Clio should be tweaked.

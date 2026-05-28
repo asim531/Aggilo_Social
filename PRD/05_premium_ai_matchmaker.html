@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Premium & AI Matchmaker Workflow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #f9ca24;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #f9ca24;
+            color: #000;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #f9ca24;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #f9ca24;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout strong {
+            color: #f9ca24;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #f9ca24;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .nav a:hover {
+            background: #e0b521;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+            color: #e0e0e8;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 6px 0;
+            color: #c0c0d0;
+        }
+
+        .tier-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .tier-card {
+            background: #12121e;
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tier-card.premium {
+            border-color: #f9ca24;
+        }
+
+        .tier-card.premium::before {
+            content: '⭐ PREMIUM';
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #f9ca24;
+            color: #000;
+            padding: 4px 16px;
+            border-radius: 0 12px 0 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .tier-card h3 {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+
+        .tier-card .price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f9ca24;
+            margin: 8px 0;
+        }
+
+        .tier-card .price span {
+            font-size: 0.9rem;
+            color: #a0a0b8;
+            font-weight: 400;
+        }
+
+        .tier-card ul {
+            margin-top: 12px;
+        }
+
+        .tier-card li {
+            font-size: 0.9rem;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18,18,30,0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>💎 Workflow 5: Premium & AI Matchmaker</h1>
+        <p class="subtitle">Subscription flow, AI-powered people matching, private clusters, and payment integration</p>
+        <span class="badge">PRD — Aggilo Social Network — MONETIZATION</span>
+    </div>
+
+    <div class="container">
+
+        <div class="callout" style="border-left-color:#e94560;margin-bottom:32px;">
+            <strong style="color:#e94560;">⚠️ Architecture Note (May 2026):</strong> This PRD describes the AI Matchmaker as a standalone agent. In the current Yantra 5-agent architecture, matchmaking is a <strong>Clio skill</strong> (<code>connection_intro</code>) — Clio handles all user-facing matchmaking conversations, orchestrating Scout and Atlas as needed. The Premium tier itself remains active: subscription flow, private clusters, preference learning, and credibility-gated creation are all in production. The flagship global "Single Source" cluster is a premium cluster. For the current agent architecture, see <code>yantra/guides/agentic_workflow.html</code> and <code>clio/AGENTS.md</code>.
+        </div>
+
+        <!-- TIER COMPARISON -->
+        <div class="section">
+            <h2>Free vs Premium Comparison</h2>
+            <div class="tier-grid">
+                <div class="tier-card">
+                    <h3>Free</h3>
+                    <div class="price">₹0 <span>forever</span></div>
+                    <ul>
+                        <li>✅ Unlimited cluster creation</li>
+                        <li>✅ Unlimited cluster joining</li>
+                        <li>✅ Basic AI cluster suggestions (Scout)</li>
+                        <li>✅ Collaborative Clio Hub support</li>
+                        <li>✅ Feed + Chat in all clusters</li>
+                        <li>✅ Direct messaging</li>
+                        <li>✅ Text + image posts</li>
+                        <li>❌ No private AI matchmaker chat</li>
+                        <li>❌ No AI preference learning</li>
+                        <li>❌ No private premium clusters</li>
+                        <li>✅ Can <em>see</em> AI matchmaker questionnaires</li>
+                        <li>✅ Can <em>join</em> private premium clusters</li>
+                    </ul>
+                </div>
+                <div class="tier-card premium">
+                    <h3>Premium</h3>
+                    <div class="price">₹300 <span>/month</span></div>
+                    <ul>
+                        <li>✅ Everything in Free</li>
+                        <li>⭐ <strong>Private AI matchmaker chat</strong></li>
+                        <li>⭐ <strong>AI learns your preferences</strong> over time</li>
+                        <li>⭐ <strong>AI suggests relevant people</strong> to connect with</li>
+                        <li>⭐ <strong>Create private premium clusters</strong></li>
+                        <li>⭐ <strong>Questionnaires</strong> sent to potential matches</li>
+                        <li>⭐ <strong>Complete control</strong> over AI chat settings</li>
+                        <li>⭐ <strong>Priority Scout discovery</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="callout info">
+                <strong>🔑 Key Design Decision:</strong> Free users CAN see questionnaires from premium users AND can
+                join private premium clusters. This means the value of Premium reaches free users — creating a natural
+                upgrade funnel when they want to initiate their own matchmaking.
+            </div>
+        </div>
+
+        <!-- PREMIUM SUBSCRIPTION FLOW -->
+        <div class="section">
+            <h2>Subscription Flow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User sees premium<br />upsell prompt or<br />taps 'Go Premium'"] --> B["Premium Benefits
+                Screen:<br />AI matchmaker, preference learning,<br />private clusters, priority discovery"]
+                B --> C["Tap 'Subscribe ₹300/month'"]
+                C --> D{"Payment method"}
+                D -->|"UPI/Razorpay"| E["Razorpay payment page<br />UPI / Card / Net Banking"]
+                D -->|"Google Play"| F["Google Play<br />in-app purchase"]
+                E --> G{"Payment<br />successful?"}
+                F --> G
+                G -->|No| H["❌ Payment failed<br />Retry or choose<br />different method"]
+                H --> D
+                G -->|Yes| I["✅ Premium Activated"]
+                I --> J["Badge: '⭐ Premium'<br />on user profile"]
+                J --> K["AI Matchmaker chat<br />becomes available<br />in bottom nav"]
+
+                style I fill:#f9ca24,color:#000
+                style K fill:#4ecdc4,color:#000
+            </div>
+
+            <h3>Subscription Management</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Handling</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Subscription active</td>
+                        <td>Auto-renews monthly. User gets 24hr reminder notification before renewal.</td>
+                    </tr>
+                    <tr>
+                        <td>Cancellation</td>
+                        <td>Premium features remain until end of billing period. Private clusters stay accessible.</td>
+                    </tr>
+                    <tr>
+                        <td>Payment failure</td>
+                        <td>3-day grace period with retry. After 3 days, downgrade to Free with data preserved.</td>
+                    </tr>
+                    <tr>
+                        <td>Re-subscription</td>
+                        <td>All premium data (preference learning, private clusters) is restored.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- AI MATCHMAKER FLOW -->
+        <div class="section">
+            <h2>🤖 AI Matchmaker — Complete Flow</h2>
+            <div class="mermaid">
+                sequenceDiagram
+                participant P as ⭐ Premium User
+                participant AI as 🤖 AI Matchmaker
+                participant DB as 🗄️ Database
+                participant T as 👤 Target User (Free or Premium)
+
+                P->>AI: "I want to find co-founders for a food tech startup in Hyderabad"
+                AI->>AI: Extract: Purpose=Startups+Food, Age=22-30, Location=Hyderabad, Languages=English+Hindi
+                AI->>DB: Query users matching AGGIL criteria
+                DB-->>AI: Found 15 matching users
+                AI->>AI: Score by preference alignment + activity level
+                AI->>P: "I found 15 potential matches. I'll send them a questionnaire to gauge interest. Here's what
+                I'll ask:"
+                AI->>P: "1. Are you interested in food tech? 2. Have you considered co-founding? 3. What skills do you
+                bring?"
+                P->>AI: "Looks good, send it"
+
+                AI->>T: Questionnaire notification (in-app push)
+                Note over T: Target user can be Free OR Premium
+                T->>AI: Fills questionnaire
+                AI->>AI: Evaluate responses, rank by fit
+                AI->>P: "8 of 15 responded. Top 3 matches: NicknameA (92% fit), NicknameB (87% fit), NicknameC (81%
+                fit)"
+                P->>AI: "Create a private cluster with top 3"
+                AI->>DB: Create private premium cluster
+                DB-->>AI: Cluster created
+                AI->>T: "You've been invited to 'Food Tech Founders HYD' — a premium cluster"
+                Note over T: Free users CAN join private premium clusters
+                T->>DB: Joins cluster
+                AI->>P: "✅ 'Food Tech Founders HYD' is live with 4 members"
+            </div>
+        </div>
+
+        <!-- AI PREFERENCE LEARNING -->
+        <div class="section">
+            <h2>🧠 AI Preference Learning (Premium Only)</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Premium user<br />interacts with AI"] --> B["AI tracks<br />(generalized basis)"]
+                B --> C["What topics they ask about"]
+                B --> D["What age groups they prefer"]
+                B --> E["What locations they target"]
+                B --> F["What questionnaire responses<br />they liked/disliked"]
+                B --> G["Which matches they<br />actually engaged with"]
+
+                C --> H["Preference Model<br />(per user)"]
+                D --> H
+                E --> H
+                F --> H
+                G --> H
+
+                H --> I["Over time, AI suggestions<br />become more accurate"]
+                I --> J["Better cluster suggestions"]
+                I --> K["Better people matches"]
+                I --> L["More relevant trending topics"]
+
+                style H fill:#f9ca24,color:#000
+            </div>
+
+            <div class="callout">
+                <strong>⚡ Generalized Learning:</strong> AI learns preferences on a <em>generalized basis</em> — it
+                doesn't track browsing behavior or external activity. It only learns from interactions WITHIN Aggilo:
+                chats, questionnaire preferences, cluster joins, purpose/tag interests.
+            </div>
+        </div>
+
+        <!-- PRIVATE CLUSTER RULES -->
+        <div class="section">
+            <h2>🔒 Private Premium Cluster Rules</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rule</th>
+                        <th>Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Created by</td>
+                        <td>Premium users only (via AI matchmaker)</td>
+                    </tr>
+                    <tr>
+                        <td>Visible to</td>
+                        <td>Only invited members — never appears in search or suggestions</td>
+                    </tr>
+                    <tr>
+                        <td>Who can join</td>
+                        <td>Free AND Premium users (must be invited via questionnaire match)</td>
+                    </tr>
+                    <tr>
+                        <td>Content</td>
+                        <td>Same as regular clusters (feed + chat + DM)</td>
+                    </tr>
+                    <tr>
+                        <td>Deletion</td>
+                        <td>Cannot be deleted (same as regular clusters)</td>
+                    </tr>
+                    <tr>
+                        <td>Member removal</td>
+                        <td>Cannot remove members (same as regular clusters)</td>
+                    </tr>
+                    <tr>
+                        <td>If creator downgrades</td>
+                        <td>Cluster remains accessible. No new private clusters can be created.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CONVERSION FUNNEL -->
+        <div class="section">
+            <h2>📈 Free → Premium Conversion Triggers</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Free User"] --> B{"Trigger Events"}
+
+                B --> C["Receives questionnaire<br />from premium user"]
+                B --> D["Sees premium badge<br />on interesting user"]
+                B --> E["Push notification:<br />'You've been active 30 days.<br />Get AI matchmaking for ₹300/mo'"]
+                B --> F["Wants to find specific<br />type of person<br />but can't initiate matchmaking"]
+
+                C --> G["Joins private cluster<br />(free users can join)"]
+                G --> H["Experiences premium value"]
+                H --> I["Wants to create<br />their own matchmaking"]
+                I --> J["💎 Upgrades to Premium"]
+
+                D --> I
+                E --> I
+                F --> I
+
+                style J fill:#f9ca24,color:#000
+            </div>
+        </div>
+
+        <!-- API ENDPOINTS -->
+        <div class="section">
+            <h2>API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>POST /api/premium/subscribe</code></td>
+                        <td>POST</td>
+                        <td>Initiate premium subscription</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/premium/cancel</code></td>
+                        <td>POST</td>
+                        <td>Cancel subscription</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/premium/status</code></td>
+                        <td>GET</td>
+                        <td>Check subscription status</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/matchmaker/chat</code></td>
+                        <td>POST</td>
+                        <td>Send message to AI matchmaker</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/matchmaker/questionnaire</code></td>
+                        <td>POST</td>
+                        <td>Create + send questionnaire to matches</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/matchmaker/questionnaire/{id}/respond</code></td>
+                        <td>POST</td>
+                        <td>Submit questionnaire response</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/matchmaker/private-cluster</code></td>
+                        <td>POST</td>
+                        <td>Create private cluster from matched users</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/payment/razorpay/create-order</code></td>
+                        <td>POST</td>
+                        <td>Create Razorpay payment order</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/payment/razorpay/verify</code></td>
+                        <td>POST</td>
+                        <td>Verify Razorpay payment</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/payment/google-play/verify</code></td>
+                        <td>POST</td>
+                        <td>Verify Google Play purchase</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="nav">
+        <a href="04_in_cluster_experience.html" class="secondary">← In-Cluster</a>
+        <a href="06_ai_agents.html">Next: AI Agents →</a>
+    </div>
+
+    <script>
+        mermaid.initialize({ theme: 'dark', startOnLoad: true, themeVariables: { primaryColor: '#f9ca24', primaryTextColor: '#000', primaryBorderColor: '#f9ca24', lineColor: '#7b8cde', secondaryColor: '#1a1a2e', tertiaryColor: '#2a2a3e', fontFamily: 'Segoe UI, system-ui, sans-serif' } });
+    </script>
+
+    <script>
+        // Diagram Zoom Functionality
+        const zoomState = {};
+
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(1)';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+
+        // Wrap diagrams after Mermaid renders
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.querySelectorAll('.mermaid').forEach(function(el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

@@ -262,9 +262,14 @@ export default function ClioFab({ userId }: { userId: string }) {
             <>
               <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 min-h-0">
                 {clusterMessages.length === 0 && (
-                  <p className="text-xs text-lc-muted text-center py-4">
-                    I&apos;m here. Ask me anything about the room, or just talk.
-                  </p>
+                  <div className="text-center py-4 space-y-2">
+                    <p className="text-xs text-lc-ink">
+                      I read the room. I can tell you what&apos;s actually happening, or help you say what you&apos;re trying to say.
+                    </p>
+                    <p className="text-[10px] text-lc-muted">
+                      Clio has read the last 8 posts.
+                    </p>
+                  </div>
                 )}
                 {clusterMessages.map((msg, i) => (
                   <div
@@ -281,7 +286,7 @@ export default function ClioFab({ userId }: { userId: string }) {
                   </div>
                 ))}
                 {clusterLoading && (
-                  <div className="text-xs text-lc-muted">…</div>
+                  <div className="text-xs text-lc-muted">Clio is reading the room…</div>
                 )}
                 <div ref={clusterEndRef} />
               </div>
@@ -342,7 +347,7 @@ export default function ClioFab({ userId }: { userId: string }) {
                   </div>
                 ))}
                 {ephemeralLoading && (
-                  <div className="text-xs text-lc-muted">…</div>
+                  <div className="text-xs text-lc-muted">Clio is thinking…</div>
                 )}
                 <div ref={ephemeralEndRef} />
               </div>

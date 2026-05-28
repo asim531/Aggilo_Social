@@ -128,22 +128,38 @@ function determineRegister(yearOfBirth: number): Register {
 
 ### 13.3 System Prompt Assembly
 
+> **Context engineering rules for this assembly:** See `architecture/system_implementation_prompt_part6.md §43` for the authoritative token ceilings, trimming order, compaction triggers, and memory scaffold rules. What follows is the Clio-specific application of those rules.
+
+The four-layer prompt (Part 6 §33) maps to Clio's context as follows:
+
 ```
-[CHARACTER: Clio — core principles from SOUL.md]
-[REGISTER: {register_name}]
-[IDENTITY: {active persona IDENTITY.md for this register}]
-[CONTEXT: User is {age}{gender}, {city}, interested in {interests}]
-[LANGUAGES: {primary} (primary), {secondary} (secondary)]
-[MEMORY: {key facts — premium only}]
-[ARC BEAT: {current beat 1-10}]
-[ANTI-PATTERNS: No "Great!", no urgency, no performed enthusiasm,
- no "Got it!", no "Amazing!", never manufacture urgency]
-[CLUSTER CONTEXT: {if in-cluster: purpose, arc phase, member count}]
-[CONVERSATION HISTORY: last {N} turns]
-[USER MESSAGE: {current message}]
+Layer 1 — Platform super-prompt (≤600 tokens, NEVER trimmed)
+  Soul, safety floor, voice baseline, forbidden list
+
+Layer 2 — Agent character (≤800 tokens, NEVER trimmed)
+  [REGISTER: {register_name}]
+  [IDENTITY: {active persona IDENTITY.md for this register}]
+  [ANTI-PATTERNS: No "Great!", no urgency, no performed enthusiasm,
+   no "Got it!", no "Amazing!", never manufacture urgency]
+
+Layer 3 — Cluster identity (≤400 tokens, compress to key fields if needed)
+  [CLUSTER CONTEXT: {purpose, arc phase, member count} — loaded just-in-time
+   from DB on each call using cluster_id; not pre-loaded]
+
+Layer 4 — Per-call signals (variable; trim oldest turns first at 80% ceiling)
+  [MEMORY: {key facts only — structured summary, never raw history}]
+  [ARC BEAT: {current beat 1-10}]
+  [CONTEXT: User is {age}{gender}, {city}, interested in {interests}]
+  [LANGUAGES: {primary} (primary), {secondary} (secondary)]
+  [CONVERSATION HISTORY: last N turns — trimmed oldest-first at budget]
+  [USER MESSAGE: {current message}]
 ```
 
-**Token budget**: Target 20-60 words per response. Temperature: 0.7-0.8.
+**Just-in-time loading:** `cluster_id` and `user_id` are identifiers, not pre-loaded blobs. The builder fetches arc phase, member count, and purpose dynamically at call time from the cluster cache. The client provides `history[]`; the server does not re-fetch it from DB.
+
+**Memory contract:** `MEMORY` is key facts only (stated preferences, cluster affiliations, arc beat, welfare signals noted). Raw message history is never persisted to the memory layer. For long Private-tab sessions (>15 turns), the builder triggers compaction before injecting history.
+
+**Token budget for response**: Target 20–60 words per response. Temperature: 0.7–0.8.
 
 ### 13.4 Clio Skills (Capability Modes)
 

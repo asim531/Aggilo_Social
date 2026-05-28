@@ -1,0 +1,65 @@
+/* ═══════════════════════════════ RESPONSIVE ═══════════════════════════════ */
+@media (max-width: 768px) {
+    .hero { height: auto; min-height: 100vh; padding: 100px 0 60px; overflow: hidden; }
+    .hero-overlay { position: relative; inset: auto; padding: 20px 5%; height: auto; }
+    .hero-split { display: flex; flex-direction: column-reverse; gap: 28px; text-align: center; align-items: center; }
+    .hero-intro { align-items: center; padding: 28px 16px; margin-top: 10px; }
+    .hero-headline { font-size: clamp(2rem, 8vw, 2.6rem); }
+    .hero-desc { max-width: none; text-align: center; }
+    .hero-personas { justify-content: center; }
+    .hero-cta-row { justify-content: center; }
+    .hero-clio-col { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; }
+    .hero-avatar-wrap, .hero-avatar-video { width: 150px; height: 150px; }
+    .hero-avatar-ring { inset: -10px; }
+    .hero-avatar-ring-2 { inset: -20px; }
+
+    .cz-layout { grid-template-columns: 1fr; gap: 36px; }
+    .scenarios-grid { grid-template-columns: 1fr; }
+    .steps-row { grid-template-columns: 1fr; gap: 24px; }
+
+    /* Interaction card: full-width bottom on narrow screens */
+    .clio-interaction {
+        width: auto; left: 12px; right: 12px; bottom: 12px;
+        border-radius: 20px;
+    }
+}
+
+/* Modal override — only pin to bottom on genuinely narrow (phone) screens */
+@media (max-width: 600px) {
+    .clio-interaction.mode-modal {
+        left: 8px; right: 8px; top: auto; bottom: 8px;
+        width: auto; max-height: 82vh;
+        transform: translateY(24px) !important;
+    }
+    .clio-interaction.mode-modal.active {
+        transform: translateY(0) !important;
+    }
+
+    /* Evangelist form responsive */
+    .ef-topbar { padding: 14px 18px; }
+    .ef-aside { padding: 0 18px; }
+    .ef-content { padding: 0 18px; }
+    .ef-bottombar { padding: 14px 18px; }
+    .ef-row { flex-direction: column; gap: 12px; }
+}
+
+@media (max-width: 480px) {
+    .hero-headline { font-size: clamp(1.6rem, 8vw, 2rem); }
+    .floating-orb { transform: scale(0.7); }
+    .orb-4, .orb-5 { display: none; }
+
+    .interaction-video-wrap { width: 72px; height: 72px; }
+    .interaction-msg-area { min-height: 72px; }
+
+    .clio-interaction { padding: 16px; }
+
+    .ef-question { font-size: 1.1rem; }
+    .ef-cta { font-size: 0.88rem; padding: 12px 28px; }
+
+    /* Improved touch targets */
+    .pf-chip, .ef-chip, .pf-tile {
+        padding: 14px 18px !important;
+        margin-bottom: 4px;
+        min-height: 48px !important;
+    }
+}

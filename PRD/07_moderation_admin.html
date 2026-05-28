@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Moderation & Admin Workflow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout.warning {
+            border-left-color: #f9ca24;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .callout.warning strong {
+            color: #f9ca24;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #e94560;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #c73a52;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🛡️ Workflow 7: Moderation, Admin & Notifications</h1>
+        <p class="subtitle">Content moderation, admin dashboard, and Firebase push notification system</p>
+        <span class="badge">PRD — Aggilo Social Network — SAFETY & OPS</span>
+    </div>
+
+    <div class="container">
+
+        <!-- MODERATION FLOW -->
+        <div class="section">
+            <h2>🚩 Content Report & Moderation Flow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User tap '🚩 Report'<br>on post, message,<br>or user profile"] --> B["Report Form:<br>• Spam<br>•
+                Harassment<br>• Hate speech<br>• Inappropriate content<br>• Impersonation<br>• Other (text field)"]
+                B --> C["Report submitted"]
+                C --> D["AI Moderation Engine<br>(LLM analysis)"]
+                D --> E{"Severity<br>Assessment"}
+
+                E -->|"Low Risk"| F["Flag for<br>human review"]
+                F --> G["Admin Dashboard:<br>Review Queue"]
+                G --> H{"Admin decision"}
+                H -->|"No action"| I["Dismiss report"]
+                H -->|"Warn user"| J["Send warning<br>notification"]
+                H -->|"Remove content"| K["Delete post/message"]
+                H -->|"Ban user"| L["Account suspended"]
+
+                E -->|"High Risk<br>(hate speech,<br>threats, CSAM)"| M["🚨 AUTO-BAN user<br>immediately"]
+                M --> N["Flag for<br>human review<br>(mandatory)"]
+                N --> O["Admin reviews<br>ban decision"]
+                O -->|"Uphold ban"| P["Ban confirmed<br>User notified"]
+                O -->|"Overturn ban"| Q["Ban reversed<br>User reinstated"]
+
+                style M fill:#ff3333,color:#fff
+                style P fill:#ff3333,color:#fff
+                style I fill:#4ecdc4,color:#000
+            </div>
+
+            <h3>Severity Levels</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>Icon</th>
+                        <th>Examples</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Low Risk</strong></td>
+                        <td>🟡</td>
+                        <td>Spam, off-topic content, mild language, self-promotion</td>
+                        <td>Flag for human review only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medium Risk</strong></td>
+                        <td>🟠</td>
+                        <td>Harassment, bullying, targeted insults, doxxing attempts</td>
+                        <td>Flag for urgent human review + content hidden pending review</td>
+                    </tr>
+                    <tr>
+                        <td><strong>High Risk</strong></td>
+                        <td>🔴</td>
+                        <td>Hate speech, threats of violence, impersonation</td>
+                        <td>AUTO-BAN + Flag for mandatory human review</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Critical Welfare</strong></td>
+                        <td>🏥</td>
+                        <td>Suicide threats, severe self-harm intent, credible immediate physical danger</td>
+                        <td><strong>ESCALATE</strong> immediately. Alert Admin on-call via pager. AI moderator shifts to containment/support. <strong>SLA: 5 minutes</strong> for human intervention.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CSAM / Illegal</strong></td>
+                        <td>⚫</td>
+                        <td>Child Sexual Abuse Material, illegal content</td>
+                        <td><strong>FREEZE</strong> account (quarantine). Preserve ALL evidence (posts, messages, metadata, IP, timestamps). Auto-generate Incident Report. Admin escalates to law enforcement (NCMEC/NCRB). Content is <strong>never deleted</strong> until law enforcement clears it.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- BLOCKING -->
+        <div class="section">
+            <h2>🚫 User Blocking (User-Level)</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User A blocks User B<br>(via DM interface)"] --> B["Effects:"]
+                B --> C["User B cannot<br>send DMs to A"]
+                B --> F["Timeline feed ignores block:<br>Posts are handled via<br>'Report to Clio' instead"]
+                
+                G["User A can<br>unblock at any time"] --> H["All restrictions<br>reversed"]
+
+                style A fill:#e94560,color:#fff
+            </div>
+        </div>
+
+        <!-- ADMIN DASHBOARD -->
+        <div class="section">
+            <h2>🖥️ Admin Dashboard</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Admin logs in<br>(admin.aggilo.in)"] --> B["Dashboard Overview"]
+                B --> C["📊 Metrics Panel"]
+                B --> D["🚩 Moderation Queue"]
+                B --> E["👥 User Management"]
+                B --> F["🔮 Cluster Management"]
+                B --> G["🤖 AI Agent Monitor"]
+                B --> H["💰 Revenue Dashboard"]
+                B --> I["🔔 Notification Manager"]
+                B --> J["🧬 Persona Lab"]
+
+                C --> C1["• Total users<br>• Daily active users<br>• New signups today<br>• Active clusters<br>• Posts
+                today<br>• Premium subscribers"]
+                D --> D1["• Pending reports<br>• Auto-banned queue<br>• Resolved today<br>• Report categories"]
+                E --> E1["• User search<br>• User profiles<br>• Ban/unban<br>• Premium status<br>• Activity history"]
+                F --> F1["• All clusters list<br>• AI-Created clusters<br>• Cluster health scores<br>• Dead clusters (no
+                activity)"]
+                G --> G1["• Scout run status<br>• Last crawl results<br>• Topics discovered<br>• Auto-created
+                clusters<br>• Clio conversation volume<br>• LLM API usage"]
+                H --> H1["• Total revenue<br>• Premium subscribers<br>• Churn rate<br>• Payment failures<br>• Revenue
+                forecast"]
+                I --> I1["• Push notification stats<br>• Delivery rates<br>• Open rates<br>• Trigger analytics"]
+            </div>
+
+            <h3>Admin Actions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Scope</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Ban user</strong></td>
+                        <td>User</td>
+                        <td>Suspend account. User cannot login. Can be reversed.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Unban user</strong></td>
+                        <td>User</td>
+                        <td>Reverse suspension. All data restored.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Delete content</strong></td>
+                        <td>Post/Message</td>
+                        <td>Remove specific post or message from cluster.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Archive cluster</strong></td>
+                        <td>Cluster</td>
+                        <td>Hide cluster from search/suggestions. Members can still access.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Trigger Scout</strong></td>
+                        <td>AI</td>
+                        <td>Manually trigger Scout crawl for a specific segment.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Approve/reject Scout topic</strong></td>
+                        <td>AI</td>
+                        <td>Override auto-creation decision for Scout-discovered clusters.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vet Persona</strong></td>
+                        <td>AI</td>
+                        <td>Review/Edit/Approve dynamically generated personas for new cohorts.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Send platform notification</strong></td>
+                        <td>All/Segment</td>
+                        <td>Send announcement push to all users or specific AGGIL segment.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>View analytics</strong></td>
+                        <td>Platform</td>
+                        <td>Access detailed metrics and growth data.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- NOTIFICATIONS -->
+        <div class="section">
+            <h2>🔔 Notification System (Firebase Push — ₹0/mo)</h2>
+            <div class="mermaid">
+                flowchart TD
+                subgraph Triggers["Event Triggers"]
+                A1["New post in<br>user's cluster"]
+                A2["New chat message<br>(if user not in chat)"]
+                A3["New DM received"]
+                A4["New member joins<br>user's cluster"]
+                A5["AI trending topic<br>discovered for user"]
+                A6["Cluster suggestion<br>matching user's AGGIL"]
+                A7["Questionnaire received<br>(from premium matchmaker)"]
+                A8["Premium conversion<br>nudge (Day 30)"]
+                end
+
+                subgraph Engine["Notification Engine"]
+                B["Laravel Job Queue"]
+                C["Firebase Cloud<br>Messaging SDK"]
+                end
+
+                subgraph Delivery["Delivery"]
+                D["📱 Push<br>Notification"]
+                E["🔴 In-App<br>Badge Counter"]
+                F["📧 Email Digest<br>(daily, optional)"]
+                end
+
+                A1 --> B
+                A2 --> B
+                A3 --> B
+                A4 --> B
+                A5 --> B
+                A6 --> B
+                A7 --> B
+                A8 --> B
+                B --> C
+                C --> D
+                B --> E
+                B --> F
+            </div>
+
+            <h3>Notification Frequency Rules</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Trigger</th>
+                        <th>Channel</th>
+                        <th>Frequency Cap</th>
+                        <th>User Can Mute?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>New post in cluster</td>
+                        <td>Push + Badge</td>
+                        <td>Batched: max 1 push per cluster per hour</td>
+                        <td>✅ Per cluster</td>
+                    </tr>
+                    <tr>
+                        <td>New chat message</td>
+                        <td>Push + Badge</td>
+                        <td>Batched: max 1 push per cluster per 15 min</td>
+                        <td>✅ Per cluster</td>
+                    </tr>
+                    <tr>
+                        <td>New DM</td>
+                        <td>Push + Badge</td>
+                        <td>Real-time (every message)</td>
+                        <td>✅ Per user</td>
+                    </tr>
+                    <tr>
+                        <td>New member joins</td>
+                        <td>Push</td>
+                        <td>Daily digest: "X people joined your clusters today"</td>
+                        <td>✅ Global</td>
+                    </tr>
+                    <tr>
+                        <td>AI trending topic</td>
+                        <td>Push</td>
+                        <td>Max 1 per day</td>
+                        <td>✅ Global</td>
+                    </tr>
+                    <tr>
+                        <td>Cluster suggestion</td>
+                        <td>Badge only</td>
+                        <td>When new suggestion available</td>
+                        <td>❌ Always shown</td>
+                    </tr>
+                    <tr>
+                        <td>Questionnaire received</td>
+                        <td>Push + Badge</td>
+                        <td>Immediate</td>
+                        <td>❌ Cannot mute</td>
+                    </tr>
+                    <tr>
+                        <td>Premium conversion</td>
+                        <td>Push</td>
+                        <td>Once at Day 30, once at Day 60</td>
+                        <td>❌ System notification</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout success">
+                <strong>✅ Anti-Spam:</strong> Notification batching ensures users never feel bombarded. A cluster with
+                50 messages in an hour generates just 1 push notification saying "50 new messages in CSE Study Buddies",
+                not 50 individual pushes.
+            </div>
+        </div>
+
+        <!-- USER PREFERENCES -->
+        <div class="section">
+            <h2>👤 User Notification Preferences</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Settings → Notifications"] --> B["Global Controls"]
+                B --> B1["Master toggle:<br>Enable/Disable all push"]
+                B --> B2["Quiet hours:<br>e.g., 10 PM - 8 AM"]
+                B --> B3["Email digest:<br>On/Off + frequency"]
+
+                A --> C["Per-Cluster Controls"]
+                C --> C1["Mute cluster<br>(no push for this cluster)"]
+                C --> C2["Mentions only<br>(push only if @ mentioned)"]
+                C --> C3["All activity<br>(default)"]
+
+                A --> D["DM Controls"]
+                D --> D1["All DMs"]
+                D --> D2["From cluster<br>members only"]
+                D --> D3["Muted users"]
+            </div>
+        </div>
+
+        <!-- API -->
+        <div class="section">
+            <h2>API Endpoints</h2>
+
+            <h3>Moderation</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>POST /api/reports</code></td>
+                        <td>POST</td>
+                        <td>Submit a content report</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/reports</code></td>
+                        <td>GET</td>
+                        <td>Get moderation queue</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/reports/{id}/action</code></td>
+                        <td>POST</td>
+                        <td>Take action on a report (dismiss/warn/delete/ban)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/users/{id}/ban</code></td>
+                        <td>POST</td>
+                        <td>Ban a user</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/users/{id}/unban</code></td>
+                        <td>POST</td>
+                        <td>Unban a user</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/users/{nickname}/block</code></td>
+                        <td>POST</td>
+                        <td>User-level block</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Admin</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/admin/dashboard</code></td>
+                        <td>GET</td>
+                        <td>Dashboard metrics overview</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/users</code></td>
+                        <td>GET</td>
+                        <td>User management list</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/clusters</code></td>
+                        <td>GET</td>
+                        <td>Cluster management list</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/analytics</code></td>
+                        <td>GET</td>
+                        <td>Detailed analytics data</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/personas/queue</code></td>
+                        <td>GET</td>
+                        <td>List pending generated personas for review</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/personas/{id}/approve</code></td>
+                        <td>POST</td>
+                        <td>Approve/Edit a generated persona</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Notifications</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>POST /api/devices/register</code></td>
+                        <td>POST</td>
+                        <td>Register device for FCM push</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT /api/notifications/preferences</code></td>
+                        <td>PUT</td>
+                        <td>Update notification preferences</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT /api/clusters/{id}/notifications</code></td>
+                        <td>PUT</td>
+                        <td>Update per-cluster notification settings</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="06_ai_agents.html" class="secondary">← AI Agents</a>
+        <a href="00_prd_index.html">PRD Index</a>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                primaryColor: '#e94560',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#e94560',
+                lineColor: '#7b8cde',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#2a2a3e',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }
+        });
+
+        // Diagram Zoom Functionality
+        const zoomState = {};
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) { diagrams[idx].style.transform = 'scale(1)'; }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

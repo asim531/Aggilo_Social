@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Registration & Onboarding Workflow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .step-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .step-card {
+            background: #12121e;
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .step-card:hover {
+            border-color: #e94560;
+        }
+
+        .step-card .step-num {
+            background: #e94560;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        .step-card h4 {
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .step-card p {
+            color: #a0a0b8;
+            font-size: 0.9rem;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .tag.required {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+        }
+
+        .tag.optional {
+            background: rgba(123, 140, 222, 0.2);
+            color: #7b8cde;
+        }
+
+        .tag.ai {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #e94560;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #c73a52;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 6px 0;
+            color: #c0c0d0;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18,18,30,0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>📱 Workflow 1: Registration & Onboarding</h1>
+        <p class="subtitle">How a new user goes from app download to seeing their first cluster suggestions</p>
+        <span class="badge">PRD — Aggilo Social Network</span>
+    </div>
+
+    <div class="container">
+        <!-- MAIN FLOW -->
+        <div class="section">
+            <h2>Complete Registration Flow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["📱 User opens app<br />(first time)"] --> B["Walkthrough Screens<br />(4 slides explaining Aggilo)"]
+                B --> C["Tap 'Get Started'"]
+                C --> D["📞 Enter Phone Number"]
+                D --> E["Receive OTP via SMS"]
+                E --> F{"OTP Valid?"}
+                F -->|No| G["❌ 'Invalid OTP'<br />Retry (max 3 attempts)"]
+                G --> E
+                F -->|Yes| H["✅ Phone Verified"]
+                H --> I["Step 1: Year of Birth + Gender"]
+                I --> J["Step 2: Language Selection"]
+                J --> K["Step 3: Nickname + Purpose & Tags"]
+                K --> L{"Nickname<br />Available?"}
+                L -->|No| M["❌ 'Nickname taken'<br />AI suggests alternatives"]
+                M --> K
+                L -->|Yes| N{"Nickname<br />AI-verified<br />appropriate?"}
+                N -->|No| O["❌ 'Nickname not acceptable'<br />Choose another"]
+                O --> K
+                N -->|Yes| P["✅ Profile Created"]
+                P --> Q["🏠 Dashboard<br />with AGGIL Suggestions"]
+
+                style A fill:#e94560,color:#fff
+                style P fill:#4ecdc4,color:#000
+                style Q fill:#4ecdc4,color:#000
+                style G fill:#ff6b6b,color:#fff
+                style M fill:#ff6b6b,color:#fff
+                style O fill:#ff6b6b,color:#fff
+            </div>
+        </div>
+
+        <!-- STEP DETAILS -->
+        <div class="section">
+            <h2>Step-by-Step Details</h2>
+
+            <div class="step-grid">
+                <div class="step-card">
+                    <div class="step-num">0</div>
+                    <h4>Walkthrough Screens</h4>
+                    <p>4 swipeable slides introducing Aggilo's core value proposition: "Find your people through
+                        AI-powered clusters."</p>
+                    <span class="tag required">First-time only</span>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <h4>Phone OTP Verification</h4>
+                    <p>User enters Indian mobile number (+91). Receives 6-digit OTP via SMS. Max 3 retry attempts. OTP
+                        expires in 5 minutes.</p>
+                    <span class="tag required">Required</span>
+                    <span class="tag required">One-time cost: ₹0.50</span>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <h4>Year of Birth + Gender</h4>
+                    <p><strong>Year of Birth:</strong> Year selector. Cannot be changed later. Drives all AGGIL age-based
+                        matching.<br />
+                        <strong>Gender:</strong> Male / Female / Genderqueer. Used for privacy gating on clusters.
+                    </p>
+                    <span class="tag required">Required</span>
+                    <span class="tag required">Immutable Year of Birth</span>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <h4>Language Selection</h4>
+                    <p>Select primary + secondary languages. Pre-populated from phone settings. Multiple languages
+                        supported.<br />
+                        <strong>Clio uses this for matching:</strong> Language is a core AGGIL dimension — Clio
+                        prioritizes clusters where members share the user's languages and surfaces language-specific
+                        insights (e.g., "This cluster speaks mostly Telugu"). Language also influences Clio's adaptive
+                        register and cultural references.
+                    </p>
+                    <span class="tag required">Required</span>
+                    <span class="tag ai">Auto-detected</span>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">4</div>
+                    <h4>Nickname + Purpose & Tags</h4>
+                    <p><strong>Nickname:</strong> AI-verified for uniqueness and appropriateness. Real name never
+                        exposed.<br />
+                        <strong>Purpose & Tags:</strong> Tell Clio what you're looking for (Purpose) and add
+                        <strong>Multiple Vibrant Tags</strong> (Hooks). Captures emotions and specific needs.
+                    </p>
+                    <span class="tag required">Required</span>
+                    <span class="tag ai">AI-verified nickname</span>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">5</div>
+                    <h4>Dashboard Landing</h4>
+                    <p>User lands on dashboard with AI-generated AGGIL Suggestions based on their year of birth, gender, location
+                        (from phone), and specific purpose/vibrant tags. Pre-seeded clusters visible.</p>
+                    <span class="tag ai">AI Suggestions ready</span>
+                    <span class="tag success">Onboarding complete</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- DATA MODEL -->
+        <div class="section">
+            <h2>Data Captured During Registration</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Mutable?</th>
+                        <th>Used For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Phone Number</td>
+                        <td>String (+91XXXXXXXXXX)</td>
+                        <td>No</td>
+                        <td>Authentication, OTP, unique identifier</td>
+                    </tr>
+                    <tr>
+                        <td>Year of Birth</td>
+                        <td>Integer (YYYY)</td>
+                        <td>❌ No (immutable)</td>
+                        <td>AGGIL age calculation, cluster eligibility, content maturation</td>
+                    </tr>
+                    <tr>
+                        <td>Gender</td>
+                        <td>Enum (M/F/GQ)</td>
+                        <td>Yes</td>
+                        <td>AGGIL gender gating, privacy filtering</td>
+                    </tr>
+                    <tr>
+                        <td>Languages</td>
+                        <td>Array of strings</td>
+                        <td>Yes</td>
+                        <td>Content discovery, cluster matching</td>
+                    </tr>
+                    <tr>
+                        <td>Nickname</td>
+                        <td>String (unique)</td>
+                        <td>Yes (limited)</td>
+                        <td>Public identity, DMs, cluster posts</td>
+                    </tr>
+                    <tr>
+                        <td>Purpose & Tags</td>
+                        <td>Array of strings (Vibrant Hooks)</td>
+                        <td>Yes</td>
+                        <td>AGGIL matchmaking, Scout topic discovery</td>
+                    </tr>
+                    <tr>
+                        <td>Device Location</td>
+                        <td>Lat/Lng (if permitted)</td>
+                        <td>Dynamic</td>
+                        <td>AGGIL geography, GPS cluster discovery</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <strong>📍 Location Note:</strong> Device location is requested but NOT required at registration. Users
+                can set a named location (city/area) instead. GPS sharing is a separate opt-in for proximity-based
+                cluster discovery.
+            </div>
+        </div>
+
+        <!-- EDGE CASES -->
+        <div class="section">
+            <h2>Edge Cases & Error Handling</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Handling</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>User enters age &lt; 13</td>
+                        <td>Block registration — COPPA / DPDPA compliance</td>
+                    </tr>
+                    <tr>
+                        <td>Phone number already registered</td>
+                        <td>"This number is already registered. Log in instead?"</td>
+                    </tr>
+                    <tr>
+                        <td>OTP not received after 60s</td>
+                        <td>Show "Resend OTP" button (max 3 resends)</td>
+                    </tr>
+                    <tr>
+                        <td>Offensive nickname detected by AI</td>
+                        <td>"This nickname isn't acceptable. Try another." + AI suggests alternatives</td>
+                    </tr>
+                    <tr>
+                        <td>No purpose/tags provided</td>
+                        <td>Allow with warning: "Telling Clio your purpose helps her find better clusters for you"</td>
+                    </tr>
+                    <tr>
+                        <td>App killed during registration</td>
+                        <td>Resume from last completed step on next open</td>
+                    </tr>
+                    <tr>
+                        <td>No internet during OTP</td>
+                        <td>Show offline message, retry when connected</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- RETURNING USER -->
+        <div class="section">
+            <h2>Returning User Login Flow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["📱 User opens app<br />(returning)"] --> B{"Session<br />active?"}
+                B -->|Yes| C["🏠 Dashboard<br />(skip login)"]
+                B -->|No| D["Enter Phone Number"]
+                D --> E["OTP Verification"]
+                E --> F{"Valid?"}
+                F -->|Yes| C
+                F -->|No| G["❌ Retry"]
+                G --> E
+
+                style C fill:#4ecdc4,color:#000
+                style G fill:#ff6b6b,color:#fff
+            </div>
+
+            <div class="callout success">
+                <strong>✅ Session Duration:</strong> 30-day active session. User stays logged in unless they manually
+                log out or don't open app for 30 days.
+            </div>
+        </div>
+
+        <!-- API ENDPOINTS -->
+        <div class="section">
+            <h2>API Endpoints (Backend)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>POST /api/auth/send-otp</code></td>
+                        <td>POST</td>
+                        <td>Send OTP to phone number</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/auth/verify-otp</code></td>
+                        <td>POST</td>
+                        <td>Verify OTP, create session</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/profile/create</code></td>
+                        <td>POST</td>
+                        <td>Create profile (year of birth, gender, languages, nickname, purpose/vibrant tags)</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/nickname/check/{name}</code></td>
+                        <td>GET</td>
+                        <td>Check nickname availability + AI appropriateness</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/nickname/suggest</code></td>
+                        <td>GET</td>
+                        <td>Get AI-generated nickname alternatives</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/dashboard/suggestions</code></td>
+                        <td>GET</td>
+                        <td>Get AGGIL-matched cluster suggestions for dashboard</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="nav">
+        <a href="00_prd_index.html" class="secondary">← PRD Index</a>
+        <a href="02_cluster_creation.html">Next: Cluster Creation →</a>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                primaryColor: '#e94560',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#e94560',
+                lineColor: '#7b8cde',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#2a2a3e',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }
+        });
+    </script>
+
+    <script>
+        // Diagram Zoom Functionality
+        const zoomState = {};
+
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(1)';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+
+        // Wrap diagrams after Mermaid renders
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.querySelectorAll('.mermaid').forEach(function(el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

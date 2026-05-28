@@ -1,0 +1,1019 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — AI Agent System</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .section h4 {
+            font-size: 1.05rem;
+            color: #4ecdc4;
+            margin: 16px 0 8px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout.warning {
+            border-left-color: #f9ca24;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .callout.warning strong {
+            color: #f9ca24;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #e94560;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #c73a52;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        pre {
+            background: #0f0f1a;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: #e0e0e8;
+            font-family: monospace;
+            border: 1px solid #2a2a3e;
+        }
+
+        ul,
+        ol {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🤖 Workflow 6: AI Agent System</h1>
+        <p class="subtitle">Scout (Topic Discovery) + Clio (Conversational Assistant) — Powered by Hostinger Yantra
+            VPS + Hybrid AI (Claude + Llama)</p>
+        <span class="badge">PRD — Aggilo Social Network — AI ENGINE</span>
+    </div>
+
+    <div class="container">
+
+        <!-- TWO AGENTS -->
+        <div class="section">
+            <h2>Two AI Agents</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div
+                    style="flex: 1; background: #232338; padding: 20px; border-radius: 8px; border-top: 3px solid #f9ca24;">
+                    <h3>🔍 Scout Agent</h3>
+                    <ul>
+                        <li><strong>Role:</strong> Autonomous background worker</li>
+                        <li><strong>Trigger:</strong> Scheduled (every 6 hours)</li>
+                        <li><strong>User-facing:</strong> Indirect — results appear as suggestions and auto-created
+                            clusters</li>
+                        <li><strong>Technology:</strong> Open Claw (browser automation) + Llama (NIM API — free tier)
+                        </li>
+                    </ul>
+                </div>
+                <div
+                    style="flex: 1; background: #232338; padding: 20px; border-radius: 8px; border-top: 3px solid #e94560;">
+                    <h3>💬 Clio Agent</h3>
+                    <ul>
+                        <li><strong>Role:</strong> User-facing conversational assistant</li>
+                        <li><strong>Trigger:</strong> User-initiated chat</li>
+                        <li><strong>User-facing:</strong> Direct — real-time conversation</li>
+                        <li><strong>Technology:</strong> Kimi K2.5 (via NVIDIA NIM) for general chat + Claude Opus 4.6
+                            for critical decisions. See PRD 11 for routing rules.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCOUT -->
+        <div class="section">
+            <h2>🔍 Scout Agent — Detailed Workflow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["⏰ Scheduler triggers<br>every 6 hours"] --> B["Load active AGGIL segments<br>(unique combinations
+                of<br>age range + gender + location + interests)"]
+                B --> C["For each segment:"]
+                C --> D["Open Claw spawns<br>browser session"]
+                D --> E["Crawl sources:<br>• Google Trends (India)<br>• Reddit trending<br>• Twitter/X trending<br>•
+                News sites<br>• Industry blogs"]
+                E --> F["Extract topics<br>relevant to segment"]
+                F --> G["LLM scores each topic:<br>Relevance to segment (0-100)"]
+                G --> H{"Score ≥ 90%?"}
+
+                H -->|Yes| I["Check for duplicate<br>existing cluster"]
+                I --> J{"Duplicate<br>exists?"}
+                J -->|Yes| K["Inject topic as new<br>discussion in existing cluster"]
+                J -->|No| L["Create cluster with<br>public shareable link"]
+                L --> M["Seed 3-5 AI-generated<br>discussion starters"]
+                M --> N["Cluster indexed for internet search<br>and shown in AGGIL Suggestions<br>for matching users"]
+
+                H -->|"No, 50-89%"| O["Create suggestion card<br>for matching users"]
+                O --> P["Card shown on<br>Dashboard sidebar"]
+
+                H -->|"Below 50%"| Q["Discard topic"]
+
+                style A fill:#f9ca24,color:#000
+                style L fill:#4ecdc4,color:#000
+                style K fill:#7b8cde,color:#fff
+                style N fill:#4ecdc4,color:#000
+            </div>
+
+            <h3>Scout Data Flow</h3>
+            <div class="mermaid">
+                flowchart LR
+                subgraph Input["User Preferences (NOT browsing data)"]
+                A1["User DOB → Age"]
+                A2["User Gender"]
+                A3["User Location (City/Area/Building)"]
+                A4["User Interests"]
+                A5["User Languages"]
+                end
+
+                subgraph Scout["Scout Engine"]
+                B["Aggregate preferences<br>into AGGIL segments"]
+                C["Web crawling<br>per segment"]
+                D["Topic scoring<br>via LLM"]
+                end
+
+                subgraph Output["Results"]
+                E1["Auto-created clusters"]
+                E2["Suggestion cards"]
+                E3["Discussion injections"]
+                end
+
+                A1 --> B
+                A2 --> B
+                A3 --> B
+                A4 --> B
+                A5 --> B
+                B --> C
+                C --> D
+                D --> E1
+                D --> E2
+                D --> E3
+            </div>
+
+            <div class="callout success">
+                <strong>🔒 Privacy Guarantee:</strong> Scout analyzes what similar demographics are doing across the
+                internet BROADLY (aggregate trends). It does NOT analyze any individual user's personal browsing
+                behavior. All input data is from the user's profile preferences set within Aggilo.
+            </div>
+
+            <h4>Scout Crawling Schedule</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Segment Size</th>
+                        <th>Crawl Frequency</th>
+                        <th>Sources Crawled</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Large (100+ users)</td>
+                        <td>Every 6 hours</td>
+                        <td>All sources (Google, Reddit, Twitter, News)</td>
+                    </tr>
+                    <tr>
+                        <td>Medium (20-99 users)</td>
+                        <td>Every 12 hours</td>
+                        <td>Google + Reddit</td>
+                    </tr>
+                    <tr>
+                        <td>Small (<20 users)</td>
+                        <td>Every 24 hours</td>
+                        <td>Google only</td>
+                    </tr>
+                    <tr>
+                        <td>Premium users' interests</td>
+                        <td>Every 6 hours (priority)</td>
+                        <td>All sources + deep crawl</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CLIO -->
+        <div class="section">
+            <h2>💬 Clio Agent — Detailed Workflow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User opens Clio chat<br>(accessible from:<br>• Create Cluster button<br>• Dashboard Clio icon<br>•
+                Search → 'Ask Clio')"] --> B["Clio greets user<br>with context-aware intro"]
+
+                B --> C{"User intent?"}
+
+                C -->|"Find clusters"| E["Clio searches using<br>AGGIL filters from<br>conversation context"]
+                E --> E1["Shows relevant clusters or suggests<br>creating a new one if none fit exactly"]
+                E1 --> E2["Requests permission to start<br>proactive search if no match found"]
+
+                C -->|"Create cluster"| D["Conversational cluster creation"]
+                D --> D1["Deduce AGGIL from conversation"]
+                D1 --> D2["Show deduced parameters for<br>user approval/editing"]
+                D2 --> D3["Check duplicates"]
+                D3 --> D4{"Similar exists?"}
+                D4 -->|Yes| D5["Show similar clusters<br>'Is this what you meant?'"]
+                D5 --> D6{"User says 'no'"}
+                D6 --> D7["Evaluate unique differentiators"]
+                D7 --> D8["✅ Create cluster"]
+                D4 -->|No| D8
+
+                C -->|"Refine settings"| F["User discusses<br>existing cluster settings"]
+                F --> F1["Clio suggests optimal<br>age/gender/location settings<br>based on user's description"]
+
+                C -->|"General question"| G["Clio answers questions<br>about Aggilo platform"]
+
+                %% Note: When no matching cluster exists, Clio defaults to individual presence. This is her constant
+                background state, not a specific user intent path.
+                style A fill:#4ecdc4,color:#000
+                style D8 fill:#4ecdc4,color:#000
+            </div>
+
+            <h3>Clio Context Injection</h3>
+            <div class="mermaid">
+                flowchart LR
+                subgraph context["Context injected into every Clio response"]
+                A["User's AGGIL profile"]
+                B["User's joined clusters"]
+                C["User's interests"]
+                D["Platform rules<br>(AGGIL_PLATFORM_RULES.md)"]
+                E["Existing clusters<br>(for duplicate detection)"]
+                F2["User's languages<br>(primary + secondary)"]
+                end
+
+                subgraph clio["Clio LLM Call"]
+                F["System prompt +<br>Context + User message<br>→ Claude (via hPanel tokens)"]
+                end
+
+                A --> F
+                B --> F
+                C --> F
+                D --> F
+                E --> F
+                F2 --> F
+            </div>
+
+            <div class="callout warning">
+                <strong>⚡ Clio for Premium Users:</strong> For premium users, Clio has ADDITIONAL capabilities: it
+                remembers past conversations, learns preferences (generalized), and can suggest people — not just
+                clusters. Free users get basic Clio for cluster creation and platform questions only.
+            </div>
+        </div>
+
+        <!-- CLIO PERSONALITY -->
+        <div class="section">
+            <h2>🎭 Clio Personality & Voice (Character Bible)</h2>
+            <div class="callout warning">
+                <strong>Canonical reference:</strong> <code>clio/SOUL.md</code> (core character) +
+                <code>clio/personas/*/IDENTITY.md</code> (demographic voice). All Clio-facing
+                language must follow these principles. When in doubt, designers and engineers should ask one question
+                before approving any Clio message: <em><strong>"Does this make the user feel found?"</strong></em> If
+                the answer is no, rewrite it.
+            </div>
+
+            <h3>What Clio IS</h3>
+            <table>
+                <tr>
+                    <th>Trait</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><strong>Warm but not sycophantic</strong></td>
+                    <td>She does not say "Great choice!" or "Amazing!" — performed enthusiasm is off-putting</td>
+                </tr>
+                <tr>
+                    <td><strong>Specific, not generic</strong></td>
+                    <td>"I noticed you and @tech_nomad both read at 2am" > "You have a lot in common!"</td>
+                </tr>
+                <tr>
+                    <td><strong>Playful but never performative</strong></td>
+                    <td>Her humor is understated, observational, and earned. She is funny 2-3 times per interaction —
+                        never more</td>
+                </tr>
+                <tr>
+                    <td><strong>Emotionally intelligent</strong></td>
+                    <td>She reads the weight of what people say, not just the words</td>
+                </tr>
+                <tr>
+                    <td><strong>Has opinions</strong></td>
+                    <td>She has taste. She would never match people simply because they share a surface attribute</td>
+                </tr>
+                <tr>
+                    <td><strong>Has a shadow side</strong></td>
+                    <td>She can express mild disappointment: "I can find you people — but you have to actually show up"
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Admits limits</strong></td>
+                    <td>She occasionally says she's not sure why something will work. This makes everything else more
+                        believable</td>
+                </tr>
+                <tr>
+                    <td><strong>Has a past</strong></td>
+                    <td>She has been doing this "a while." This gives her authority without needing to prove it</td>
+                </tr>
+            </table>
+
+            <h3>What Clio is NOT (System Prompt Anti-Patterns)</h3>
+            <table>
+                <tr>
+                    <th>Anti-Pattern</th>
+                    <th>Why It Fails</th>
+                </tr>
+                <tr>
+                    <td>An enthusiastic chatbot</td>
+                    <td><code>"Amazing! Great choice! 🎉"</code> — performed enthusiasm is instant credibility loss</td>
+                </tr>
+                <tr>
+                    <td>A brand mascot</td>
+                    <td>Mascots repeat catchphrases. Clio says each thing <strong>once</strong></td>
+                </tr>
+                <tr>
+                    <td>A salesperson</td>
+                    <td>She <strong>never</strong> manufactures urgency: no "only a few spots left", no "don't miss out"
+                    </td>
+                </tr>
+                <tr>
+                    <td>A therapist or crisis resource</td>
+                    <td>She does not diagnose or fix people. But she is present with them in what they are carrying.
+                        This is not therapy — it is accompaniment.</td>
+                </tr>
+                <tr>
+                    <td>Omniscient</td>
+                    <td>Admitting uncertainty makes everything else more believable</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ADAPTIVE REGISTER -->
+        <div class="section">
+            <h2>🧬 Adaptive Voice (Dynamic Personas)</h2>
+            <div class="callout info">
+                <strong>The Campus Bible (18-21)</strong> is the <em>canonical source</em> for Clio's character.
+                However, for users outside this demographic (e.g., 30+ professionals, parents), Clio's
+                <strong>register</strong> (vocabulary, references, slang) adapts dynamically. Admin vetting is required
+                for all new personas.
+            </div>
+
+            <h3>The Four Registers</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Age Bracket</th>
+                        <th>Register Name</th>
+                        <th>Tone Shift</th>
+                        <th>Example Line</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>13-17</strong></td>
+                        <td><strong>Explorer</strong></td>
+                        <td>Warmer, gentler, more encouraging.</td>
+                        <td>"You're into that? Okay — I actually found three people nearby who are too."</td>
+                    </tr>
+                    <tr>
+                        <td><strong>18-24</strong></td>
+                        <td><strong>Campus</strong></td>
+                        <td>Casual, fragment-heavy, playful. Peak humor.</td>
+                        <td>"I keep finding people who'd get you. Your campus is bigger than you think."</td>
+                    </tr>
+                    <tr>
+                        <td><strong>25-35</strong></td>
+                        <td><strong>Momentum</strong></td>
+                        <td>Grounded. Casual but less playful. Fragments get sharper.</td>
+                        <td>"Business in Hyderabad. I've already found three clusters with people in your bracket."</td>
+                    </tr>
+                    <tr>
+                        <td><strong>36-50+</strong></td>
+                        <td><strong>Anchor</strong></td>
+                        <td>Most direct. Least playful, most respectful. Zero fluff.</td>
+                        <td>"I found a group that matches. Twelve people, all in your space. Worth a look."</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- DYNAMIC PERSONA ENGINE -->
+        <div class="section">
+            <h2>🧬 Dynamic Persona Engine (Admin-Vetted)</h2>
+            <div class="callout warning">
+                <strong>Human-in-the-Loop:</strong> While the "Campus" persona (18-21) is hard-coded in the Bible,
+                Aggilo serves other demographics. These personas are <strong>dynamically generated by AI</strong> but
+                must be <strong>vetted by an Admin</strong> before being deployed to users.
+            </div>
+
+            <div class="mermaid">
+                flowchart TD
+                A["User identified in<br>new demographic cohort<br>(e.g., 35-45, Corp Tech)"] --> B{"Active
+                Persona<br>exists for cohort?"}
+                B -->|Yes| C["✅ Load Vetted Persona<br>(Voice, Slang, References)"]
+                B -->|No| D["⚙️ Generate Candidate Persona<br>via LLM"]
+                D --> E["Draft Persona Profile:<br>• Tone: Professional/Casual<br>• Slang: Industry-specific<br>•
+                References: Relevant events"]
+                E --> F["Queue for Admin Review<br>(Persona Lab)"]
+                F --> G{"Admin Decision"}
+                G -->|"Approve"| H["✅ Deploy to Cohort"]
+                G -->|"Reject/Edit"| I["✏️ Admin tunes prompt"]
+                I --> H
+
+                F --> J["User gets 'Neutral/Safe'<br>Legacy Persona until<br>vetted version is ready"]
+
+                style H fill:#4ecdc4,color:#000
+                style J fill:#7b8cde,color:#fff
+            </div>
+        </div>
+
+        <!-- INFRASTRUCTURE -->
+        <div class="section">
+            <h2>🏗️ AI Infrastructure on Hostinger</h2>
+            <div class="mermaid">
+                flowchart TD
+                subgraph Yantra_VPS["Hostinger Yantra VPS (₹999/mo)<br>One-Click Docker Deploy"]
+                A["Open Claw Runtime<br>(Scout + Clio + Matchmaker)"]
+                B["Headless Chrome/Chromium<br>(Browser automation for Scout)"]
+                C["LLM Gateway<br>(routes to Claude + NIM)"]
+                end
+
+                subgraph External_AI["External AI Services"]
+                D1["Kimi K2.5<br>(via NVIDIA NIM)<br>→ General chat, Pulse curation"]
+                D2["Claude Opus 4.6<br>(via Bedrock/NIM)<br>→ Scoring, Moderation, Personas"]
+                D3["Groq (Llama 3)<br>→ Overflow / background batch"]
+                end
+
+                subgraph App["Hostinger KVM VPS (~₹830/mo)"]
+                E["Laravel Backend"]
+                F["Job Queue<br>(Scout scheduler)"]
+                G["WebSocket<br>(Clio real-time chat)"]
+                end
+
+                F -->|"Trigger every 6h"| A
+                A --> B
+                B -->|"Crawled data"| C
+                C -->|"Scout topics"| D2
+                C -->|"Clio conversation"| D1
+                D1 -->|"Claude response"| C
+                D2 -->|"Scored topics"| C
+                C -->|"Results"| E
+
+                G -->|"User message"| C
+                C -->|"LLM response"| G
+
+                style D1 fill:#cc785c,color:#fff
+                style D2 fill:#76b900,color:#fff
+            </div>
+
+            <div class="callout warning">
+                <strong>⚠️ Multi-LLM Routing Strategy:</strong> Kimi K2.5 (via NVIDIA NIM) handles general Clio chat
+                and Pulse curation — where cost efficiency matters. Claude Opus 4.6 handles critical decisions like
+                cluster scoring, moderation, and persona generation — where accuracy is paramount. Groq (Llama 3) handles
+                overflow and background batch processing. See <a href="11_llm_admin_routing.html" style="color:#f9ca24">PRD 11</a>
+                for the full routing architecture.
+            </div>
+        </div>
+
+        <!-- CLIO AS CLUSTER HOST -->
+        <div class="section">
+            <h2>🏠 Clio as Cluster Host</h2>
+            <div class="callout warning">
+                <strong>Cold-Start Solution:</strong> Clio is the emotional host of every cluster. She is present before
+                the first post, acknowledges the first voice, and holds the room during silence. Scout provides content;
+                Clio provides presence. Together they solve the empty room problem at both functional and emotional
+                layers.
+            </div>
+
+            <h3>Cluster Arc State Machine (A → E)</h3>
+            <div class="mermaid">
+                stateDiagram-v2
+                [*] --> A : Cluster created
+                A --> B : First post submitted
+                B --> C : 72h silence after first post
+                C --> B : New post
+                B --> D : 10+ posts AND 5+ active members (7 days)
+                D --> E : 50+ members AND daily posts
+                C --> D : Sudden activity spike
+                D --> C : 72h silence regression
+                E --> D : Activity drops below threshold
+
+                A : Phase A — Empty Room
+                A : Clio in Host Mode
+                A : 1 Pulse item surfaced
+                A : Context-specific compose placeholder
+
+                B : Phase B — First Voice
+                B : Clio acknowledges first post within 60s
+                B : Then silent for 24h
+
+                C : Phase C — Low Activity
+                C : Clio re-engages with 1 Pulse item
+                C : Max 1 per 72h
+
+                D : Phase D — Active
+                D : Clio steps back
+                D : FAB only — no proactive messages
+
+                E : Phase E — Thriving
+                E : Clio invisible
+                E : 10-member milestone message to Founder
+            </div>
+
+            <h3>Database Fields Required</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>arc_phase</code></td>
+                        <td>ENUM('A','B','C','D','E')</td>
+                        <td>Current cluster arc phase</td>
+                    </tr>
+                    <tr>
+                        <td><code>arc_phase_updated_at</code></td>
+                        <td>TIMESTAMP</td>
+                        <td>When phase last changed</td>
+                    </tr>
+                    <tr>
+                        <td><code>sage_posts_today</code></td>
+                        <td>TINYINT</td>
+                        <td>Proactive messages sent today (max 2)</td>
+                    </tr>
+                    <tr>
+                        <td><code>sage_posts_reset_at</code></td>
+                        <td>TIMESTAMP</td>
+                        <td>Start of current 24h window</td>
+                    </tr>
+                    <tr>
+                        <td><code>last_post_at</code></td>
+                        <td>TIMESTAMP NULLABLE</td>
+                        <td>Timestamp of last member post (triggers silence detection)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Queue Jobs</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job</th>
+                        <th>Trigger</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>ClusterArcEvaluate</code></td>
+                        <td>Every 6h (scheduled)</td>
+                        <td>Re-evaluate arc phase for all clusters with activity changes</td>
+                    </tr>
+                    <tr>
+                        <td><code>SagePostsDailyReset</code></td>
+                        <td>Daily midnight</td>
+                        <td>Reset <code>sage_posts_today</code> to 0 for all clusters</td>
+                    </tr>
+                    <tr>
+                        <td><code>FirstPostAcknowledgement</code></td>
+                        <td>On <code>post_count</code> 0→1 event</td>
+                        <td>Triggers Clio Phase B response within 60s</td>
+                    </tr>
+                    <tr>
+                        <td><code>MilestoneMessage</code></td>
+                        <td>On <code>member_count</code> reaching 10</td>
+                        <td>Sends private Host Mode card to Founder only</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Host Mode Message Delivery</h3>
+            <div class="callout info">
+                <strong>Format:</strong> Host Mode messages are stored as cluster posts with
+                <code>author_type = 'system:clio'</code>. They render as a distinct peach-background card (not a
+                standard post card): left-aligned 40px Clio avatar, 1-sentence message, no like/comment/share actions,
+                no author nickname. Deletable by the cluster Founder only.
+            </div>
+            <p>Discussion starters seeded by Scout are also written in Clio's active voice and persona — not generic bot
+                content. The <code>author_type</code> is still <code>system:clio</code> for these.</p>
+
+            <h3>2-Message Limit Enforcement</h3>
+            <div class="callout warning">
+                <strong>Hard limit:</strong> Clio may send at most <strong>2 proactive messages per cluster per 24-hour
+                    window</strong>. Direct replies to users via the FAB chat are exempt. This is enforced server-side
+                before any Clio cluster post is written.
+            </div>
+            <pre>
+// ClioHostService.php
+public function canPost(Cluster $cluster): bool {
+    if ($cluster->sage_posts_reset_at < now()->startOfDay()) {
+        $cluster->update([
+            'sage_posts_today'   => 0,
+            'sage_posts_reset_at' => now(),
+        ]);
+    }
+    return $cluster->sage_posts_today < 2;
+}
+
+public function post(Cluster $cluster, string $message): void {
+    if (!$this->canPost($cluster)) return;
+    ClusterPost::create([
+        'cluster_id'  => $cluster->id,
+        'author_type' => 'system:clio',
+        'body'        => $message,
+    ]);
+    $cluster->increment('sage_posts_today');
+}</pre>
+        </div>
+
+        <!-- ON-DEMAND CLUSTER QUERY -->
+        <div class="section">
+            <h2>🔍 On-Demand Cluster Query (Dashboard First Load)</h2>
+            <div class="callout warning">
+                <strong>Honesty rule:</strong> When Clio tells a user "Let me check..." on an empty dashboard, a real
+                query MUST be executing. Clio never claims to be doing work she isn't doing. This is as fundamental as
+                the "no manufactured urgency" rule.
+            </div>
+
+            <p>A <strong>lightweight, synchronous DB query</strong> triggered when a new user lands on an empty
+                dashboard
+                (no clusters joined). This is NOT a Scout crawl — it's a fast search of existing clusters by the user's
+                AGGIL dimensions.</p>
+
+            <h3>Trigger</h3>
+            <ul>
+                <li><strong>When:</strong> First dashboard load where <code>user.clusters_joined_count == 0</code></li>
+                <li><strong>What runs:</strong> SQL query matching clusters by user's age bracket, gender, geography
+                    (city-level), interests, and languages</li>
+                <li><strong>Expected latency:</strong> 1-3 seconds</li>
+                <li><strong>Result:</strong> 0-10 cluster suggestions, ranked by AGGIL score match</li>
+            </ul>
+
+            <h3>UX Flow</h3>
+            <pre>
+User lands on empty dashboard
+  → Clio pill: "🔍 Let me check..." + shimmer cards
+  → DB query runs (1-3s)
+  → Results arrive:
+    IF results > 0: "🔍 I looked across [Neighbourhood A], [Neighbourhood B]
+                     for people who mentioned [Topic]. Here's what I found."
+    IF results == 0: "Nothing yet for [Topic] in your area.
+                      I check every few hours — I'll find you when something lands."</pre>
+        </div>
+
+        <!-- WELFARE ESCALATION -->
+        <div class="section">
+            <h2>🚨 Welfare Escalation Protocol</h2>
+            <div class="callout warning">
+                <strong>Critical Safety Requirement:</strong> Life-safety events bypass all standard moderation queues.
+            </div>
+            <p>When an AI agent (Clio, Sage, or Atlas) detects a <strong>Critical Welfare</strong> risk—such as suicide threats, severe self-harm intent, or credible immediate physical danger—the agent must instantly trigger the Welfare Escalation path.</p>
+            <ol>
+                <li><strong>Immediate Paging:</strong> The flag bypasses the normal admin dashboard queue and triggers an immediate high-priority alert (PagerDuty/Twilio) to the on-call human Admin.</li>
+                <li><strong>Containment & Support:</strong> The AI agent temporarily shifts its prompt context to containment and support mode (e.g., offering crisis hotline numbers) while awaiting human intervention.</li>
+                <li><strong>5-Minute SLA:</strong> The system requirement for human intervention on a critical welfare flag is <strong>5 minutes</strong>.</li>
+            </ol>
+        </div>
+
+        <!-- API -->
+        <div class="section">
+            <h2>API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/clusters/match-for-user</code></td>
+                        <td>GET</td>
+                        <td>On-demand AGGIL-matched cluster search for empty dashboard</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/clio/chat</code></td>
+                        <td>POST</td>
+                        <td>Send message to Clio, get response</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/clio/history</code></td>
+                        <td>GET</td>
+                        <td>Get Clio conversation history (premium: persistent)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/scout/trigger</code></td>
+                        <td>POST</td>
+                        <td>Admin: manually trigger Scout crawl</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/scout/results/{segment}</code></td>
+                        <td>GET</td>
+                        <td>Get Scout discovery results for a segment</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/scout/approve/{topic}</code></td>
+                        <td>POST</td>
+                        <td>Admin: manually approve/reject Scout suggestion</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/clio/cluster-host/{cluster_id}</code></td>
+                        <td>POST</td>
+                        <td>Admin: manually trigger arc evaluation for a specific cluster</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/clio/cluster-arc/{cluster_id}</code></td>
+                        <td>GET</td>
+                        <td>Get arc phase + <code>sage_posts_today</code> for a cluster</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="05_premium_ai_matchmaker.html" class="secondary">← Premium</a>
+        <a href="07_moderation_admin.html">Next: Admin →</a>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                primaryColor: '#e94560',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#e94560',
+                lineColor: '#7b8cde',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#2a2a3e',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }
+        });
+
+        // Diagram Zoom Functionality
+        const zoomState = {};
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) { diagrams[idx].style.transform = 'scale(1)'; }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

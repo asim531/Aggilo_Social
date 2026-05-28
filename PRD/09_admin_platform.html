@@ -1,0 +1,1267 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Admin Platform & Intelligence Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .header .meta {
+            margin-top: 16px;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .header .meta-item {
+            color: #a0a0b8;
+            font-size: 0.9rem;
+        }
+
+        .header .meta-item strong {
+            color: #e0e0e8;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .section h4 {
+            font-size: 1.05rem;
+            color: #4ecdc4;
+            margin: 16px 0 8px;
+        }
+
+        p {
+            margin: 12px 0;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout.warning {
+            border-left-color: #f9ca24;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .callout.warning strong {
+            color: #f9ca24;
+        }
+
+        pre {
+            background: #12121e;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #e0e0e8;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #e94560;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #c73a52;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-active {
+            background: #4ecdc4;
+            color: #000;
+        }
+
+        .status-review {
+            background: #f9ca24;
+            color: #000;
+        }
+
+        .status-draft {
+            background: #7b8cde;
+            color: #fff;
+        }
+
+        .compliance-line {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            padding: 4px 0;
+            line-height: 1.6;
+        }
+
+        .compliance-pass {
+            color: #4ecdc4;
+        }
+
+        .compliance-fail {
+            color: #e94560;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🖥️ Workflow 9: Admin Platform — Unified Intelligence Dashboard</h1>
+        <p class="subtitle">Persona governance, Clio orchestrator monitoring, Scout controls, and cross-system admin
+            capabilities</p>
+        <span class="badge">PRD — Aggilo Social Network — ADMIN & INTELLIGENCE OPS</span>
+        <div class="meta">
+            <span class="meta-item">🧬 Persona Lab: <strong>Full Lifecycle</strong></span>
+            <span class="meta-item">🤖 Clio Monitor: <strong>Real-time</strong></span>
+            <span class="meta-item">🔍 Scout Controls: <strong>Manual + Auto</strong></span>
+            <span class="meta-item">📡 New Endpoints: <strong>22</strong></span>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- NOTE CALLOUT -->
+        <div class="callout info">
+            <strong>NOTE:</strong> This document extends
+            <a href="07_moderation_admin.html" style="color:#7b8cde">07 — Moderation & Admin</a>
+            (content moderation, user management, notifications) with <strong>AI intelligence management</strong> — the
+            tools admins use to govern Clio's persona system, monitor orchestrator behaviour, tune Scout, and track
+            platform-wide AI effectiveness.
+        </div>
+
+        <!-- ADMIN INTEGRATION MAP -->
+        <div class="section">
+            <h2>Admin Integration Map</h2>
+            <p>How the Admin Dashboard connects to every system.</p>
+            <div class="mermaid">
+                flowchart TD
+                subgraph Admin["🖥️ Admin Dashboard (admin.aggilo.in)"]
+                A1["📊 Metrics"]
+                A2["🚩 Moderation"]
+                A3["🧬 Persona Lab"]
+                A4["🤖 Clio Monitor"]
+                A5["🔍 Scout Control"]
+                A6["💎 Matchmaker Ops"]
+                A7["💰 Revenue"]
+                A8["🔔 Notifications"]
+                end
+
+                subgraph Clio["💬 Clio — The Orchestrator"]
+                C1["SOUL.md<br>(immutable)"]
+                C2["Active Persona<br>(IDENTITY.md)"]
+                C3["USER.md<br>(per user)"]
+                C4["MEMORY.md<br>(persistent facts)"]
+                end
+
+                subgraph Sub["Sub-Capabilities"]
+                S1["🔍 Scout<br>Trend discovery"]
+                S2["🤖 Matchmaker<br>People matching"]
+                end
+
+                subgraph Data["Behavioural Intelligence<br>(08_data_strategy)"]
+                D1["5 signal domains"]
+                D2["AGGIL Behaviour Matrix"]
+                D3["Calibration engine"]
+                end
+
+                A3 -->|"approve/reject<br>personas"| C2
+                A4 -->|"monitor register<br>usage & fallbacks"| C3
+                A4 -->|"view conversation<br>analytics"| C4
+                A5 -->|"trigger/approve<br>crawls"| S1
+                A6 -->|"monitor questionnaires<br>& matches"| S2
+                D1 --> D2 --> D3
+                D3 -->|"calibrates"| Clio
+                D3 -->|"calibrates"| S1
+
+                style Admin fill:#1a1a2e,stroke:#e94560,color:#e0e0e8
+                style Clio fill:#4ecdc4,color:#000
+            </div>
+        </div>
+
+        <!-- PERSONA LAB -->
+        <div class="section">
+            <h2>🧬 Persona Lab — Deep Dive</h2>
+            <p>The admin's workspace for managing Clio's demographic voice layer.</p>
+
+            <h3>What Admin Sees</h3>
+            <div class="mermaid">
+                flowchart TD
+                A["🧬 Persona Lab"] --> B["Active Personas"]
+                A --> C["Review Queue"]
+                A --> D["Draft Workspace"]
+                A --> E["Effectiveness Board"]
+
+                B --> B1["Campus Connect (18-24) — ACTIVE<br>Conversations: 12,400 | Satisfaction: 0.87"]
+                B --> B2["No other active personas yet"]
+
+                C --> C1["Explorer (13-17) — IN REVIEW<br>Submitted: 2026-02-15 | Reviewer: —"]
+                C --> C2["Momentum (25-35) — IN REVIEW<br>Submitted: 2026-02-16 | Reviewer: —"]
+
+                D --> D1["Anchor (36-50+) — DRAFT<br>Last edited: 2026-02-17"]
+
+                E --> E1["Register effectiveness<br>per AGGIL segment<br>(from Signal Domain 4)"]
+
+                style B1 fill:#4ecdc4,color:#000
+                style C1 fill:#f9ca24,color:#000
+                style C2 fill:#f9ca24,color:#000
+                style D1 fill:#7b8cde,color:#fff
+            </div>
+
+            <h3>Persona Card — Admin View</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Source</th>
+                        <th>Admin Can Edit?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Name</strong></td>
+                        <td><code>persona_name</code> in YAML frontmatter</td>
+                        <td>✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Demographic</strong></td>
+                        <td><code>demographic</code> in YAML frontmatter</td>
+                        <td>✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status</strong></td>
+                        <td><code>status</code> in YAML frontmatter</td>
+                        <td>✅ Yes (controls lifecycle)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tone summary</strong></td>
+                        <td>Extracted from IDENTITY.md <code>## Tone Specification</code></td>
+                        <td>✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Example lines</strong></td>
+                        <td>From <code>## Relationship Arc — Dialogue Examples</code></td>
+                        <td>✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Emoji rules</strong></td>
+                        <td>From <code>## Vocabulary & Language</code></td>
+                        <td>✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SOUL.md compliance</strong></td>
+                        <td>Auto-checked: anti-patterns, no urgency, no sycophancy</td>
+                        <td>🤖 Automated</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Effectiveness score</strong></td>
+                        <td>From data strategy register effectiveness signal</td>
+                        <td>📊 Read-only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Conversation volume</strong></td>
+                        <td>Total Clio conversations using this register</td>
+                        <td>📊 Read-only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fallback frequency</strong></td>
+                        <td>How often this persona is used as fallback</td>
+                        <td>📊 Read-only</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Admin Actions in Persona Lab</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Effect</th>
+                        <th>Validation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Submit for review</strong></td>
+                        <td><span class="status-badge status-draft">draft</span> → <span
+                                class="status-badge status-review">review</span></td>
+                        <td>Must have all required sections filled</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Approve</strong></td>
+                        <td><span class="status-badge status-review">review</span> → approved</td>
+                        <td>SOUL.md compliance check must pass</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Activate</strong></td>
+                        <td>approved → <span class="status-badge status-active">active</span></td>
+                        <td>Only 1 active persona per demographic</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Revoke</strong></td>
+                        <td><span class="status-badge status-active">active</span> → <span
+                                class="status-badge status-review">review</span></td>
+                        <td>Affected users fall back to Anchor</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Reject</strong></td>
+                        <td><span class="status-badge status-review">review</span> → <span
+                                class="status-badge status-draft">draft</span> + notes</td>
+                        <td>Admin writes rejection reason</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Edit inline</strong></td>
+                        <td>Modify any IDENTITY.md section</td>
+                        <td>Changes require re-review if status ≥ review</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Clone</strong></td>
+                        <td>Duplicate persona as new draft</td>
+                        <td>For creating variants or A/B tests</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Preview</strong></td>
+                        <td>See Clio's responses as if this persona is active</td>
+                        <td>Uses sandbox conversation with test user</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>SOUL.md Compliance Checker</h3>
+            <p>Before approval, the system automatically validates:</p>
+            <pre><span class="compliance-pass">✅ No "Got it!", "Amazing!", "Great choice!" (sycophantic phrases)</span>
+<span class="compliance-pass">✅ No "only X spots left", "don't miss out" (urgency/scarcity)</span>
+<span class="compliance-pass">✅ No "We found great matches!" (algorithmic language)</span>
+<span class="compliance-pass">✅ All 10 relationship arc phases have dialogue examples</span>
+<span class="compliance-pass">✅ Emoji usage is ≤1 per message in examples</span>
+<span class="compliance-pass">✅ Generic vs. Clio comparison table is present</span>
+<span class="compliance-pass">✅ Vocabulary section defines words-never-used</span>
+<span class="compliance-fail">❌ FAIL: Line 47 contains "You're doing great!" → sycophantic</span></pre>
+        </div>
+
+        <!-- CLIO ORCHESTRATOR MONITOR -->
+        <div class="section">
+            <h2>🤖 Clio Orchestrator Monitor</h2>
+            <p>Live visibility into how Clio is performing across all users.</p>
+
+            <h3>Overview Dashboard</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Description</th>
+                        <th>Update Frequency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Active register distribution</strong></td>
+                        <td>Pie chart: what % of users are on each persona</td>
+                        <td>Real-time</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fallback frequency</strong></td>
+                        <td>How often Anchor is loaded because no active persona matches</td>
+                        <td>Real-time</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Conversation volume</strong></td>
+                        <td>Total Clio conversations / day, broken by register</td>
+                        <td>Hourly</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Arc phase distribution</strong></td>
+                        <td>Histogram: how many users are at each phase (1-10)</td>
+                        <td>Daily</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Average arc velocity</strong></td>
+                        <td>Mean time to advance from phase 1 → 5</td>
+                        <td>Daily</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1-turn abandonment rate</strong></td>
+                        <td>Conversations closed after Clio's first message</td>
+                        <td>Real-time</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Proactive trigger success</strong></td>
+                        <td>Which triggers (dormant, empty dashboard) lead to engagement</td>
+                        <td>Daily</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Premium vs free usage</strong></td>
+                        <td>Conversation depth comparison between tiers</td>
+                        <td>Daily</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Register Effectiveness View</h3>
+            <p>Sourced from <a href="08_data_strategy.html" style="color:#7b8cde">Signal Domain 4</a> —
+                <code>register_effectiveness</code> signal.
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Register</th>
+                        <th>Segment</th>
+                        <th>Conversations</th>
+                        <th>Engagement</th>
+                        <th>1-Turn Abandon</th>
+                        <th>Recommendation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Campus</td>
+                        <td>18-24, Hyderabad</td>
+                        <td>4,200</td>
+                        <td>0.87</td>
+                        <td>8%</td>
+                        <td>✅ Performing well</td>
+                    </tr>
+                    <tr>
+                        <td>Campus</td>
+                        <td>18-24, Bangalore</td>
+                        <td>3,100</td>
+                        <td>0.71</td>
+                        <td>15%</td>
+                        <td>⚠️ Consider regional variant</td>
+                    </tr>
+                    <tr>
+                        <td>Anchor (fallback)</td>
+                        <td>25-35, all cities</td>
+                        <td>1,800</td>
+                        <td>0.62</td>
+                        <td>22%</td>
+                        <td>🔴 Prioritize Momentum activation</td>
+                    </tr>
+                    <tr>
+                        <td>Anchor (fallback)</td>
+                        <td>36-50+, all cities</td>
+                        <td>400</td>
+                        <td>0.78</td>
+                        <td>11%</td>
+                        <td>✅ Anchor fits this demographic</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>IMPORTANT:</strong> When fallback frequency for a demographic exceeds <strong>30%</strong> of
+                that segment's total conversations, the system alerts the admin to prioritize persona development for
+                that bracket.
+            </div>
+
+            <h3>Conversation Audit</h3>
+            <p>Admins can browse <strong>LLM-classified summaries</strong> of Clio conversations (never raw text):</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>What Admin Sees</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Conversation ID</td>
+                        <td>Pseudonymized</td>
+                    </tr>
+                    <tr>
+                        <td>Register used</td>
+                        <td>e.g. "Campus Connect"</td>
+                    </tr>
+                    <tr>
+                        <td>Intent classified</td>
+                        <td>e.g. "find_community"</td>
+                    </tr>
+                    <tr>
+                        <td>Emotional register</td>
+                        <td>e.g. "curious"</td>
+                    </tr>
+                    <tr>
+                        <td>Arc beat reached</td>
+                        <td>e.g. Phase 5</td>
+                    </tr>
+                    <tr>
+                        <td>Outcome</td>
+                        <td>e.g. "cluster_joined"</td>
+                    </tr>
+                    <tr>
+                        <td>Override?</td>
+                        <td>If user corrected Clio's AGGIL deduction</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout warning">
+                <strong>WARNING:</strong> Raw conversation text is <strong>never shown</strong> to admins. All audit
+                data
+                is LLM-classified into structured signals per
+                <a href="08_data_strategy.html" style="color:#f9ca24">08_data_strategy</a> Signal Domain 4.
+            </div>
+        </div>
+
+        <!-- SCOUT ADMIN CONTROLS -->
+        <div class="section">
+            <h2>🔍 Scout Admin Controls</h2>
+            <p>Extends the Scout controls referenced in
+                <a href="06_ai_agents.html" style="color:#7b8cde">06_ai_agents</a> and
+                <a href="07_moderation_admin.html" style="color:#7b8cde">07_moderation_admin</a>.
+            </p>
+
+            <h3>Scout Dashboard</h3>
+            <div class="mermaid">
+                flowchart TD
+                A["🔍 Scout Control Panel"] --> B["Crawl Status"]
+                A --> C["Topic Queue"]
+                A --> D["Auto-Created Clusters"]
+                A --> E["Source Quality"]
+                A --> F["Segment Coverage"]
+
+                B --> B1["Last crawl: 2h ago<br>Next crawl: in 4h<br>Status: ✅ Healthy"]
+                C --> C1["3 topics ≥90% (auto-created)<br>7 topics 50-89% (suggestion cards)<br>2 topics rejected by
+                admin"]
+                D --> D1["12 auto-created this week<br>Avg adoption: 34 members/48h<br>Best: 'IPL 2026 Hyd Fans' (112)"]
+                E --> E1["Twitter: 0.82 quality<br>Reddit: 0.74 quality<br>Google Trends: 0.69 quality"]
+                F --> F1["Segments with active crawling<br>Segments with no data yet<br>Underserved demographics"]
+
+                style A fill:#f9ca24,color:#000
+            </div>
+
+            <h3>Admin Scout Actions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Manual trigger</strong></td>
+                        <td>Force Scout crawl for a specific AGGIL segment</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Approve/reject topic</strong></td>
+                        <td>Override auto-creation decision for pending topics</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Adjust relevance threshold</strong></td>
+                        <td>Change the ≥90% auto-create threshold per segment</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pause crawl source</strong></td>
+                        <td>Temporarily disable a low-quality source for a segment</td>
+                    </tr>
+                    <tr>
+                        <td><strong>View adoption analytics</strong></td>
+                        <td>See which auto-created clusters gained traction</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <strong>NOTE:</strong> All Scout actions flow <strong>through Clio</strong> — results are surfaced to
+                users as Clio's suggestions, not as "Scout found this". Admin controls Scout's inputs; Clio owns the
+                user-facing output.
+            </div>
+        </div>
+
+        <!-- MATCHMAKER OPS -->
+        <div class="section">
+            <h2>💎 Matchmaker Ops (Premium Phase)</h2>
+            <p>Admin controls for the premium matchmaker capability. Deferred until premium launch but specified here
+                for
+                completeness.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Capability</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Questionnaire review</strong></td>
+                        <td>Browse active questionnaires, flag inappropriate ones</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Match quality monitoring</strong></td>
+                        <td>Track match acceptance rates per AGGIL segment</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Private cluster oversight</strong></td>
+                        <td>View private premium clusters (admin-only visibility)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Premium conversion funnel</strong></td>
+                        <td>Free → premium conversion tracking by trigger type</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Churn risk alerts</strong></td>
+                        <td>Premium users approaching cancellation signals</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- NOTIFICATION INTELLIGENCE -->
+        <div class="section">
+            <h2>🔔 Notification Intelligence</h2>
+            <p>Extends <a href="07_moderation_admin.html" style="color:#7b8cde">07_moderation_admin</a> notification
+                system with AI-specific triggers.</p>
+
+            <h3>Clio-Triggered Notifications</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Trigger</th>
+                        <th>Source</th>
+                        <th>Admin Control</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Proactive outreach (dormant user)</td>
+                        <td><code>AGENTS.md</code> proactive triggers</td>
+                        <td>Set cooldown period, max frequency</td>
+                    </tr>
+                    <tr>
+                        <td>Scout suggestion surfaced through Clio</td>
+                        <td><code>AGENTS.md</code> orchestrator coordination</td>
+                        <td>Enable/disable per segment</td>
+                    </tr>
+                    <tr>
+                        <td>Connection introduction (premium)</td>
+                        <td><code>connection_intro</code> skill</td>
+                        <td>Review templates per persona</td>
+                    </tr>
+                    <tr>
+                        <td>Persona fallback alert</td>
+                        <td>Anchor loaded for unserved demographic</td>
+                        <td>Set threshold for admin notification</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PERSONA LIFECYCLE -->
+        <div class="section">
+            <h2>Persona Lifecycle — Technical Implementation</h2>
+
+            <h3>How IDENTITY.md Frontmatter Changes</h3>
+            <div class="mermaid">
+                sequenceDiagram
+                participant A as Admin
+                participant D as Dashboard
+                participant API as API
+                participant FS as Yantra Files
+                participant C as Clio Runtime
+
+                A->>D: Reviews persona in Persona Lab
+                D->>API: POST /personas/{id}/approve
+                API->>API: Run SOUL.md compliance check
+                API->>FS: Set status=approved, approved_by=admin
+                A->>D: Clicks Activate
+                D->>API: POST /personas/{id}/activate
+                API->>FS: Set status=active
+                API->>C: Invalidate persona cache
+                C->>C: Next session loads new persona
+                Note over C: Users in this demographic now get the new register
+            </div>
+
+            <h3>Storage Model</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Answer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Where do personas live?</td>
+                        <td><code>clio/personas/&lt;demographic&gt;/IDENTITY.md</code> — version-controlled</td>
+                    </tr>
+                    <tr>
+                        <td>How does admin edit them?</td>
+                        <td>Admin Dashboard provides a rich editor; changes are written via API to the file system</td>
+                    </tr>
+                    <tr>
+                        <td>Is there Git version control?</td>
+                        <td>Yes — every frontmatter change is committed with admin name and timestamp</td>
+                    </tr>
+                    <tr>
+                        <td>Can changes be rolled back?</td>
+                        <td>Yes — via Git history. Admin can revert to any previous version</td>
+                    </tr>
+                    <tr>
+                        <td>How does Clio pick up changes?</td>
+                        <td>Yantra runtime watches for file changes or receives cache invalidation signal</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- COMPLETE API ENDPOINTS -->
+        <div class="section">
+            <h2>Complete Admin API Endpoints</h2>
+
+            <h3>Existing (from PRD 06 & 07)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/admin/reports</code></td>
+                        <td>GET</td>
+                        <td>Moderation queue</td>
+                        <td>07</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/reports/{id}/action</code></td>
+                        <td>POST</td>
+                        <td>Take action on report</td>
+                        <td>07</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/users/{id}/ban</code></td>
+                        <td>POST</td>
+                        <td>Ban user</td>
+                        <td>07</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/scout/trigger</code></td>
+                        <td>POST</td>
+                        <td>Manual Scout crawl</td>
+                        <td>06</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/scout/status</code></td>
+                        <td>GET</td>
+                        <td>Scout crawl status</td>
+                        <td>06</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/scout/approve/{topic}</code></td>
+                        <td>POST</td>
+                        <td>Approve/reject Scout topic</td>
+                        <td>06</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>New (this document)</h3>
+
+            <h4>Persona Management</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/admin/personas</code></td>
+                        <td>GET</td>
+                        <td>List all personas with status, effectiveness scores</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/personas/{id}</code></td>
+                        <td>GET</td>
+                        <td>Full persona detail including IDENTITY.md content</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT /api/admin/personas/{id}</code></td>
+                        <td>PUT</td>
+                        <td>Edit persona content (inline editing)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/personas/{id}/submit</code></td>
+                        <td>POST</td>
+                        <td>Submit for review (draft → review)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/personas/{id}/approve</code></td>
+                        <td>POST</td>
+                        <td>Approve persona (review → approved)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/personas/{id}/activate</code></td>
+                        <td>POST</td>
+                        <td>Activate persona (approved → active)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/personas/{id}/revoke</code></td>
+                        <td>POST</td>
+                        <td>Revoke persona (active → review)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/personas/{id}/reject</code></td>
+                        <td>POST</td>
+                        <td>Reject with notes (review → draft)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/personas/{id}/clone</code></td>
+                        <td>POST</td>
+                        <td>Clone persona as new draft</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/personas/{id}/preview</code></td>
+                        <td>POST</td>
+                        <td>Preview Clio responses with this persona</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/personas/{id}/compliance</code></td>
+                        <td>GET</td>
+                        <td>Run SOUL.md compliance check</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Clio Monitoring</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/admin/clio/stats</code></td>
+                        <td>GET</td>
+                        <td>Register distribution, fallback frequency, volumes</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/clio/arc-distribution</code></td>
+                        <td>GET</td>
+                        <td>Users per arc phase histogram</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/clio/register-effectiveness</code></td>
+                        <td>GET</td>
+                        <td>Per-register per-segment effectiveness scores</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/clio/conversations</code></td>
+                        <td>GET</td>
+                        <td>LLM-classified conversation audit log</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/clio/proactive-triggers</code></td>
+                        <td>GET</td>
+                        <td>Proactive trigger success rates</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Scout Analytics</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/admin/scout/sources</code></td>
+                        <td>GET</td>
+                        <td>Source quality scores per segment</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/scout/adoption</code></td>
+                        <td>GET</td>
+                        <td>Auto-created cluster adoption metrics</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT /api/admin/scout/threshold</code></td>
+                        <td>PUT</td>
+                        <td>Adjust auto-create relevance threshold</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT /api/admin/scout/sources/{id}/pause</code></td>
+                        <td>PUT</td>
+                        <td>Pause a crawl source for a segment</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Notifications</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/admin/notifications/clio-triggers</code></td>
+                        <td>GET</td>
+                        <td>Clio-triggered notification analytics</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT /api/admin/notifications/clio-triggers/{id}</code></td>
+                        <td>PUT</td>
+                        <td>Configure trigger cooldowns and frequency</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CROSS-REFERENCE INDEX -->
+        <div class="section">
+            <h2>Cross-Reference Index</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>This Document Section</th>
+                        <th>Related PRD</th>
+                        <th>Related Yantra File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Persona Lab</td>
+                        <td><a href="06_ai_agents.html" style="color:#7b8cde">06</a> §Dynamic Persona Engine</td>
+                        <td><code>clio/AGENTS.md</code>, <code>clio/personas/README.md</code></td>
+                    </tr>
+                    <tr>
+                        <td>Clio Monitor</td>
+                        <td><a href="08_data_strategy.html" style="color:#7b8cde">08</a> §Signal Domain 4</td>
+                        <td><code>clio/AGENTS.md</code> §Orchestrator Coordination</td>
+                    </tr>
+                    <tr>
+                        <td>Scout Controls</td>
+                        <td><a href="06_ai_agents.html" style="color:#7b8cde">06</a> §Scout Agent</td>
+                        <td><code>clio/AGENTS.md</code> §Orchestrator Coordination</td>
+                    </tr>
+                    <tr>
+                        <td>Register Effectiveness</td>
+                        <td><a href="08_data_strategy.html" style="color:#7b8cde">08</a> §Register effectiveness</td>
+                        <td><code>clio/personas/*/IDENTITY.md</code></td>
+                    </tr>
+                    <tr>
+                        <td>Fallback Logic</td>
+                        <td><a href="06_ai_agents.html" style="color:#7b8cde">06</a> §Persona Generation Rules</td>
+                        <td><code>clio/AGENTS.md</code> §Fallback Logic</td>
+                    </tr>
+                    <tr>
+                        <td>Proactive Triggers</td>
+                        <td><a href="08_data_strategy.html" style="color:#7b8cde">08</a> §Signal Domain 5</td>
+                        <td><code>clio/AGENTS.md</code> §Proactive triggers</td>
+                    </tr>
+                    <tr>
+                        <td>Notification Triggers</td>
+                        <td><a href="07_moderation_admin.html" style="color:#7b8cde">07</a> §Notification System</td>
+                        <td><code>clio/skills/connection_intro/SKILL.md</code></td>
+                    </tr>
+                    <tr>
+                        <td>Moderation & User Mgmt</td>
+                        <td><a href="07_moderation_admin.html" style="color:#7b8cde">07</a> (full)</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Premium Matchmaker</td>
+                        <td><a href="05_premium_ai_matchmaker.html" style="color:#7b8cde">05</a> (full)</td>
+                        <td><code>clio/AGENTS.md</code> §Premium vs Free Tier</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="08_data_strategy.html" class="secondary">← Data Strategy</a>
+        <a href="07_moderation_admin.html" class="secondary">Moderation & Admin</a>
+        <a href="00_prd_index.html">PRD Index</a>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                primaryColor: '#e94560',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#e94560',
+                lineColor: '#7b8cde',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#2a2a3e',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }
+        });
+
+        // Diagram Zoom Functionality
+        const zoomState = {};
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) { diagrams[idx].style.transform = 'scale(1)'; }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

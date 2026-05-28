@@ -70,6 +70,7 @@ export interface Post {
   /** "unattended" | "attended" | "welfare_flagged" */
   thread_state: string;
   created_at: string;
+  edited_at?: string | null;
 }
 
 export interface PostWithAuthor extends Post {

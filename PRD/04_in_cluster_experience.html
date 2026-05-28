@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — In-Cluster Experience Workflow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout.warning {
+            border-left-color: #f9ca24;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .callout.warning strong {
+            color: #f9ca24;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #e94560;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #c73a52;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>💬 Workflow 4: In-Cluster Experience</h1>
+        <p class="subtitle">Feed (Instagram-style), Chat (WhatsApp-style), DMs, and interactions</p>
+        <span class="badge">PRD — Aggilo Social Network</span>
+    </div>
+
+    <div class="container">
+
+        <!-- STRUCTURE -->
+        <div class="section">
+            <h2>Cluster Page Structure</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User opens joined cluster"] --> B["Cluster Page"]
+                B --> C["Header:<br>Cluster Name<br>Member Count<br>Purpose & Tags<br>Cluster Score<br>Founder badge"]
+                B --> D["Tab Bar"]
+
+                D --> E["📸 Timeline Tab<br>(Instagram-style posts)"]
+                D --> G["📊 Media Tab<br>(Shared images/videos)"]
+                D --> H["👥 Members Tab<br>(Member list with nicknames)"]
+
+                style B fill:#e94560,color:#fff
+                style E fill:#1a1a2e,stroke:#e94560,color:#e0e0e8
+                style F fill:#1a1a2e,stroke:#4ecdc4,color:#e0e0e8
+            </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="section">
+            <h2>📸 Timeline Tab — Instagram-Style Posts</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Timeline Tab"] --> B["Scrollable post feed<br>(newest first)"]
+                B --> C["Each post shows:<br>• Poster's nickname<br>• Poster's badges<br>• Timestamp<br>• Content (text
+                + image)<br>• Like count<br>• Comment count<br>• Share button"]
+
+                C --> D{"User action"}
+                D -->|"❤️ Like"| E["Toggle like<br>Update count"]
+                D -->|"💬 Comment"| F["Open comment thread<br>Reply to post"]
+                D -->|"📤 Share"| G["Share post link<br>externally"]
+                D -->|"🚩 Report"| H["Report post<br>→ AI moderation"]
+                D -->|"Tap nickname"| I["View member's<br>public profile"]
+                I --> J{"DM available?"}
+                J -->|Yes| K["Start Direct Message"]
+
+                style A fill:#e94560,color:#fff
+            </div>
+
+            <h3>Post Creation Flow (MVP Phase 1)</h3>
+
+            <div class="callout info">
+                <strong>Experience Rule:</strong> The "Post" action is a <strong>Floating Action Button (FAB)</strong>,
+                never a persistent text input bar. This subtle UI choice reinforces that the timeline is for
+                <em>reading</em> first, not <em>chatting</em>.
+            </div>
+
+            <div class="mermaid">
+                flowchart TD
+                A["Tap '+' or 'New Post'<br>in Feed tab"] --> B{"Content type"}
+                B -->|"Text"| C["Text editor<br>(multi-line)"]
+                B -->|"Image + Caption"| D["Camera / Gallery picker<br>→ Add caption"]
+                C --> E["Preview post"]
+                D --> E
+                E --> F["Tap 'Post'"]
+                F --> G["Post appears at top<br>of cluster feed"]
+                G --> H["Push notification sent<br>to cluster members"]
+
+                style G fill:#4ecdc4,color:#000
+            </div>
+
+            <h3>Content Types by Phase</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Phase</th>
+                        <th>Content Types</th>
+                        <th>Timeline</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Phase 1 (MVP)</strong></td>
+                        <td>Text posts, Image + caption posts</td>
+                        <td>Month 1-2</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phase 2</strong></td>
+                        <td>Polls, Events, GIFs, Links with preview</td>
+                        <td>Month 3-4</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phase 3</strong></td>
+                        <td>Voice messages, Video posts, Audio rooms</td>
+                        <td>Month 5-8</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phase 4</strong></td>
+                        <td>Live streaming, Stories</td>
+                        <td>Month 9-12</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- MENTAL MODEL -->
+        <div class="callout warning">
+            <strong>💬 Communication Model:</strong> To prevent the "Empty Room Problem," <strong>Scout actively
+                pre-seeds</strong> new clusters with relevant external content (news, events) before users arrive. Users
+            should feel like they walked into a library with books already on the shelves, not an empty warehouse.
+            <br><br>
+            <strong>The Mental Model:</strong> Cluster = Subreddit (Async, Threaded). DM = WhatsApp (Sync, Chat).
+        </div>
+
+        <!-- DM -->
+        <div class="section">
+            <h2>✉️ Direct Messaging (DM)</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["User sees interesting<br>member in a cluster"] --> B["Taps member's nickname"]
+                B --> C["Member public profile:<br>• Nickname<br>• Badges (Founder, Contributor)<br>• Clusters they're
+                in (public ones)<br>• Join date"]
+                C --> D["Tap 'Send Message'"]
+                D --> E["Private DM Thread<br>(1-on-1)"]
+                E --> F["Text messages<br>(same UI as cluster chat)"]
+
+                G["DM Inbox: accessible<br>from bottom nav<br>'Messages' tab"] --> H["List of active<br>DM
+                conversations"]
+                H --> E
+
+                style D fill:#e94560,color:#fff
+                style E fill:#4ecdc4,color:#000
+            </div>
+
+            <h3>DM Rules</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rule</th>
+                        <th>Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Who can DM</td>
+                        <td>Any user can DM any other user they share a cluster with</td>
+                    </tr>
+                    <tr>
+                        <td>Identity</td>
+                        <td>DMs use nicknames only — no real names revealed</td>
+                    </tr>
+                    <tr>
+                        <td>Block</td>
+                        <td>Users can block other users permanently via the DM flow. There is NO user-to-user blocking in cluster feeds; violative feed posts are reported to Clio for review and removal.</td>
+                    </tr>
+                    <tr>
+                        <td>Content</td>
+                        <td>Text only in MVP. Images in Phase 2.</td>
+                    </tr>
+                    <tr>
+                        <td>Notifications</td>
+                        <td>Push notification for new DMs</td>
+                    </tr>
+                    <tr>
+                        <td>Unsolicited DMs</td>
+                        <td>Users can set "DM from cluster members only" or "Anyone" preference</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PASSIVE USERS -->
+        <div class="section">
+            <h2>👁️ Passive User Experience</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Passive user<br>(joins but doesn't post)"] --> B["Onboarding Promise:<br>'Lurking is okay.<br>Speak
+                when ready.'"]
+                B --> C["Can browse all:<br>• Timeline posts<br>• Member list<br>• Media"]
+                B --> C["Receives notifications:<br>• New posts in clusters<br>• AI trending topics<br>• New member
+                joins"]
+                C --> D["AI is the active participant<br>seeding discussions"]
+                D --> E["Passive user gets value<br>from READING content<br>without creating it"]
+                E --> F["Over time, engagement<br>may convert to active"]
+                F --> G["AI nudge:<br>'3 people liked a topic<br>you bookmarked. Share<br>your thoughts?'"]
+
+                style A fill:#7b8cde,color:#fff
+                style D fill:#4ecdc4,color:#000
+            </div>
+
+            <div class="callout success">
+                <strong>✅ Design Principle:</strong> The platform must deliver value to passive users. AI fills the
+                content gap — even in a cluster with 90% lurkers, the AI-seeded discussions and trending topic
+                injections keep the cluster feeling alive.
+            </div>
+        </div>
+
+        <!-- API -->
+        <div class="section">
+            <h2>API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/clusters/{id}/feed</code></td>
+                        <td>GET</td>
+                        <td>Get paginated feed posts</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/clusters/{id}/posts</code></td>
+                        <td>POST</td>
+                        <td>Create a new post (text or image)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/posts/{id}/like</code></td>
+                        <td>POST</td>
+                        <td>Like/unlike a post</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/posts/{id}/comment</code></td>
+                        <td>POST</td>
+                        <td>Add a comment to a post</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/posts/{id}/report</code></td>
+                        <td>POST</td>
+                        <td>Report a post</td>
+                    </tr>
+                    <tr>
+                        <td><code>WS /ws/clusters/{id}/chat</code></td>
+                        <td>WebSocket</td>
+                        <td>Real-time cluster chat connection</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/clusters/{id}/chat/history</code></td>
+                        <td>GET</td>
+                        <td>Get paginated chat history</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/clusters/{id}/members</code></td>
+                        <td>GET</td>
+                        <td>Get cluster member list</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/users/{nickname}/profile</code></td>
+                        <td>GET</td>
+                        <td>Get public user profile</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/dm/send</code></td>
+                        <td>POST</td>
+                        <td>Send a direct message</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/dm/conversations</code></td>
+                        <td>GET</td>
+                        <td>List DM conversations</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/users/{nickname}/block</code></td>
+                        <td>POST</td>
+                        <td>Block a user</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="03_cluster_discovery.html" class="secondary">← Discovery</a>
+        <a href="05_premium_ai_matchmaker.html">Next: AI Matchmaker →</a>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                primaryColor: '#e94560',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#e94560',
+                lineColor: '#7b8cde',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#2a2a3e',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }
+        });
+
+        // Diagram Zoom Functionality
+        const zoomState = {};
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) { diagrams[idx].style.transform = 'scale(1)'; }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

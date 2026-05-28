@@ -1,0 +1,144 @@
+/* ═══════════════════════════════ VARIABLES & RESET ═══════════════════════════════ */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Soft dark — deep slate-navy, not pure black */
+    --bg: #0d1117;
+    --bg2: #161b26;
+    --bg3: #1c2333;
+    --surface: #212936;
+    --border: rgba(255, 255, 255, 0.10);
+    --border-hi: rgba(255, 255, 255, 0.20);
+
+    /* Accent palette — warm & vibrant */
+    --teal: #2dd4bf;
+    --cyan: #38bdf8;
+    --pink: #f472b6;
+    --purple: #a78bfa;
+    --orange: #fb923c;
+    --yellow: #fbbf24;
+    --green: #34d399;
+
+    /* Text */
+    --text: #e2eaf3;
+    --text-muted: #7e8fa6;
+    --text-dim: #4a5568;
+
+    /* Glass */
+    --glass: rgba(255, 255, 255, 0.05);
+    --glass-hi: rgba(255, 255, 255, 0.09);
+
+    --font: 'Outfit', sans-serif;
+    --radius: 20px;
+}
+
+/* Suppress number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Common section styles ─── */
+section {
+    padding: clamp(56px, 10vw, 110px) 5%;
+    position: relative;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.sec-label {
+    display: block;
+    text-align: center;
+    margin-bottom: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal);
+    opacity: 0.75;
+}
+
+.sec-title {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 52px;
+    color: var(--text);
+}
+
+.sec-title span {
+    color: var(--teal);
+}
+
+.btn-primary {
+    display: inline-block;
+    padding: 17px 44px;
+    background: linear-gradient(135deg, var(--cyan), var(--teal));
+    color: #06101a;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 8px 36px rgba(45, 212, 191, 0.4);
+    font-family: var(--font);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 48px rgba(45, 212, 191, 0.6);
+}
+
+/* Global interaction consistency */
+.pf-chip, .ef-chip, .pf-tile, .byc-card {
+    cursor: pointer;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

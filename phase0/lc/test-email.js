@@ -8,8 +8,13 @@ const { join } = require('path');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function test() {
-  const email = 'world.asim@gmail.com';
-  const name = 'Asim';
+  const email = 'tasneem.bano@gmail.com';
+  const name = 'Tas';
+  const founder = 'tas';
+  const tasEmail = 'tasneem.bano@gmail.com';
+  const gender = 'female';
+  const birthYear = '1999';
+  const country = 'India';
   
   console.log('Using API KEY:', process.env.RESEND_API_KEY ? 'Set' : 'Missing');
   
@@ -20,6 +25,10 @@ async function test() {
     );
     
     let html = baseHtml.replace('Hey Tas,', `Hey ${name},`);
+    
+    // Replace CTA link with Tas's specific params
+    const ctaUrl = `https://mvp.aggilo.in/c/long-conversation?founder=${founder}&email=${encodeURIComponent(tasEmail)}&gender=${gender}&birth_year=${birthYear}&country=${country}`;
+    html = html.replace(/href="https:\/\/mvp\.aggilo\.in\/c\/long-conversation\/cluster\?[^"]*"/, `href="${ctaUrl}"`);
     
     console.log('Sending email to:', email);
     const result = await resend.emails.send({

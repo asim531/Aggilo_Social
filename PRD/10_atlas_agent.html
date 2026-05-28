@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Atlas Agent</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #4ecdc4;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #4ecdc4;
+            color: #000;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 10px;
+            margin-right: 8px;
+        }
+
+        .header .badge.red {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #4ecdc4;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .section h4 {
+            font-size: 1.05rem;
+            color: #e94560;
+            margin: 16px 0 8px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout.warning {
+            border-left-color: #f9ca24;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .callout.warning strong {
+            color: #f9ca24;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        pre {
+            background: #0f0f1a;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: #e0e0e8;
+            font-family: monospace;
+            border: 1px solid #2a2a3e;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        ul,
+        ol {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #4ecdc4;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover {
+            background: #3ab8b0;
+        }
+
+        .nav a.sec {
+            background: #2a2a3e;
+            color: #e0e0e8;
+        }
+
+        .nav a.sec:hover {
+            background: #3a3a4e;
+        }
+
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .agent-card {
+            background: #232338;
+            border-radius: 12px;
+            padding: 24px;
+            border-top: 3px solid #2a2a3e;
+        }
+
+        .agent-card.scout {
+            border-top-color: #f9ca24;
+        }
+
+        .agent-card.clio {
+            border-top-color: #e94560;
+        }
+
+        .agent-card.atlas {
+            border-top-color: #4ecdc4;
+        }
+
+        .agent-card h3 {
+            margin-top: 0;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .tag.teal {
+            background: rgba(78, 205, 196, 0.15);
+            color: #4ecdc4;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+        }
+
+        .tag.red {
+            background: rgba(233, 69, 96, 0.15);
+            color: #e94560;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+
+        .tag.purple {
+            background: rgba(123, 140, 222, 0.15);
+            color: #7b8cde;
+            border: 1px solid rgba(123, 140, 222, 0.3);
+        }
+
+        .chain {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .chain-node {
+            background: #232338;
+            border: 1px solid #3a3a4e;
+            border-radius: 10px;
+            padding: 14px 20px;
+            text-align: center;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .chain-node.atlas {
+            border-color: #4ecdc4;
+        }
+
+        .chain-node.clio {
+            border-color: #e94560;
+        }
+
+        .chain-node.output {
+            border-color: #7b8cde;
+        }
+
+        .chain-arrow {
+            color: #4ecdc4;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .chain-node .label {
+            font-size: 0.7rem;
+            color: #a0a0b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .chain-node .name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .pulse-preview {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 380px;
+            margin: 20px auto;
+            border: 1px solid #2a2a3e;
+        }
+
+        .pulse-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .pulse-header h4 {
+            margin: 0;
+            color: #4ecdc4;
+        }
+
+        .live-dot {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: #4ecdc4;
+        }
+
+        .live-dot::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4ecdc4;
+            animation: pulse-anim 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-anim {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .clio-frame {
+            font-style: italic;
+            color: #a0a0b8;
+            font-size: 0.85rem;
+            margin-bottom: 14px;
+            border-bottom: 1px solid #2a2a3e;
+            padding-bottom: 10px;
+        }
+
+        .pulse-card {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #2a2a3e;
+        }
+
+        .pulse-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .source-badge {
+            font-size: 0.7rem;
+            color: #a0a0b8;
+        }
+
+        .relevance {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.1);
+            padding: 2px 7px;
+            border-radius: 8px;
+        }
+
+        .pulse-card h5 {
+            font-size: 0.9rem;
+            color: #e0e0e8;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .hook {
+            font-size: 0.8rem;
+            color: #a0a0b8;
+            font-style: italic;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .pulse-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pulse-btn {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .pulse-btn.primary {
+            background: #4ecdc4;
+            color: #000;
+        }
+
+        .pulse-btn.secondary {
+            background: #2a2a3e;
+            color: #e0e0e8;
+        }
+
+        .variant-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .variant-card {
+            background: #232338;
+            border-radius: 10px;
+            padding: 20px;
+            border-top: 3px solid #7b8cde;
+        }
+
+        .variant-card.cold {
+            border-top-color: #f9ca24;
+        }
+
+        .variant-card.warm {
+            border-top-color: #4ecdc4;
+        }
+
+        .variant-card.reeng {
+            border-top-color: #e94560;
+        }
+
+        .score-bar-wrap {
+            margin: 8px 0;
+        }
+
+        .score-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #a0a0b8;
+            margin-bottom: 4px;
+        }
+
+        .score-bar {
+            height: 6px;
+            background: #2a2a3e;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: #4ecdc4;
+        }
+
+        .hook-example {
+            background: #0f0f1a;
+            border-left: 3px solid #4ecdc4;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            margin: 8px 0;
+            font-style: italic;
+            font-size: 0.85rem;
+            color: #c0c0d8;
+        }
+
+        .bad-hook {
+            border-left-color: #e94560;
+            color: #a0a0b8;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🗺️ Workflow 10: Atlas Agent</h1>
+        <p class="subtitle">Clio-Orchestrated Cluster Content Intelligence · Closing the Post-Join Gap</p>
+        <span class="badge">PRD — Aggilo Social Network</span>
+        <span class="badge red">ATLAS ENGINE</span>
+    </div>
+
+    <div class="container">
+
+        <!-- THE PROBLEM -->
+        <div class="section">
+            <h2>The Problem Atlas Solves</h2>
+            <div class="callout" style="border-left-color:#f9ca24;">
+                <strong style="color:#f9ca24;">⚠️ The Post-Join Gap:</strong> A user joins a cluster. They arrive to a
+                feed with three posts — or zero. An implicit "now what?" hangs in the air. They don't know anyone. They
+                haven't found a voice yet. The blank compose bar stares back. This is the <strong
+                    style="color:#f9ca24;">highest-churn moment</strong> in any social platform.
+            </div>
+            <p style="margin-top:16px;">Atlas closes this gap by making every cluster feel <strong>alive with relevant,
+                    timely, demographically-calibrated content</strong> — from the moment anyone joins. Atlas is
+                invisible. Users never see "Atlas." They see Clio-surfaced content that feels chosen specifically for
+                them. Because it was.</p>
+        </div>
+
+        <!-- THREE AGENTS -->
+        <div class="section">
+            <h2>Three AI Agents — Roles & Relationships</h2>
+            <div class="agent-grid">
+                <div class="agent-card scout">
+                    <h3>🔍 Scout</h3>
+                    <p style="font-size:0.9rem;color:#a0a0b8;margin:8px 0;">Discovers <em>clusters</em> from trending
+                        topics. Auto-creates or seeds new communities.</p>
+                    <span class="tag purple">Background worker</span>
+                    <span class="tag purple">6h schedule</span>
+                    <span class="tag purple">Indirect</span>
+                </div>
+                <div class="agent-card clio">
+                    <h3>💬 Clio</h3>
+                    <p style="font-size:0.9rem;color:#a0a0b8;margin:8px 0;">Conversational orchestrator + cluster
+                        emotional host. Instructs Atlas and curates its output.</p>
+                    <span class="tag red">User-facing</span>
+                    <span class="tag red">Orchestrator</span>
+                    <span class="tag red">Editor-in-chief</span>
+                </div>
+                <div class="agent-card atlas">
+                    <h3>🗺️ Atlas</h3>
+                    <p style="font-size:0.9rem;color:#a0a0b8;margin:8px 0;">Cluster content intelligence. Brings the
+                        outside world into each cluster, calibrated to its AGGIL demographic.</p>
+                    <span class="tag teal">Background</span>
+                    <span class="tag teal">Clio-briefed</span>
+                    <span class="tag teal">Never user-facing</span>
+                </div>
+            </div>
+
+            <h3>The Chain of Command</h3>
+            <div class="callout info"><strong>Invariant:</strong> Atlas never bypasses Clio. All output goes to Clio's
+                editorial queue. Only Clio's selections reach the cluster.</div>
+            <div class="chain">
+                <div class="chain-node clio">
+                    <div class="label">Orchestrator</div>
+                    <div class="name">Clio</div>
+                    <div style="font-size:0.75rem;color:#a0a0b8;margin-top:4px;">Issues demographic brief</div>
+                </div>
+                <div class="chain-arrow">→</div>
+                <div class="chain-node atlas">
+                    <div class="label">Content Intelligence</div>
+                    <div class="name">Atlas</div>
+                    <div style="font-size:0.75rem;color:#a0a0b8;margin-top:4px;">Crawls · Scores · Hooks</div>
+                </div>
+                <div class="chain-arrow">→</div>
+                <div class="chain-node clio">
+                    <div class="label">Editorial Filter</div>
+                    <div class="name">Clio</div>
+                    <div style="font-size:0.75rem;color:#a0a0b8;margin-top:4px;">Selects 2–3 · Frames</div>
+                </div>
+                <div class="chain-arrow">→</div>
+                <div class="chain-node output">
+                    <div class="label">Cluster Output</div>
+                    <div class="name">⚡ Pulse Tab</div>
+                    <div style="font-size:0.75rem;color:#a0a0b8;margin-top:4px;">Members interact</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ORCHESTRATION DIAGRAM -->
+        <div class="section">
+            <h2>Clio-Atlas Orchestration Diagram</h2>
+            <div class="mermaid">
+                flowchart LR
+                subgraph Triggers["Trigger Events"]
+                T1["User joins cluster"]
+                T2["6h Scout cycle"]
+                T3["72h silence detected"]
+                end
+                subgraph Clio["Clio — Orchestrator"]
+                C1["Build AGGIL<br>demographic brief"]
+                C2["Dispatch to Atlas"]
+                C3["Receive card batch"]
+                C4["Editorial filter<br>(arc gate + coherence)"]
+                C5["Write framing sentence"]
+                C6["Approve 2–3 cards"]
+                end
+                subgraph Atlas["Atlas — Content Intelligence"]
+                A1["Crawl sources<br>(Google, Reddit, Twitter…)"]
+                A2["Score relevance ≥80%<br>+ demographic conf ≥80%"]
+                A3["Safety check"]
+                A4["Generate conversation hook"]
+                A5["Return card batch"]
+                end
+                subgraph Output["Cluster"]
+                O1["⚡ Pulse tab populates"]
+                O2["Member taps card"]
+                O3["Composer opens<br>with hook pre-filled"]
+                O4["Post → Timeline"]
+                end
+                T1 --> C1
+                T2 --> C1
+                T3 --> C1
+                C1 --> C2
+                C2 --> A1
+                A1 --> A2
+                A2 --> A3
+                A3 --> A4
+                A4 --> A5
+                A5 --> C3
+                C3 --> C4
+                C4 --> C5
+                C5 --> C6
+                C6 --> O1
+                O1 --> O2
+                O2 --> O3
+                O3 --> O4
+                style C6 fill:#4ecdc4,color:#000
+                style O4 fill:#7b8cde,color:#fff
+            </div>
+        </div>
+
+        <!-- NOW WHAT UX -->
+        <div class="section">
+            <h2>⚡ The "Now What?" — Post-Join UX</h2>
+            <div class="callout success"><strong>Design Principle:</strong> The post-join gap is a <em>permission
+                    problem</em>, not a content problem. New members don't post because they don't know if their voice
+                is welcome. The conversation hook removes that friction — specific, relevant, tied to real content
+                happening now.</div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:24px;align-items:start;">
+                <div>
+                    <h3>Post-Join Timeline</h3>
+                    <div class="mermaid">
+                        flowchart TD
+                        A["User joins cluster"] --> B["60s delay"]
+                        B --> C["Clio briefs Atlas<br>with AGGIL segment"]
+                        C --> D["Atlas crawls + scores<br>≤30 seconds"]
+                        D --> E["Card batch returned"]
+                        E --> F["Clio selects 2–3<br>writes framing sentence"]
+                        F --> G["⚡ Pulse tab live"]
+                        G --> H["User opens cluster"]
+                        H --> I{"Tab chosen"}
+                        I --> |"⚡ Pulse"| J["Content cards<br>+ conversation hooks"]
+                        I --> |"📸 Timeline"| K["Clio empty-state:<br>'Nobody set the tone yet.'"]
+                        J --> L["Tap → Composer<br>pre-filled with hook"]
+                        L --> M["Post → Arc A→B"]
+                        style G fill:#4ecdc4,color:#000
+                        style M fill:#7b8cde,color:#fff
+                    </div>
+                </div>
+                <div>
+                    <h3>Pulse Tab — Live Preview</h3>
+                    <div class="pulse-preview">
+                        <div class="pulse-header">
+                            <h4>⚡ Pulse</h4>
+                            <div class="live-dot">LIVE</div>
+                        </div>
+                        <div class="clio-frame">"These are happening in your space right now."</div>
+                        <div class="pulse-card">
+                            <div class="pulse-card-header">
+                                <span class="source-badge">🗞 YourStory</span>
+                                <span class="relevance">94% match</span>
+                            </div>
+                            <h5>IIT Hyderabad students raise ₹2.5Cr seed for AI logistics startup</h5>
+                            <div class="hook">"If you were pitching to angels next month, what problem in your city
+                                would you actually solve?"</div>
+                            <div class="pulse-btns">
+                                <button class="pulse-btn primary">💬 Start discussion</button>
+                                <button class="pulse-btn secondary">↗ Read</button>
+                            </div>
+                        </div>
+                        <div class="pulse-card">
+                            <div class="pulse-card-header">
+                                <span class="source-badge">🗞 Hacker News</span>
+                                <span class="relevance">88% match</span>
+                            </div>
+                            <h5>GitHub Copilot adds new agentic coding features for VS Code</h5>
+                            <div class="hook">"Is AI pair programming making you better at fundamentals — or helping you
+                                skip them?"</div>
+                            <div class="pulse-btns">
+                                <button class="pulse-btn primary">💬 Start discussion</button>
+                                <button class="pulse-btn secondary">↗ Read</button>
+                            </div>
+                        </div>
+                        <div style="text-align:center;font-size:0.7rem;color:#a0a0b8;margin-top:8px;">Last refreshed
+                            just now</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEMOGRAPHIC BRIEF -->
+        <div class="section">
+            <h2>Demographic Brief — How Clio Instructs Atlas</h2>
+            <p style="margin-bottom:16px;">Clio builds and sends a structured JSON brief for every dispatch. Atlas only
+                activates when briefed — it is never autonomous.</p>
+            <pre>{
+  "cluster_id": "uuid",
+  "aggil_segment": {
+    "age_range": [18, 24],
+    "gender": "mixed",
+    "geography": { "city": "Hyderabad", "area": "Gachibowli" },
+    "interests": ["machine learning", "startup culture", "side projects"],
+    "languages": ["English", "Telugu"]
+  },
+  "cluster_purpose": "Find co-founders for ML side projects in Hyderabad",
+  "cluster_arc_phase": "A",
+  "existing_pulse_topics": ["already shown topics — Atlas will exclude these"],
+  "existing_post_titles": ["recent post titles for warm/reengagement context"],
+  "freshness_threshold_hours": 48,
+  "content_count_requested": 10,
+  "variant": "cold"     // cold | warm | reengagement
+}</pre>
+            <div class="callout info"><strong>Why demographic-first matters:</strong> The same headline about VC funding
+                scores 96% for a 20-year-old student and 21% for a 38-year-old CTO looking at it from a board-level
+                perspective. Atlas scores <em>topic × demographic</em>, not topic alone.</div>
+        </div>
+
+        <!-- THREE VARIANTS -->
+        <div class="section">
+            <h2>System Prompt Variants — Three Modes</h2>
+            <div class="variant-grid">
+                <div class="variant-card cold">
+                    <h3>🧊 Cold</h3>
+                    <p style="font-size:0.85rem;color:#a0a0b8;margin:8px 0;"><code>post_count = 0</code> · Arc Phase A
+                    </p>
+                    <p style="font-size:0.85rem;">Widely accessible topics. Low barrier — designed to make the first
+                        post feel safe and easy.</p>
+                    <div class="hook-example">"If you were pitching to angels next month, what problem in your city
+                        would you actually solve?"</div>
+                    <div class="hook-example bad-hook">"What do you think about this funding news?"</div>
+                </div>
+                <div class="variant-card warm">
+                    <h3>🔥 Warm</h3>
+                    <p style="font-size:0.85rem;color:#a0a0b8;margin:8px 0;"><code>post_count 1–5</code> · Arc Phase B/C
+                    </p>
+                    <p style="font-size:0.85rem;">Builds on existing discussion. Atlas uses
+                        <code>existing_post_titles</code> to find thematically connected content.</p>
+                    <div class="hook-example">"Everyone debates the right idea — this suggests the equity split
+                        conversation matters just as much. Where does your cluster land?"</div>
+                </div>
+                <div class="variant-card reeng">
+                    <h3>⚡ Reengagement</h3>
+                    <p style="font-size:0.85rem;color:#a0a0b8;margin:8px 0;">72h silence · Arc regresses to C</p>
+                    <p style="font-size:0.85rem;">One precision item. References a topic the cluster previously engaged
+                        with — not a fresh restart.</p>
+                    <div class="hook-example">"The conversation you were having three days ago — this is what happened
+                        next."</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCORING EXPLANATION -->
+        <div class="section">
+            <h2>Content Card — Scoring & Schema</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
+                <div>
+                    <h3>How Atlas Scores</h3>
+                    <p style="font-size:0.9rem;margin-bottom:16px;">Each content item gets two independent scores via
+                        Llama 3 8B (Modal). Both must reach ≥80% or the card is discarded.</p>
+                    <div class="score-bar-wrap">
+                        <div class="score-label"><span>Relevance to interests</span><span
+                                style="color:#4ecdc4;">94%</span></div>
+                        <div class="score-bar">
+                            <div class="score-fill" style="width:94%"></div>
+                        </div>
+                    </div>
+                    <div class="score-bar-wrap">
+                        <div class="score-label"><span>Demographic confidence</span><span
+                                style="color:#4ecdc4;">91%</span></div>
+                        <div class="score-bar">
+                            <div class="score-fill" style="width:91%"></div>
+                        </div>
+                    </div>
+                    <div class="score-bar-wrap" style="margin-top:16px;">
+                        <div class="score-label"><span style="color:#e94560;">Below threshold — discarded</span><span
+                                style="color:#e94560;">71%</span></div>
+                        <div class="score-bar">
+                            <div class="score-fill" style="width:71%;background:#e94560;"></div>
+                        </div>
+                    </div>
+                    <div class="callout info" style="margin-top:16px;"><strong>Quality gate:</strong> Atlas would rather
+                        return 0 cards than surface something irrelevant. Clio handles a zero-card result gracefully.
+                    </div>
+                </div>
+                <div>
+                    <h3>Card Schema</h3>
+                    <pre style="font-size:0.78rem;">{
+  "card_id": "uuid",
+  "headline": "string",
+  "source_name": "Tech In Asia",
+  "source_url": "https://...",
+  "published_at": "ISO8601",
+  "relevance_score": 0.94,
+  "demographic_confidence": 0.91,
+  "conversation_hook": "string (30–80 words)",
+  "category": "startup | tech | career...",
+  "tags": ["funding", "student founders"],
+  "arc_variant": "cold | warm | reengagement",
+  "safe_for_arc": ["cold", "warm"],
+  "status": "pending | approved | shown",
+  "interaction_count": 0
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATLAS STATE MACHINE -->
+        <div class="section">
+            <h2>Atlas State Machine</h2>
+            <div class="mermaid">
+                stateDiagram-v2
+                [*] --> Idle
+                Idle --> Briefed : Brief received from Clio
+                Briefed --> Crawling : Brief validated
+                Briefed --> Idle : Validation failed → return []
+                Crawling --> Scoring : Raw content extracted
+                Crawling --> Idle : All sources timeout → return []
+                Scoring --> HookGen : Cards pass threshold
+                Scoring --> Idle : 0 cards pass → return []
+                HookGen --> Delivering : Hooks generated
+                Delivering --> Idle : Batch written to Supabase → Clio notified
+            </div>
+            <h3>Queue Jobs</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job</th>
+                        <th>Trigger</th>
+                        <th>Queue Lane</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>AtlasBriefOnJoin</code></td>
+                        <td>User joins cluster (event)</td>
+                        <td><span class="tag teal">medium</span></td>
+                        <td>Brief Atlas 60s after join event</td>
+                    </tr>
+                    <tr>
+                        <td><code>AtlasPulseRefresh</code></td>
+                        <td>After every Scout cycle (6h)</td>
+                        <td><span class="tag purple">low</span></td>
+                        <td>Refresh Pulse cards for all active clusters</td>
+                    </tr>
+                    <tr>
+                        <td><code>AtlasReengagementCheck</code></td>
+                        <td>Every 6h cron</td>
+                        <td><span class="tag teal">medium</span></td>
+                        <td>Target 72h-silent clusters for reengagement brief</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- DB SCHEMA -->
+        <div class="section">
+            <h2>Database Schema</h2>
+            <h3>New fields on <code>clusters</code></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>atlas_last_briefed_at</code></td>
+                        <td>TIMESTAMP</td>
+                        <td>When Clio last briefed Atlas for this cluster</td>
+                    </tr>
+                    <tr>
+                        <td><code>pulse_last_refreshed_at</code></td>
+                        <td>TIMESTAMP</td>
+                        <td>When Pulse tab content last updated</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3>New table: <code>cluster_pulse_cards</code></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>id</code></td>
+                        <td>UUID PK</td>
+                        <td>Card identifier</td>
+                    </tr>
+                    <tr>
+                        <td><code>cluster_id</code></td>
+                        <td>FK → clusters</td>
+                        <td>Parent cluster</td>
+                    </tr>
+                    <tr>
+                        <td><code>headline</code></td>
+                        <td>TEXT</td>
+                        <td>Content headline</td>
+                    </tr>
+                    <tr>
+                        <td><code>source_name</code></td>
+                        <td>VARCHAR(128)</td>
+                        <td>Source publication</td>
+                    </tr>
+                    <tr>
+                        <td><code>source_url</code></td>
+                        <td>TEXT</td>
+                        <td>Full source URL</td>
+                    </tr>
+                    <tr>
+                        <td><code>relevance_score</code></td>
+                        <td>DECIMAL(3,2)</td>
+                        <td>Atlas topic relevance (0–1)</td>
+                    </tr>
+                    <tr>
+                        <td><code>demographic_confidence</code></td>
+                        <td>DECIMAL(3,2)</td>
+                        <td>Atlas demographic fit (0–1)</td>
+                    </tr>
+                    <tr>
+                        <td><code>conversation_hook</code></td>
+                        <td>TEXT</td>
+                        <td>Atlas-generated discussion prompt</td>
+                    </tr>
+                    <tr>
+                        <td><code>arc_variant</code></td>
+                        <td>ENUM</td>
+                        <td>cold · warm · reengagement</td>
+                    </tr>
+                    <tr>
+                        <td><code>safe_for_arc</code></td>
+                        <td>JSONB</td>
+                        <td>Phase restriction flags</td>
+                    </tr>
+                    <tr>
+                        <td><code>status</code></td>
+                        <td>ENUM</td>
+                        <td>pending · approved · shown · archived</td>
+                    </tr>
+                    <tr>
+                        <td><code>interaction_count</code></td>
+                        <td>INT</td>
+                        <td>Posts + taps generated from this card</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- API ENDPOINTS -->
+        <div class="section">
+            <h2>API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Access</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET /api/clusters/{id}/pulse</code></td>
+                        <td>GET</td>
+                        <td>Client</td>
+                        <td>Get approved Pulse cards for a cluster</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/atlas/brief</code></td>
+                        <td>POST</td>
+                        <td>Internal</td>
+                        <td>Clio → Atlas: send demographic brief</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/atlas/results/{cluster_id}</code></td>
+                        <td>GET</td>
+                        <td>Internal</td>
+                        <td>Clio pulls scored card batch from Atlas</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/atlas/feedback</code></td>
+                        <td>POST</td>
+                        <td>Client</td>
+                        <td>Member interaction logged → ranking calibration</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/atlas/approve/{card_id}</code></td>
+                        <td>POST</td>
+                        <td>Admin</td>
+                        <td>Manually approve or reject a Pulse card</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- GUARDRAILS -->
+        <div class="section">
+            <h2>Guardrails</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                <div>
+                    <h3>Atlas must never:</h3>
+                    <ul style="font-size:0.9rem;">
+                        <li>Surface cards below 80% relevance or 80% demographic confidence</li>
+                        <li>Repeat a topic shown in the past 72 hours</li>
+                        <li>Surface politically polarizing content</li>
+                        <li>Generate hooks with manufactured urgency</li>
+                        <li>Post directly to a cluster — Clio is the only voice</li>
+                        <li>Return more than 10 cards per batch</li>
+                        <li>Speak in first person — Atlas produces cards, not messages</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Clio must never (with Atlas output):</h3>
+                    <ul style="font-size:0.9rem;">
+                        <li>Approve more than 3 cards per Pulse session</li>
+                        <li>Use Atlas content in Posts feed if 2-message daily limit is reached</li>
+                        <li>Present Atlas content as coming from "Atlas" — it appears as Clio-curated Pulse</li>
+                        <li>Approve Phase A clusters cards marked <code>safe_for_arc: ["warm"]</code> only</li>
+                        <li>Forward Atlas output to users without editorial review</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="callout success" style="margin-top:16px;"><strong>Scout vs Atlas:</strong> Scout discovers
+                clusters from the internet. Atlas discovers <em>content for existing clusters</em>. Scout = decides
+                which restaurants to open. Atlas = the daily specials board inside each restaurant.</div>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="09_admin_platform.html" class="sec">← Admin Platform</a>
+        <a href="06_ai_agents.html">AI Agent System →</a>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { primaryColor: '#4ecdc4', primaryTextColor: '#e0e0e8', primaryBorderColor: '#2a2a3e', lineColor: '#4ecdc4', secondaryColor: '#1a1a2e', tertiaryColor: '#232338', background: '#0f0f1a', mainBkg: '#1a1a2e', nodeBorder: '#2a2a3e', clusterBkg: '#232338', titleColor: '#e0e0e8', edgeLabelBackground: '#1a1a2e' } });
+    </script>
+</body>
+
+</html>

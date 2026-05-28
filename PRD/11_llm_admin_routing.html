@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — LLM Admin Routing & Quality Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e8;
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 40px 60px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: #a0a0b8;
+            font-size: 1.1rem;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e94560;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .section {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: #7b8cde;
+            margin: 20px 0 12px;
+        }
+
+        .section h4 {
+            font-size: 1.05rem;
+            color: #4ecdc4;
+            margin: 16px 0 8px;
+        }
+
+        .mermaid {
+            background: #12121e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th {
+            background: #2a2a3e;
+            color: #7b8cde;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        tr:hover td {
+            background: #1e1e32;
+        }
+
+        .callout {
+            background: #1e1e32;
+            border-left: 4px solid #e94560;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout.info {
+            border-left-color: #7b8cde;
+        }
+
+        .callout.success {
+            border-left-color: #4ecdc4;
+        }
+
+        .callout.warning {
+            border-left-color: #f9ca24;
+        }
+
+        .callout strong {
+            color: #e94560;
+        }
+
+        .callout.info strong {
+            color: #7b8cde;
+        }
+
+        .callout.success strong {
+            color: #4ecdc4;
+        }
+
+        .callout.warning strong {
+            color: #f9ca24;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav a {
+            background: #e94560;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #c73a52;
+        }
+
+        .nav a.secondary {
+            background: #2a2a3e;
+        }
+
+        .nav a.secondary:hover {
+            background: #3a3a4e;
+        }
+
+        code {
+            background: #2a2a3e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4ecdc4;
+        }
+
+        pre {
+            background: #12121e;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #e0e0e8;
+        }
+
+        ul,
+        ol {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Diagram Zoom Controls */
+        .diagram-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+
+        .zoom-controls {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            padding: 8px 12px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(18, 18, 30, 0.95) 60%, transparent);
+        }
+
+        .zoom-controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #3a3a4e;
+            background: #1a1a2e;
+            color: #e0e0e8;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .zoom-controls button:hover {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+            transform: scale(1.1);
+        }
+
+        .zoom-controls .zoom-level {
+            display: flex;
+            align-items: center;
+            color: #a0a0b8;
+            font-size: 0.75rem;
+            padding: 0 8px;
+            font-family: monospace;
+        }
+
+        .mermaid {
+            transition: transform 0.2s ease;
+        }
+
+        .feedback-ui {
+            background: #12121e;
+            border: 1px solid #2a2a3e;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .feedback-ui .clio-name {
+            color: #4ecdc4;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .feedback-ui .clio-msg {
+            color: #c0c0d0;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+
+        .feedback-ui .feedback-btns {
+            display: flex;
+            gap: 16px;
+            font-size: 0.82rem;
+            color: #6a6a80;
+        }
+
+        .feedback-ui .feedback-btns span {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .feedback-ui .feedback-btns span:hover {
+            color: #e0e0e8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🧠 Workflow 11: LLM Admin Routing & Quality Architecture</h1>
+        <p class="subtitle">Multi-LLM routing, response logging, user feedback, and admin quality review</p>
+        <span class="badge">PRD — Aggilo Social Network — LLM OPS</span>
+    </div>
+
+    <div class="container">
+
+        <!-- OVERVIEW -->
+        <div class="section">
+            <h2>Overview</h2>
+            <p>Aggilo uses multiple LLM providers (<strong>Kimi K2.5</strong>, <strong>Claude Opus 4.6</strong>,
+                <strong>Groq</strong>) for different functions. This spec defines the <strong>admin-side
+                    architecture</strong> for:
+            </p>
+            <ol>
+                <li><strong>Dynamic LLM routing</strong> — selecting the right LLM per request type</li>
+                <li><strong>Response logging</strong> — every AI response stored with its LLM source</li>
+                <li><strong>User feedback</strong> — Connections can rate and dispute Clio's responses</li>
+                <li><strong>Admin quality review</strong> — dashboard to evaluate which LLMs perform best</li>
+            </ol>
+        </div>
+
+        <!-- ARCHITECTURE -->
+        <div class="section">
+            <h2>Architecture</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Clio Request<br>(user-facing)"] --> B["LLM Router"]
+                B --> C{"Request Type?"}
+
+                C -->|"General chat,<br>Pulse curation"| D["Kimi K2.5<br>(via NVIDIA NIM)"]
+                C -->|"Critical decisions:<br>Cluster scoring,<br>moderation, personas"| E["Claude Opus 4.6<br>(via Bedrock/NIM)"]
+                C -->|"Overflow /<br>high-volume"| F["Groq<br>(Llama 3)"]
+
+                D --> G["Response Logger"]
+                E --> G
+                F --> G
+
+                G --> H["Response delivered<br>to Connection"]
+                G --> I["response_logs table<br>(Supabase)"]
+
+                H --> J{"Connection<br>reaction?"}
+                J -->|"👍 Helpful"| K["Positive rating<br>logged"]
+                J -->|"👎 Not helpful"| L["Negative rating<br>logged"]
+                J -->|"🚩 Disagree"| M["Disagreement flag<br>→ admin queue"]
+
+                M --> N["Admin Review<br>Dashboard"]
+                I --> N
+                K --> N
+                L --> N
+
+                style B fill:#4ecdc4,color:#000
+                style N fill:#e94560,color:#fff
+            </div>
+        </div>
+
+        <!-- LLM ROUTER -->
+        <div class="section">
+            <h2>1. LLM Router — Admin-Configurable</h2>
+            <p>The LLM Router routes each AI operation to the LLM assigned by the admin. <strong>The admin controls
+                    which LLM handles which task</strong> — there are no hardcoded defaults. The routing config is a
+                live, editable table in the admin dashboard.</p>
+
+            <div class="callout warning">
+                <strong>Admin-first routing.</strong> The admin selects which LLM handles each operation. The system
+                ships with sensible initial assignments (table below), but the admin can reassign any operation to any
+                available LLM at any time. This is how the platform learns which LLMs serve best for which tasks.
+            </div>
+
+            <h3>Operations & Initial Routing</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Operation</th>
+                        <th>Agent</th>
+                        <th>Initial LLM</th>
+                        <th>Fallback</th>
+                        <th>Latency</th>
+                        <th>Why</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><strong>Cluster creation & suggestions</strong></td>
+                        <td>Clio</td>
+                        <td>Claude Opus 4.6</td>
+                        <td>Kimi K2.5</td>
+                        <td>&lt; 5s</td>
+                        <td>High-stakes — determines group quality</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><strong>Cluster scoring</strong> (AGGIL, U-shaped model)</td>
+                        <td>Clio</td>
+                        <td>Claude Opus 4.6</td>
+                        <td>Kimi K2.5</td>
+                        <td>&lt; 5s</td>
+                        <td>Math-heavy, accuracy-critical</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><strong>Clio basic conversation</strong> (greetings, Q&amp;A, hosting)</td>
+                        <td>Clio</td>
+                        <td>Kimi K2.5</td>
+                        <td>Groq (Llama 3)</td>
+                        <td>&lt; 2s</td>
+                        <td>High volume, cost-efficient</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td><strong>Scout crawl & search operations</strong></td>
+                        <td>Scout</td>
+                        <td>Kimi K2.5</td>
+                        <td>Groq (Llama 3)</td>
+                        <td>&lt; 4s</td>
+                        <td>Batch processing, cost matters</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td><strong>Atlas content curation</strong> (scoring, framing)</td>
+                        <td>Atlas</td>
+                        <td>Kimi K2.5</td>
+                        <td>Groq (Llama 3)</td>
+                        <td>&lt; 4s</td>
+                        <td>High volume content pipeline</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td><strong>Pulse conversation hooks</strong></td>
+                        <td>Atlas/Clio</td>
+                        <td>Kimi K2.5</td>
+                        <td>Groq (Llama 3)</td>
+                        <td>&lt; 3s</td>
+                        <td>Creative but high-volume</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td><strong>Moderation decisions</strong> (content review, reports)</td>
+                        <td>Clio</td>
+                        <td>Claude Opus 4.6</td>
+                        <td>Kimi K2.5</td>
+                        <td>&lt; 3s</td>
+                        <td>Safety-critical, can't afford errors</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td><strong>Dynamic persona generation</strong></td>
+                        <td>Clio</td>
+                        <td>Claude Opus 4.6</td>
+                        <td>— (queue, no fallback)</td>
+                        <td>&lt; 10s</td>
+                        <td>Requires nuance and cultural awareness</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td><strong>Matchmaker</strong> (Premium people-matching)</td>
+                        <td>Matchmaker</td>
+                        <td>Claude Opus 4.6</td>
+                        <td>Kimi K2.5</td>
+                        <td>&lt; 5s</td>
+                        <td>High-value users, quality paramount</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td><strong>DM request context</strong> ("why this person?")</td>
+                        <td>Clio</td>
+                        <td>Kimi K2.5</td>
+                        <td>Groq</td>
+                        <td>&lt; 2s</td>
+                        <td>Low-stakes, fast</td>
+                    </tr>
+                    <tr>
+                        <td>11</td>
+                        <td><strong>Nickname verification</strong> (appropriateness check)</td>
+                        <td>Clio</td>
+                        <td>Kimi K2.5</td>
+                        <td>Groq</td>
+                        <td>&lt; 1s</td>
+                        <td>Simple validation, high volume</td>
+                    </tr>
+                    <tr>
+                        <td>12</td>
+                        <td><strong>Icebreaker generation</strong></td>
+                        <td>Clio</td>
+                        <td>Kimi K2.5</td>
+                        <td>Groq</td>
+                        <td>&lt; 3s</td>
+                        <td>Creative but not critical</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3><code>llm_routing_config</code> Table (Supabase)</h3>
+            <p>This is the live routing config that the admin edits:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>operation_key</code></td>
+                        <td>TEXT (PK)</td>
+                        <td>One of the 12 operation keys (e.g., <code>cluster_creation</code>,
+                            <code>scout_crawl</code>)</td>
+                    </tr>
+                    <tr>
+                        <td><code>operation_label</code></td>
+                        <td>TEXT</td>
+                        <td>Human-readable name shown in admin dashboard</td>
+                    </tr>
+                    <tr>
+                        <td><code>agent</code></td>
+                        <td>TEXT</td>
+                        <td>Which agent owns this operation (<code>clio</code>, <code>scout</code>,
+                            <code>atlas</code>, <code>matchmaker</code>)</td>
+                    </tr>
+                    <tr>
+                        <td><code>primary_llm</code></td>
+                        <td>TEXT</td>
+                        <td>Currently assigned LLM (<code>kimi_k25</code>, <code>claude_opus_46</code>,
+                            <code>groq_llama3</code>)</td>
+                    </tr>
+                    <tr>
+                        <td><code>fallback_llm</code></td>
+                        <td>TEXT</td>
+                        <td>Fallback if primary fails or hits ceiling (nullable)</td>
+                    </tr>
+                    <tr>
+                        <td><code>latency_target_ms</code></td>
+                        <td>INT</td>
+                        <td>Expected response time in milliseconds</td>
+                    </tr>
+                    <tr>
+                        <td><code>cost_ceiling_usd</code></td>
+                        <td>DECIMAL(8,2)</td>
+                        <td>Daily spend limit for this operation (auto-switches to fallback)</td>
+                    </tr>
+                    <tr>
+                        <td><code>ab_test_active</code></td>
+                        <td>BOOLEAN</td>
+                        <td>Whether an A/B test is running on this operation</td>
+                    </tr>
+                    <tr>
+                        <td><code>ab_test_llm</code></td>
+                        <td>TEXT</td>
+                        <td>The second LLM in the A/B test (nullable)</td>
+                    </tr>
+                    <tr>
+                        <td><code>ab_test_split</code></td>
+                        <td>INT</td>
+                        <td>% of traffic to the test LLM (default 50)</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_by</code></td>
+                        <td>TEXT</td>
+                        <td>Admin who last changed this config</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td>TIMESTAMPTZ</td>
+                        <td>When the config was last changed</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- RESPONSE LOGGING -->
+        <div class="section">
+            <h2>2. Response Logging</h2>
+            <p>Every AI response is logged with full metadata for quality analysis.</p>
+
+            <h3><code>response_logs</code> Table (Supabase)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>id</code></td>
+                        <td>UUID</td>
+                        <td>Primary key</td>
+                    </tr>
+                    <tr>
+                        <td><code>timestamp</code></td>
+                        <td>TIMESTAMPTZ</td>
+                        <td>When the response was generated</td>
+                    </tr>
+                    <tr>
+                        <td><code>llm_provider</code></td>
+                        <td>TEXT</td>
+                        <td>Which LLM generated this (<code>kimi_k25</code>, <code>claude_opus_46</code>,
+                            <code>groq_llama3</code>)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><code>request_type</code></td>
+                        <td>TEXT</td>
+                        <td>Operation key from routing config (<code>cluster_creation</code>,
+                            <code>cluster_scoring</code>, <code>clio_basic_chat</code>, <code>scout_crawl</code>,
+                            <code>atlas_curation</code>, <code>pulse_hooks</code>, <code>moderation</code>,
+                            <code>persona_gen</code>, <code>matchmaker</code>, <code>dm_context</code>,
+                            <code>nickname_check</code>, <code>icebreaker</code>)</td>
+                    </tr>
+                    <tr>
+                        <td><code>cluster_id</code></td>
+                        <td>UUID</td>
+                        <td>FK → clusters table (nullable)</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td>UUID</td>
+                        <td>FK → users table</td>
+                    </tr>
+                    <tr>
+                        <td><code>response_text</code></td>
+                        <td>TEXT</td>
+                        <td>The full response delivered</td>
+                    </tr>
+                    <tr>
+                        <td><code>latency_ms</code></td>
+                        <td>INT</td>
+                        <td>Time from request to response</td>
+                    </tr>
+                    <tr>
+                        <td><code>cost_usd</code></td>
+                        <td>DECIMAL(8,6)</td>
+                        <td>Estimated cost of this response</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_rating</code></td>
+                        <td>SMALLINT</td>
+                        <td>1 (helpful), -1 (not helpful), NULL (no feedback)</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_disagreement</code></td>
+                        <td>BOOLEAN</td>
+                        <td>Whether user flagged as disagreement</td>
+                    </tr>
+                    <tr>
+                        <td><code>admin_reviewed</code></td>
+                        <td>BOOLEAN</td>
+                        <td>Whether admin has reviewed this</td>
+                    </tr>
+                    <tr>
+                        <td><code>admin_verdict</code></td>
+                        <td>TEXT</td>
+                        <td>approved, poor_quality, wrong_llm, retrain_needed</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- USER FEEDBACK -->
+        <div class="section">
+            <h2>3. User Feedback System</h2>
+
+            <h3>In-App Feedback (Clio Responses)</h3>
+            <p>When Clio responds substantively, each response can receive user feedback:</p>
+
+            <div class="feedback-ui">
+                <div class="clio-name">CLIO</div>
+                <div class="clio-msg">I noticed 3 of you are into the same podcast series. Want me to start a thread
+                    about it?</div>
+                <div class="feedback-btns">
+                    <span>👍 Helpful</span>
+                    <span>·</span>
+                    <span>👎 Not helpful</span>
+                </div>
+            </div>
+
+            <h3>Rules</h3>
+            <ul>
+                <li>Feedback buttons appear <strong>only after Clio's substantive responses</strong> (not greetings)</li>
+                <li>Buttons are subtle (low-contrast text) — never disruptive</li>
+                <li>Tapping <strong>👎 Not helpful</strong> shows a follow-up: <em>"What went wrong?"</em></li>
+                <li>Follow-up options: "Not relevant to me", "Felt generic", "Tone was off", "I disagree with this"</li>
+                <li>Selecting <strong>"I disagree with this"</strong> → flags for admin review</li>
+                <li>Feedback is anonymous — other Connections cannot see who rated</li>
+            </ul>
+
+            <h3>Feedback API</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Body</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>POST /api/ai/feedback</code></td>
+                        <td>POST</td>
+                        <td><code>{ response_log_id, rating: 1/-1, reason?, disagree: bool }</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ADMIN DASHBOARD -->
+        <div class="section">
+            <h2>4. Admin Quality Review Dashboard</h2>
+
+            <h3>4a. LLM Performance Overview</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>View</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Rating by LLM</strong></td>
+                        <td>Bar chart: avg rating per LLM over time</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Disagreement rate</strong></td>
+                        <td>% of responses flagged per LLM</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cost per 1K responses</strong></td>
+                        <td>Cost comparison across LLMs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Latency P50/P95</strong></td>
+                        <td>Response time distribution per LLM</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Volume</strong></td>
+                        <td>Requests routed per LLM per day</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>4b. Disagreement Queue</h3>
+            <div class="mermaid">
+                flowchart LR
+                A["Disagreement<br>flagged"] --> B["Admin Queue<br>(sorted by recency)"]
+                B --> C["Admin reads:<br>• Original prompt context<br>• Clio's response<br>• User's reason<br>• Which LLM generated it"]
+                C --> D{"Admin verdict"}
+                D -->|"Response was fine"| E["Mark: approved<br>No action"]
+                D -->|"LLM was poor here"| F["Mark: poor_quality<br>Log against LLM"]
+                D -->|"Wrong LLM was used"| G["Mark: wrong_llm<br>Update routing rule"]
+                D -->|"Pattern issue"| H["Mark: retrain_needed<br>Create calibration ticket"]
+            </div>
+
+            <h3>4c. A/B Testing View</h3>
+            <p>Admins can split traffic for a specific request type across two LLMs and compare:</p>
+            <ul>
+                <li><strong>Rating delta</strong> — which LLM gets better user ratings?</li>
+                <li><strong>Disagreement delta</strong> — which LLM triggers fewer flags?</li>
+                <li><strong>Cost delta</strong> — is the better LLM worth the cost difference?</li>
+            </ul>
+
+            <h3>Admin Actions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Effect</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Approve response</strong></td>
+                        <td>Clears from queue, logged as <code>approved</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Flag LLM</strong></td>
+                        <td>Increments poor_quality counter for that LLM + request type</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Update routing</strong></td>
+                        <td>Changes the primary/fallback LLM for a request type</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Start A/B test</strong></td>
+                        <td>Splits traffic for a request type across two LLMs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>End A/B test</strong></td>
+                        <td>Locks in the winner as the primary LLM</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Set cost ceiling</strong></td>
+                        <td>Daily spend limit per LLM, auto-fallback when reached</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- API ENDPOINTS -->
+        <div class="section">
+            <h2>5. API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>POST /api/ai/feedback</code></td>
+                        <td>POST</td>
+                        <td>Submit user feedback on a Clio response</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/llm/performance</code></td>
+                        <td>GET</td>
+                        <td>LLM performance metrics (admin only)</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/llm/disagreements</code></td>
+                        <td>GET</td>
+                        <td>Paginated disagreement queue (admin only)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/llm/disagreements/{id}/verdict</code></td>
+                        <td>POST</td>
+                        <td>Admin verdict on a flagged response</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/llm/routing</code></td>
+                        <td>GET</td>
+                        <td>Current routing rules</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT /api/admin/llm/routing</code></td>
+                        <td>PUT</td>
+                        <td>Update routing rules</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST /api/admin/llm/ab-test</code></td>
+                        <td>POST</td>
+                        <td>Start an A/B test</td>
+                    </tr>
+                    <tr>
+                        <td><code>DELETE /api/admin/llm/ab-test/{id}</code></td>
+                        <td>DELETE</td>
+                        <td>End an A/B test</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET /api/admin/llm/costs</code></td>
+                        <td>GET</td>
+                        <td>Cost breakdown per LLM per day</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="00_prd_index.html" class="secondary">← PRD Index</a>
+        <a href="10_atlas_agent.html" class="secondary">← Atlas Agent</a>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            theme: 'dark',
+            startOnLoad: true,
+            themeVariables: {
+                primaryColor: '#e94560',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#e94560',
+                lineColor: '#7b8cde',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#2a2a3e',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }
+        });
+    </script>
+
+    <script>
+        // Diagram Zoom Functionality
+        const zoomState = {};
+
+        function zoomDiagram(idx, delta) {
+            if (!zoomState[idx]) zoomState[idx] = 1;
+            zoomState[idx] = Math.max(0.3, Math.min(3, zoomState[idx] + delta));
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(' + zoomState[idx] + ')';
+                diagrams[idx].style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = Math.round(zoomState[idx] * 100) + '%';
+        }
+
+        function resetZoom(idx) {
+            zoomState[idx] = 1;
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (diagrams[idx]) {
+                diagrams[idx].style.transform = 'scale(1)';
+            }
+            const label = document.getElementById('zoom-label-' + idx);
+            if (label) label.textContent = '100%';
+        }
+
+        // Wrap diagrams after Mermaid renders
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                document.querySelectorAll('.mermaid').forEach(function (el, i) {
+                    if (el.parentNode.classList.contains('diagram-wrapper')) return;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'diagram-wrapper';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                    var controls = document.createElement('div');
+                    controls.className = 'zoom-controls';
+                    controls.innerHTML = '<button onclick="zoomDiagram(' + i + ', 0.2)" title="Zoom In">+</button>' +
+                        '<span class="zoom-level" id="zoom-label-' + i + '">100%</span>' +
+                        '<button onclick="zoomDiagram(' + i + ', -0.2)" title="Zoom Out">\u2212</button>' +
+                        '<button onclick="resetZoom(' + i + ')" title="Reset Zoom">\u21BA</button>';
+                    wrapper.insertBefore(controls, el);
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

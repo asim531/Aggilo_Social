@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggilo PRD — Premium Clusters: Make Your Crowd</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f0f1a; color: #e0e0e8; line-height: 1.7; }
+        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 40px 60px; border-bottom: 2px solid #e94560; }
+        .header h1 { font-size: 2.2rem; color: #fff; margin-bottom: 8px; }
+        .header .subtitle { color: #a0a0b8; font-size: 1.1rem; }
+        .header .badge { display: inline-block; background: #e94560; color: #fff; padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-top: 10px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 60px; }
+        .section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 16px; padding: 32px; margin-bottom: 32px; }
+        .section h2 { font-size: 1.5rem; color: #e94560; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #2a2a3e; }
+        .section h3 { font-size: 1.2rem; color: #7b8cde; margin: 20px 0 12px; }
+        .section h4 { font-size: 1.05rem; color: #4ecdc4; margin: 16px 0 8px; }
+        .mermaid { background: #12121e; border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th { background: #2a2a3e; color: #7b8cde; padding: 12px 16px; text-align: left; font-weight: 600; }
+        td { padding: 12px 16px; border-bottom: 1px solid #2a2a3e; }
+        tr:hover td { background: #1e1e32; }
+        .callout { background: #1e1e32; border-left: 4px solid #e94560; padding: 16px 20px; margin: 16px 0; border-radius: 0 8px 8px 0; }
+        .callout.info { border-left-color: #7b8cde; }
+        .callout.success { border-left-color: #4ecdc4; }
+        .callout.warning { border-left-color: #f9ca24; }
+        .callout strong { color: #e94560; }
+        .callout.info strong { color: #7b8cde; }
+        .callout.success strong { color: #4ecdc4; }
+        .callout.warning strong { color: #f9ca24; }
+        .nav { position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; }
+        .nav a { background: #e94560; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: background 0.3s; }
+        .nav a:hover { background: #c73a52; }
+        .nav a.secondary { background: #2a2a3e; }
+        .nav a.secondary:hover { background: #3a3a4e; }
+        code { background: #2a2a3e; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem; color: #4ecdc4; }
+        pre { background: #12121e; border: 1px solid #2a2a3e; border-radius: 8px; padding: 16px 20px; margin: 16px 0; overflow-x: auto; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 0.85rem; line-height: 1.6; color: #e0e0e8; }
+        ul, ol { margin-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 8px; }
+        .archetype-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+        .archetype-card { background: #12121e; border: 1px solid #2a2a3e; border-radius: 12px; padding: 16px; }
+        .archetype-card .label { color: #7b8cde; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .archetype-card .value { color: #e0e0e8; font-size: 0.95rem; }
+        .approved { color: #4ecdc4; }
+        .redirected { color: #e94560; }
+        .step-box { background: #12121e; border: 1px solid #2a2a3e; border-radius: 12px; padding: 20px 24px; margin: 16px 0; }
+        .step-box .step-label { color: #e94560; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .step-box .clio-says { color: #4ecdc4; font-style: italic; margin-bottom: 12px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏠 Workflow 12: Premium Clusters — Make Your Crowd</h1>
+        <p class="subtitle">Cold-start supply strategy for Atomic Crowd Leaders with existing micro-communities</p>
+        <span class="badge">PRD — Aggilo Social Network — Phase 1 Feature</span>
+    </div>
+
+    <div class="container">
+
+        <!-- CALLOUT: PHASE 1 -->
+        <div class="section">
+            <div class="callout warning">
+                <strong>Phase 1 Feature.</strong> Premium Clusters are available from Day 1 via the "Make Your Crowd" tab on the evangelist landing page. They serve as Aggilo's primary cold-start supply-side strategy — each approved Founder seeds 20–50 community members into a purpose-built room before public launch.
+            </div>
+            <div class="callout info">
+                <strong>"Premium" = premium evaluation standards, NOT premium pricing.</strong> This feature is free in Phase 1. The premium is the credibility gate itself — it signals quality without requiring payment.
+            </div>
+        </div>
+
+        <!-- PROBLEM STATEMENT -->
+        <div class="section">
+            <h2>1. Problem Statement</h2>
+            <p>Aggilo's current cold-start strategy relies on waitlist signups (demand-side) and Scout-seeded clusters (AI content, no real members). All six user archetypes are <strong>demand-side</strong> — people seeking connection. There is no supply-side archetype.</p>
+            <p style="margin-top:12px;"><strong>The consequence:</strong> New users arrive and see clusters with AI-generated discussion starters but zero real humans. They accurately identify this as a ghost town. Trust collapses before it forms.</p>
+            <p style="margin-top:12px;"><strong>The solution:</strong> Premium Clusters — a credibility-gated creation path for individuals with existing micro-communities. Each approved Founder brings their pre-formed social graph into Aggilo, producing real activity from Day 1.</p>
+        </div>
+
+        <!-- THE SEVENTH ARCHETYPE -->
+        <div class="section">
+            <h2>2. The Seventh Archetype — The Atomic Crowd Leader</h2>
+            <div class="archetype-grid">
+                <div class="archetype-card"><div class="label">Identity</div><div class="value">Someone who already influences 10–500 people around a topic — a natural convener, not a traditional "influencer"</div></div>
+                <div class="archetype-card"><div class="label">Examples</div><div class="value">College senior with study circle · Fitness enthusiast with 30-person WhatsApp gym group · Local food blogger · Chai meetup organizer</div></div>
+                <div class="archetype-card"><div class="label">Psychology</div><div class="value">"I already have these people. I wish there was a better way to organize around what we care about."</div></div>
+                <div class="archetype-card"><div class="label">Cold Start Value</div><div class="value">Each leader brings 20–50 pre-existing members. 10–20 approved leaders = 200–1,000 users in genuinely active clusters</div></div>
+            </div>
+        </div>
+
+        <!-- COMPARISON TABLE -->
+        <div class="section">
+            <h2>3. Regular vs Premium Cluster</h2>
+            <table>
+                <thead><tr><th>Dimension</th><th>Regular Cluster</th><th>Premium Cluster</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Creation path</strong></td><td>Clio conversational (Phase 1)</td><td>"Make Your Crowd" + credibility evaluation</td></tr>
+                    <tr><td><strong>Creator profile</strong></td><td>Any registered user</td><td>Individual with existing community</td></tr>
+                    <tr><td><strong>Location</strong></td><td>Optional filter</td><td><strong>Hard location required</strong></td></tr>
+                    <tr><td><strong>Language</strong></td><td>Soft match (Phase 1)</td><td><strong>Hard language gate from Day 1</strong></td></tr>
+                    <tr><td><strong>Population model</strong></td><td>Wait for Clio + Scout</td><td>Founder brings own initial members via invite link</td></tr>
+                    <tr><td><strong>Founder admin rights</strong></td><td>None (no member removal, no content deletion)</td><td><strong>Full admin rights</strong></td></tr>
+                    <tr><td><strong>Cost</strong></td><td>Free</td><td><strong>Free</strong></td></tr>
+                </tbody>
+            </table>
+
+            <h3>Founder Admin Rights</h3>
+            <div class="callout warning">
+                <strong>Governance departure from regular clusters.</strong> Regular cluster Founders cannot remove members or delete content. Premium Cluster Founders have full admin authority because they built and populated the cluster.
+            </div>
+            <table>
+                <thead><tr><th>Admin Right</th><th>Scope</th><th>Constraint</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Remove members</strong></td><td>Any member from their cluster</td><td>Neutral notification: "The Founder has adjusted this room's membership."</td></tr>
+                    <tr><td><strong>Delete posts/comments</strong></td><td>Any content in their cluster</td><td>Clio logs all deletions for abuse monitoring</td></tr>
+                    <tr><td><strong>Pin posts</strong></td><td>Max 3 pinned posts</td><td>—</td></tr>
+                    <tr><td><strong>Mute members</strong></td><td>24h / 72h / 7d mute</td><td>Muted member can still read but not post</td></tr>
+                    <tr><td><strong>Appoint Managers</strong></td><td>Can appoint up to 3 trusted members as Managers</td><td>Managers assist in reviewing Sage intervention flags and general governance.</td></tr>
+                    <tr><td><strong>Recognized Founder badge</strong></td><td>Visible within cluster</td><td>Cannot transfer in Phase 1</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- LOCATION & LANGUAGE -->
+        <div class="section">
+            <h2>4. Hard Location &amp; Language Constraints</h2>
+            <h3>Location Types Supported</h3>
+            <table>
+                <thead><tr><th>Type</th><th>Example</th><th>Visibility Rule</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Named building</strong></td><td>"IIIT Hyderabad campus"</td><td>Visible only to users whose GPS confirms they are at or near the building</td></tr>
+                    <tr><td><strong>GPS radius</strong></td><td>"Within 3km of Charminar"</td><td>Standard GPS radius model</td></tr>
+                    <tr><td><strong>Named neighborhood</strong></td><td>"Jubilee Hills"</td><td>Visible to users in the neighborhood boundary</td></tr>
+                    <tr><td><strong>Named city</strong></td><td>"Hyderabad"</td><td>Visible to all users in the city</td></tr>
+                </tbody>
+            </table>
+            <h3>Language Rules</h3>
+            <table>
+                <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Hard gate available</strong></td><td>Premium Cluster Founders can require specific language(s) for membership</td></tr>
+                    <tr><td><strong>OR logic</strong></td><td>If multiple languages are hard-gated, user must speak at least one</td></tr>
+                    <tr><td><strong>English does NOT bypass</strong></td><td>A hard Telugu gate means English-only speakers cannot see the cluster</td></tr>
+                    <tr><td><strong>Post-spawn immutable</strong></td><td>Language gates cannot be tightened after members join</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CREDIBILITY EVALUATION -->
+        <div class="section">
+            <h2>5. Credibility Evaluation Framework</h2>
+            <div class="callout info">
+                <strong>Core question:</strong> "Could this person's need be met by WhatsApp, Discord, or Telegram? If yes — why do they believe Aggilo serves them better?"
+            </div>
+            <h3>Scoring Dimensions</h3>
+            <table>
+                <thead><tr><th>Dimension</th><th>Weight</th><th>What It Measures</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Existing Community Evidence</strong></td><td>30%</td><td>Does this person actually have people to bring?</td></tr>
+                    <tr><td><strong>Unmet Need Specificity</strong></td><td>25%</td><td>Is the need genuinely unserved by existing platforms?</td></tr>
+                    <tr><td><strong>Demographic Coherence</strong></td><td>20%</td><td>Do the AGGIL constraints match a real, identifiable group?</td></tr>
+                    <tr><td><strong>Platform Fit</strong></td><td>15%</td><td>Does what they want align with Aggilo's soul — connection, not broadcasting?</td></tr>
+                    <tr><td><strong>Commitment Signal</strong></td><td>10%</td><td>Will they actually follow through on populating the cluster?</td></tr>
+                </tbody>
+            </table>
+            <div class="callout warning">
+                <strong>The credibility score is NEVER shown to the applicant.</strong> The evaluation should feel like a conversation with Clio, not a test.
+            </div>
+            <h3>Approval Tiers</h3>
+            <table>
+                <thead><tr><th>Tier</th><th>Score</th><th>Response</th></tr></thead>
+                <tbody>
+                    <tr><td><strong class="approved">Approved</strong></td><td>70%+</td><td>Clio: "Your room is ready. Here's your invite link. Go fill it." — within 48 hours</td></tr>
+                    <tr><td><strong>Needs Clarification</strong></td><td>40–70%</td><td>Clio: "I have a few more questions before I build your room." — within 72 hours</td></tr>
+                    <tr><td><strong class="redirected">Redirected</strong></td><td>&lt;40%</td><td>Clio: "I think what you're looking for might already exist on Aggilo." → regular onboarding</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FORM STEPS -->
+        <div class="section">
+            <h2>6. "Make Your Crowd" Form — 5-Step Application</h2>
+            <div class="step-box">
+                <div class="step-label">Step 1 — The Hook</div>
+                <div class="clio-says">"You already have your people. Tell me about them."</div>
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>"What do you do together?"</td><td>Textarea</td><td>Activity/interest core → cluster purpose</td></tr>
+                        <tr><td>"How many people are we talking about?"</td><td>Number input</td><td>Community size → existing community evidence</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="step-box">
+                <div class="step-label">Step 2 — The Need</div>
+                <div class="clio-says">"And where do you connect right now? Be honest — I need to know what's not working."</div>
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>"Where do you connect right now?"</td><td>Multi-select: WhatsApp · Telegram · Discord · Instagram · Offline · Other</td><td>Real community evidence</td></tr>
+                        <tr><td>"What's broken about it?"</td><td>Textarea</td><td><strong>The credibility core</strong> — clear platform pain = genuine unmet need</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="step-box">
+                <div class="step-label">Step 3 — The Demographic</div>
+                <div class="clio-says">"Let me understand who these people are — so I can build the right room."</div>
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th></tr></thead>
+                    <tbody>
+                        <tr><td>"Where are they located?"</td><td>Location input — building name, street, neighborhood, city, or GPS pin + radius</td></tr>
+                        <tr><td>"What language(s) do you speak together?"</td><td>Language chips (auto-detected + manual)</td></tr>
+                        <tr><td>"Age range of your group"</td><td>Range slider</td></tr>
+                        <tr><td>"Gender mix"</td><td>Chips: Everyone · Mostly men · Mostly women · Mixed</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="step-box">
+                <div class="step-label">Step 4 — The Commitment</div>
+                <div class="clio-says">"Last thing. If I build this room for you — how fast can you fill it?"</div>
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th></tr></thead>
+                    <tbody>
+                        <tr><td>"How would you invite your people?"</td><td>Multi-select: Share link via WhatsApp · Post in existing group · Tell them in person · Social media post</td></tr>
+                        <tr><td>"When could you have your first 10 people here?"</td><td>Chips: This week · Within 2 weeks · Within a month · Not sure</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="step-box">
+                <div class="step-label">Step 5 — Contact</div>
+                <div class="clio-says">"I'm going to evaluate this personally. Give me a way to reach you."</div>
+                <table>
+                    <thead><tr><th>Field</th><th>Type</th><th>Required</th></tr></thead>
+                    <tbody>
+                        <tr><td>Your name</td><td>Text</td><td>✅</td></tr>
+                        <tr><td>Email</td><td>Email</td><td>✅</td></tr>
+                        <tr><td>Phone</td><td>Phone</td><td>Optional — priority contact for high-credibility applications</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- POST-APPROVAL FLOW -->
+        <div class="section">
+            <h2>7. Post-Approval Flow</h2>
+            <div class="mermaid">
+                flowchart TD
+                A["Application Submitted"] --> B["Clio automated credibility scoring (immediate)"]
+                B --> C["Founder manual review — within 48h"]
+                C --> D{Decision}
+                D -->|"70%+ Approved"| E["Email: 'Your room is ready.'<br>Pre-created cluster with AGGIL settings<br>Founder receives unique invite link"]
+                D -->|"40-70% Clarification"| F["Email: 'I have a few more questions.'<br>Async follow-up"]
+                D -->|"<40% Redirected"| G["Email: 'I think I can find something better for you.'<br>Links to regular waitlist"]
+                E --> H["Invite link shared to members"]
+                H --> I["Invitee: Cluster preview → OTP → Nickname → Auto-joined"]
+                style E fill:#4ecdc4,color:#000
+                style G fill:#e94560,color:#fff
+            </div>
+            <h3>Custom Invite Link Onboarding</h3>
+            <ol>
+                <li><strong>Cluster preview</strong> — Name, purpose, member count, Founder recognition</li>
+                <li><strong>Simplified registration</strong> — Phone OTP → birth year + gender → language → nickname</li>
+                <li><strong>AGGIL gate check</strong> — Must pass hard constraints (location, language, age, gender)</li>
+                <li><strong>Auto-join</strong> — Immediately placed in the cluster after registration</li>
+                <li><strong>Clio greeting</strong> — <em>"Welcome. [Founder nickname] built this room for people like you. Take a look around."</em></li>
+            </ol>
+        </div>
+
+        <!-- DATA SCHEMA -->
+        <div class="section">
+            <h2>8. Data Schema (Supabase Additions)</h2>
+            <table>
+                <thead><tr><th>Table</th><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+                <tbody>
+                    <tr><td><code>clusters</code></td><td><code>is_premium</code></td><td>boolean</td><td>false default</td></tr>
+                    <tr><td><code>clusters</code></td><td><code>credibility_score</code></td><td>float</td><td>Internal only — never exposed</td></tr>
+                    <tr><td><code>clusters</code></td><td><code>hard_location_type</code></td><td>enum</td><td>building | street | neighborhood | city | gps_radius</td></tr>
+                    <tr><td><code>clusters</code></td><td><code>hard_location_data</code></td><td>jsonb</td><td>Coordinates, radius, or named boundary</td></tr>
+                    <tr><td><code>clusters</code></td><td><code>hard_language_gate</code></td><td>text[]</td><td>Array of required languages — null for soft-match clusters</td></tr>
+                    <tr><td><code>premium_applications</code></td><td>*</td><td>Various</td><td>Full application data, scoring dimensions, review status</td></tr>
+                    <tr><td><code>cluster_admin_actions</code></td><td>*</td><td>Various</td><td>Audit log: member removals, content deletions, mutes</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SUCCESS METRICS -->
+        <div class="section">
+            <h2>9. Success Metrics</h2>
+            <table>
+                <thead><tr><th>Metric</th><th>Target</th><th>Why It Matters</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Applications submitted</strong></td><td>50+ pre-launch</td><td>Pipeline for cold-start seeding</td></tr>
+                    <tr><td><strong>Approval rate</strong></td><td>30–50%</td><td>Quality bar is real — not everyone qualifies</td></tr>
+                    <tr><td><strong>Members per cluster (30 days)</strong></td><td>≥15</td><td>Founder actually populated their cluster</td></tr>
+                    <tr><td><strong>Cluster activity rate</strong></td><td>≥3 posts/week at 30 days</td><td>Community is alive, not dormant</td></tr>
+                    <tr><td><strong>Invitee → registered conversion</strong></td><td>≥60%</td><td>Invite link onboarding is frictionless</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- API ENDPOINTS -->
+        <div class="section">
+            <h2>10. API Endpoints</h2>
+            <table>
+                <thead><tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr></thead>
+                <tbody>
+                    <tr><td><code>POST /api/premium-cluster/apply</code></td><td>POST</td><td>Submit "Make Your Crowd" application</td></tr>
+                    <tr><td><code>GET /api/premium-cluster/status/{id}</code></td><td>GET</td><td>Check application review status</td></tr>
+                    <tr><td><code>POST /api/premium-cluster/review</code></td><td>POST</td><td>Admin: approve/clarify/redirect an application</td></tr>
+                    <tr><td><code>POST /api/cluster/{id}/admin/remove-member</code></td><td>POST</td><td>Founder: remove a member (Premium clusters only)</td></tr>
+                    <tr><td><code>DELETE /api/cluster/{id}/admin/content/{postId}</code></td><td>DELETE</td><td>Founder: delete a post/comment (Premium clusters only)</td></tr>
+                    <tr><td><code>POST /api/cluster/{id}/admin/mute/{nickname}</code></td><td>POST</td><td>Founder: mute a member (Premium clusters only)</td></tr>
+                    <tr><td><code>POST /api/cluster/{id}/admin/pin/{postId}</code></td><td>POST</td><td>Founder: pin a post (Premium clusters only)</td></tr>
+                    <tr><td><code>GET /api/cluster/{id}/admin/audit-log</code></td><td>GET</td><td>Founder: view admin action history</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <a href="11_llm_admin_routing.html" class="secondary">← PRD 11</a>
+        <a href="00_prd_index.html">PRD Index</a>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { primaryColor: '#4ecdc4', primaryTextColor: '#e0e0e8', primaryBorderColor: '#2a2a3e', lineColor: '#7b8cde', background: '#12121e', mainBkg: '#1a1a2e', nodeBorder: '#2a2a3e', clusterBkg: '#12121e', titleColor: '#e0e0e8', edgeLabelBackground: '#1a1a2e' } });
+    </script>
+</body>
+</html>
