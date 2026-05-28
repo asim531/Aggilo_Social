@@ -72,7 +72,7 @@ const TOUR_STOPS: TourStop[] = [
     id: "chips",
     selector: "#aggilo-cluster-chips",
     title: "Who this room is for",
-    body: "India-wide, 22–32, English-primary, text-only. The room was built around a specific kind of person. If that's you, you're in the right place.",
+    body: "Text-only, nickname-only. No photos, no DMs, no algorithms. Just people talking. The room belongs to whoever speaks first.",
     placement: "bottom",
   },
 ];
