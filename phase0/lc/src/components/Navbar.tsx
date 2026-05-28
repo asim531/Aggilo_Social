@@ -47,9 +47,14 @@ export default function Navbar({
     <nav className="sticky top-0 z-40 bg-lc-card/95 backdrop-blur border-b border-stone-200">
       <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-3 min-w-0">
-          <span className="hidden sm:inline text-xs uppercase tracking-[0.18em] text-lc-muted">
+          <a
+            href="https://aggilo.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline text-xs uppercase tracking-[0.18em] text-lc-muted hover:text-lc-ink transition-colors"
+          >
             Aggilo
-          </span>
+          </a>
           <span className="text-base font-semibold text-lc-ink truncate">
             {CLUSTER.displayName}
           </span>

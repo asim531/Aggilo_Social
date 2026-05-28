@@ -18,7 +18,7 @@
  * meta line so it draws the eye without screaming.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { usePresence } from "@/lib/presence-context";
 import { CLUSTER_ID } from "@/lib/cluster";
@@ -26,7 +26,21 @@ import { CLUSTER_ID } from "@/lib/cluster";
 export default function ClusterPresence() {
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [joinedThisWeek, setJoinedThisWeek] = useState<number | null>(null);
-  const { liveCount } = usePresence();
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const { liveCount, onlineUsers } = usePresence();
+
+  // Close on outside click
+  useEffect(() => {
+    if (!showTooltip) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
+        setShowTooltip(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showTooltip]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -54,15 +68,43 @@ export default function ClusterPresence() {
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      {/* Live count — the brightest, warmest element on the header */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-lc-sageSoft/30 border border-lc-sage/30">
-        <span className="relative flex h-2 w-2" aria-hidden="true">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lc-sage opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-lc-sage" />
-        </span>
-        <span className="text-sm font-semibold text-lc-sage">
-          {liveCount} {liveCount === 1 ? "member" : "members"} live now
-        </span>
+      {/* Live count — clickable pill showing who's online */}
+      <div className="relative" ref={tooltipRef}>
+        <button
+          type="button"
+          onClick={() => setShowTooltip((v) => !v)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-lc-sageSoft/30 border border-lc-sage/30 hover:bg-lc-sageSoft/50 transition-colors cursor-pointer"
+          aria-label="See who's in the room"
+          aria-expanded={showTooltip}
+        >
+          <span className="relative flex h-2 w-2" aria-hidden="true">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lc-sage opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-lc-sage" />
+          </span>
+          <span className="text-sm font-semibold text-lc-sage">
+            {liveCount} {liveCount === 1 ? "member" : "members"} live now
+          </span>
+        </button>
+
+        {showTooltip && (
+          <div className="absolute top-full left-0 mt-2 z-30 bg-white border border-stone-200 rounded-lg shadow-lg py-2 min-w-[160px]">
+            <p className="text-[10px] uppercase tracking-widest text-lc-muted px-3 pb-1.5">
+              In the room now
+            </p>
+            {onlineUsers.length === 0 ? (
+              <p className="text-xs text-lc-muted px-3 py-1">Just you</p>
+            ) : (
+              onlineUsers.map((u) => (
+                <div
+                  key={u.id}
+                  className="px-3 py-1 text-sm text-lc-ink"
+                >
+                  {u.nickname}
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Total members — quieter, supportive */}

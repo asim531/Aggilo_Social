@@ -33,8 +33,14 @@ import {
 import { createClient } from "./supabase-browser";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+export interface OnlineUser {
+  id: string;
+  nickname: string;
+}
+
 interface PresenceContextValue {
   onlineUserIds: Set<string>;
+  onlineUsers: OnlineUser[];
   liveCount: number;
   /** How many members are currently typing (excluding the local user). */
   typingCount: number;
@@ -44,6 +50,7 @@ interface PresenceContextValue {
 
 const PresenceContext = createContext<PresenceContextValue>({
   onlineUserIds: new Set(),
+  onlineUsers: [],
   liveCount: 0,
   typingCount: 0,
   emitTyping: () => {},
@@ -66,6 +73,9 @@ export function PresenceProvider({
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(
     () => new Set([userId])
   );
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>(
+    () => [{ id: userId, nickname }]
+  );
   // Map of userId → expiry timestamp. We re-evaluate the set each render
   // and prune expired entries so the typing indicator clears on its own.
   const [typingMap, setTypingMap] = useState<Map<string, number>>(
@@ -84,8 +94,13 @@ export function PresenceProvider({
 
     channel
       .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
+        const state = channel.presenceState<{ user_id: string; nickname: string }>();
         setOnlineUserIds(new Set(Object.keys(state)));
+        const users: OnlineUser[] = Object.entries(state).map(([id, payloads]) => ({
+          id,
+          nickname: payloads[0]?.nickname ?? id.slice(0, 6),
+        }));
+        setOnlineUsers(users);
       })
       .on(
         "broadcast",
@@ -152,11 +167,12 @@ export function PresenceProvider({
   const value = useMemo<PresenceContextValue>(
     () => ({
       onlineUserIds,
+      onlineUsers,
       liveCount: onlineUserIds.size || 1,
       typingCount: typingMap.size,
       emitTyping,
     }),
-    [onlineUserIds, typingMap, emitTyping]
+    [onlineUserIds, onlineUsers, typingMap, emitTyping]
   );
 
   return (
