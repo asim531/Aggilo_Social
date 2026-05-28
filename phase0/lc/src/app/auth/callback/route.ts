@@ -67,15 +67,22 @@ export async function GET(request: Request) {
   try {
     const admin = createAdminClient();
     const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-    const nickname = typeof meta.nickname === "string" ? meta.nickname.trim() : null;
-    const gender = typeof meta.gender === "string" ? meta.gender : null;
+    
+    // Fallback: read from URL params if metadata is empty (invite link flow)
+    const urlGender = searchParams.get("gender");
+    const urlBirthYear = searchParams.get("birth_year");
+    const urlCountry = searchParams.get("country");
+    const urlNickname = searchParams.get("founder");
+    
+    const nickname = (typeof meta.nickname === "string" ? meta.nickname.trim() : null) ?? urlNickname;
+    const gender = (typeof meta.gender === "string" ? meta.gender : null) ?? urlGender;
     const birthYear =
-      typeof meta.birth_year === "number"
+      (typeof meta.birth_year === "number"
         ? meta.birth_year
         : typeof meta.birth_year === "string"
           ? parseInt(meta.birth_year, 10) || null
-          : null;
-    const country = typeof meta.country === "string" ? meta.country : null;
+          : null) ?? (urlBirthYear ? parseInt(urlBirthYear, 10) || null : null);
+    const country = (typeof meta.country === "string" ? meta.country : null) ?? urlCountry;
 
     // Build the insert payload, only including fields that have values.
     const insertPayload: Record<string, unknown> = {
