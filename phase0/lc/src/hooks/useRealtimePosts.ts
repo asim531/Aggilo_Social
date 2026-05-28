@@ -89,6 +89,14 @@ export function useRealtimePosts({ initialPosts }: UseRealtimePostsArgs) {
         },
         async (payload) => {
           const newRow = payload.new as PostWithAuthor;
+          // Notify the tab badge (no extra channel — single dispatch here).
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("lc:new-post", {
+                detail: { authorId: newRow.author_id ?? null },
+              })
+            );
+          }
           // Hydrate the author profile — INSERT events don't include joined rows.
           if (newRow.author_id && !newRow.profiles) {
             const { data: profile } = await supabase

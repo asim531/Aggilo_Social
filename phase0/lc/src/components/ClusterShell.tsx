@@ -26,7 +26,7 @@
  *     to the HelpMenu. Power-users ignore it; new members find it.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { withBasePath } from "@/lib/path";
 import { track } from "@/lib/track";
 import Navbar from "./Navbar";
@@ -41,6 +41,7 @@ import FirstVisitHint from "./FirstVisitHint";
 import ClioTipLayer from "./ClioTipLayer";
 import type { PostWithAuthor, Profile } from "@/lib/types";
 import { PresenceProvider } from "@/lib/presence-context";
+import { useTabNotification } from "@/hooks/useTabNotification";
 
 interface ClusterShellProps {
   userId: string;
@@ -63,10 +64,39 @@ export default function ClusterShell({
   // (which is non-blocking). The welcome modal itself is always
   // user-invoked from the HelpMenu.
   const [hintVisible, setHintVisible] = useState(!profile.onboarded);
+  const [unsubscribeAck, setUnsubscribeAck] = useState(false);
+  const unsubHandledRef = useRef(false);
+
+  // Tab title badge — zero intrusion, clears on focus.
+  useTabNotification(userId);
 
   useEffect(() => {
     track("session_started");
     track("cluster_landed");
+    // Stamp last_seen_at so the notification cron knows when you were here.
+    void fetch(withBasePath("/api/auth/record-visit"), { method: "POST" }).catch(() => {});
+  }, []);
+
+  // One-click email unsubscribe: the return email footer links here with
+  // ?unsubscribe=1. Handle it once, acknowledge briefly, then clean the URL.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (unsubHandledRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("unsubscribe") !== "1") return;
+    unsubHandledRef.current = true;
+    void fetch(withBasePath("/api/auth/notification-preferences"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: false }),
+    }).catch(() => {});
+    setUnsubscribeAck(true);
+    // Remove the param from the URL so a refresh doesn't re-trigger.
+    const clean = new URL(window.location.href);
+    clean.searchParams.delete("unsubscribe");
+    window.history.replaceState({}, "", clean.toString());
+    // Dismiss the ack after a few seconds.
+    setTimeout(() => setUnsubscribeAck(false), 6000);
   }, []);
 
   function handleDismissHint() {
@@ -186,6 +216,16 @@ export default function ClusterShell({
         onStartTour={handleStartTour}
         onOpenFoundingFeedback={handleOpenFoundingFeedback}
       />
+
+      {unsubscribeAck && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] bg-lc-ink text-white text-sm font-serif px-5 py-3 rounded-lg shadow-xl transition-all"
+        >
+          You won't receive email nudges anymore. Come back whenever you like.
+        </div>
+      )}
 
       <main className="flex-1">
         <ClusterHeader />

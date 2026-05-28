@@ -1,6 +1,13 @@
 {
   "framework": "nextjs",
 
+  "crons": [
+    {
+      "path": "/c/long-conversation/api/notifications/reengagement",
+      "schedule": "0 3 * * *"
+    }
+  ],
+
   "headers": [
     {
       "source": "/(.*)",
