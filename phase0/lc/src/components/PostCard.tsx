@@ -84,6 +84,44 @@ export default function PostCard({
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
+  // ── Unread reply tracking ────────────────────────────────────────
+  // We stamp the last-seen reply count per post in localStorage. The
+  // dot shows when current replies.length > stored count. Cleared on
+  // first render after the user has had a chance to see it (we mark
+  // as seen 3s after mount if the dot is showing).
+  const isOwnPost = post.author_id === userId;
+  const storageKey = `lc:seen-replies:${post.id}`;
+  const [seenReplyCount, setSeenReplyCount] = useState<number>(() => {
+    if (typeof window === "undefined") return replies.length;
+    if (!isOwnPost) return replies.length;
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored === null) {
+      // First time seeing this post — treat current count as baseline
+      // unless replies arrived after post creation (i.e. there's news).
+      // To be safe, we DO mark new replies as unread on first load if any exist.
+      window.localStorage.setItem(storageKey, "0");
+      return 0;
+    }
+    const parsed = parseInt(stored, 10);
+    return Number.isNaN(parsed) ? replies.length : parsed;
+  });
+  const hasUnreadReplies =
+    isOwnPost && replies.length > seenReplyCount;
+
+  // Mark replies as seen when the user has had a moment to notice
+  // the indicator (3s after the count changes). This prevents the
+  // dot from disappearing instantly on render.
+  useEffect(() => {
+    if (!isOwnPost) return;
+    if (typeof window === "undefined") return;
+    if (replies.length === seenReplyCount) return;
+    const t = setTimeout(() => {
+      window.localStorage.setItem(storageKey, String(replies.length));
+      setSeenReplyCount(replies.length);
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [isOwnPost, replies.length, seenReplyCount, storageKey]);
+
   // Welfare-flagged posts get a rose accent (lowest-saturation; the
   // platform safety floor is calibrated to be present without alarming).
   const isWelfare = post.thread_state === "welfare_flagged";
@@ -279,10 +317,10 @@ export default function PostCard({
           {replies.length > 0 && (
             <span className="text-lc-muted flex items-center gap-1.5">
               · {replies.length} {replies.length === 1 ? "reply" : "replies"}
-              {post.author_id === userId && (
+              {hasUnreadReplies && (
                 <span
-                  className="inline-block w-1.5 h-1.5 rounded-full bg-lc-clio"
-                  title="Someone replied to your post"
+                  className="inline-block w-1.5 h-1.5 rounded-full bg-lc-clio animate-pulse"
+                  title="New reply since you last looked"
                   aria-label="New reply"
                 />
               )}

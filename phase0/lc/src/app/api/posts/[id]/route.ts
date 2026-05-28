@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { CLUSTER_ID } from "@/lib/cluster";
+import { detectWelfareSignal } from "@/lib/welfare";
+import { withBasePath } from "@/lib/path";
 
 /**
  * PUT /api/posts/[id]
@@ -63,9 +65,22 @@ export async function PUT(
     }
 
     const trimmed = content.trim();
+
+    // ── Welfare re-check on edited content ──────────────────────
+    // A user could post benign content, pass welfare, then edit to add
+    // welfare-triggering content. Re-run detection on every edit.
+    const welfareTriggered = detectWelfareSignal(trimmed);
+    const updatePayload: Record<string, unknown> = {
+      content: trimmed,
+      edited_at: new Date().toISOString(),
+    };
+    if (welfareTriggered) {
+      updatePayload.thread_state = "welfare_flagged";
+    }
+
     const { data: updated, error: updateError } = await admin
       .from("posts")
-      .update({ content: trimmed, edited_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq("id", id)
       .eq("cluster_id", CLUSTER_ID)
       .select("*")
@@ -77,6 +92,37 @@ export async function PUT(
         { error: "failed to update post" },
         { status: 500 }
       );
+    }
+
+    // ── Welfare notification (admin review) ─────────────────────
+    if (welfareTriggered) {
+      try {
+        await admin.from("welfare_notifications").insert({
+          cluster_id: CLUSTER_ID,
+          user_id: user.id,
+          trigger_content: trimmed.slice(0, 500),
+          source: "post_edit",
+          resolved: false,
+        });
+      } catch {
+        // Non-blocking — the post is already flagged in thread_state.
+      }
+    }
+
+    // ── Sage re-eval: fire if @Sage was added during edit ───────
+    // We check whether the new content mentions @Sage. (We don't
+    // suppress duplicate fires — Sage's own evaluate route handles
+    // its own dedup logic.)
+    const mentionsSage = /@sage\b/i.test(trimmed);
+    if (mentionsSage) {
+      const origin = new URL(request.url).origin;
+      void fetch(`${origin}${withBasePath("/api/sage/evaluate")}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: id }),
+      }).catch(() => {
+        // Silent — Sage staying silent is a valid outcome.
+      });
     }
 
     return NextResponse.json({ post: updated });
