@@ -57,6 +57,7 @@ function AuthFormContent() {
   const [state, setState] = useState<AuthState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [nicknameChecking, setNicknameChecking] = useState(false);
+  const [autoSwitched, setAutoSwitched] = useState(false);
 
   useEffect(() => {
     if (urlError) setErrorMsg(urlError);
@@ -85,32 +86,30 @@ function AuthFormContent() {
     setErrorMsg("");
     track("signin_submitted");
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: {
-        // basePath-aware so magic links bounce back through the
-        // publicly-rewritten URL (aggilo.in/c/long-conversation/auth/callback).
-        emailRedirectTo: `${window.location.origin}${withBasePath("/auth/callback")}`,
-        shouldCreateUser: false,
-      },
-    });
-
-    if (error) {
-      if (
-        error.message.includes("Signups not allowed") ||
-        error.message.includes("User not found")
-      ) {
-        setState("error");
-        setErrorMsg("No account with that email. Try Create account instead.");
-      } else {
-        setState("error");
-        setErrorMsg(error.message);
+    try {
+      const res = await fetch(withBasePath("/api/auth/check-email"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const { exists } = (await res.json()) as { exists: boolean };
+      if (exists) {
+        setState("success");
+        track("signin_link_sent");
+        return;
       }
-    } else {
-      setState("success");
-      track("signin_link_sent");
+    } catch {
+      setState("error");
+      setErrorMsg("Something went wrong. Please try again.");
+      return;
     }
+
+    // New user — seamlessly switch to signup flow
+    setAutoSwitched(true);
+    setMode("signup");
+    setStep("nickname");
+    setState("idle");
+    track("signin_new_user_redirected");
   }
 
   // ── SIGN UP: multi-step ──────────────────────────────────────────
@@ -285,6 +284,7 @@ function AuthFormContent() {
             setMode("signin");
             setStep("email");
             setErrorMsg("");
+            setAutoSwitched(false);
           }}
           className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
             mode === "signin"
@@ -300,6 +300,7 @@ function AuthFormContent() {
             setMode("signup");
             setStep("email");
             setErrorMsg("");
+            setAutoSwitched(false);
           }}
           className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
             mode === "signup"
@@ -330,6 +331,11 @@ function AuthFormContent() {
               required
               className="w-full px-4 py-3 rounded-lg border border-stone-300 bg-lc-card focus:outline-none focus:ring-2 focus:ring-lc-clio focus:border-transparent text-lc-ink placeholder:text-stone-400"
             />
+          </div>
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+            <p className="text-xs text-amber-800 leading-relaxed">
+              <span className="font-semibold">Important:</span> Open the link from your email in this same browser and device. If you switch, you&apos;ll have to start over.
+            </p>
           </div>
           <button
             type="submit"
@@ -397,12 +403,23 @@ function AuthFormContent() {
       {/* ── SIGN UP — nickname step ──────────────────────────────── */}
       {mode === "signup" && step === "nickname" && (
         <form onSubmit={handleNicknameSubmit} className="space-y-4">
-          {searchParams.get("founder") === "tas" && (
+          {(searchParams.get("founder") === "tas" || autoSwitched) && (
             <div className="bg-lc-card border border-lc-clio/20 rounded-lg p-4 mb-6">
-              <p className="text-sm text-lc-ink leading-relaxed">
-                Tas, we have already filled the information that you provided us. We only need you to choose your suitable nickname.
-              </p>
-              <p className="text-sm text-lc-clio italic mt-2">— Clio</p>
+              {searchParams.get("founder") === "tas" ? (
+                <>
+                  <p className="text-sm text-lc-ink leading-relaxed">
+                    Tas, we have already filled the information that you provided us. We only need you to choose your suitable nickname.
+                  </p>
+                  <p className="text-sm text-lc-clio italic mt-2">— Clio</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-lc-ink leading-relaxed">
+                    Welcome! It looks like you&apos;re new here. Let&apos;s set up your profile.
+                  </p>
+                  <p className="text-sm text-lc-clio italic mt-2">— Clio</p>
+                </>
+              )}
             </div>
           )}
           <div>
@@ -588,6 +605,11 @@ function AuthFormContent() {
               maxLength={64}
               className="w-full px-4 py-3 rounded-lg border border-stone-300 bg-lc-card focus:outline-none focus:ring-2 focus:ring-lc-clio focus:border-transparent text-lc-ink placeholder:text-stone-400"
             />
+          </div>
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+            <p className="text-xs text-amber-800 leading-relaxed">
+              <span className="font-semibold">Important:</span> Open the link from your email in this same browser and device. If you switch, you&apos;ll have to start over.
+            </p>
           </div>
           <button
             type="submit"
