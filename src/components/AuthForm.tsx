@@ -476,7 +476,7 @@ function AuthFormContent() {
             </select>
 
             <p className="mt-2 text-[11px] text-gray-500 leading-relaxed italic">
-              Rooted in India, but open to Muslim women everywhere.
+              Open to Muslim women everywhere. Your location helps us understand the mix of the room.
             </p>
           </div>
 

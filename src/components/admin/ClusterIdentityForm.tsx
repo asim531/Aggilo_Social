@@ -223,14 +223,14 @@ export default function ClusterIdentityForm({
                 type="text"
                 value={chip.icon}
                 onChange={(e) => updateChip(idx, "icon", e.target.value)}
-                placeholder="🇮🇳"
+                placeholder="�"
                 className="w-16 px-2 py-1.5 rounded border border-gray-300 text-sm text-center"
               />
               <input
                 type="text"
                 value={chip.label}
                 onChange={(e) => updateChip(idx, "label", e.target.value)}
-                placeholder="India"
+                placeholder="Global"
                 className="flex-1 px-2 py-1.5 rounded border border-gray-300 text-sm"
               />
               <button

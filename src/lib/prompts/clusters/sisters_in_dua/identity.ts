@@ -17,9 +17,9 @@ export const SISTERS_IN_DUA_IDENTITY: ClusterIdentity = {
   id: "the_single_source", // legacy DB cluster_id — kept stable for V3.x continuity
   type: "premium",
   displayName: "Sisters in Dua",
-  tagline: "Faith lived, discussed, and held together — in Hyderabad.",
+  tagline: "Faith lived, discussed, and held together.",
   description:
-    "A community for Muslim women in Hyderabad navigating faith in real life. Grounded in Quran and authentic Sunnah. Guided by practitioners and scholars.",
+    "A community for Muslim women navigating faith, progress, and contemporary life. Grounded in Quran and authentic Sunnah. Guided by practitioners and scholars.",
   icon: "🤲",
   primaryLanguage: "en",
   memberNoun: "sister",
@@ -29,18 +29,18 @@ export const SISTERS_IN_DUA_IDENTITY: ClusterIdentity = {
   hasDemographicRestrictions: true,
   demographicChips: [
     {
-      label: "Hyderabad",
-      icon: "📍",
-      color: "bg-orange-50 text-orange-700 border-orange-200",
-    },
-    {
       label: "Women",
       icon: "♀",
       color: "bg-rose-50 text-rose-700 border-rose-200",
     },
+    {
+      label: "Faith",
+      icon: "🤲",
+      color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    },
   ],
   seedPosts: [
-    `This room is for sisters across Hyderabad to talk about what it actually means to stay close to Allah — through difficulty, doubt, routine, and real life.
+    `This room is for sisters everywhere to talk about what it actually means to stay close to Allah — through difficulty, doubt, routine, and real life.
 
 Every reference that appears here comes from verified sources: the Quran, the six major Sunni hadith collections (Sahih and Hasan grades only), and selected Islamic knowledge sources. Nothing fabricated. Nothing weak.
 

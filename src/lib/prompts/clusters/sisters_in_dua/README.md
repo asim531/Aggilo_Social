@@ -33,7 +33,7 @@ Same shape for Clio (substitute `clio-character.ts` and `clio.ts`).
 
 ## Cluster-specific decisions
 
-- **Demographic restrictions:** women-only, India-focused. Surfaced as
+- **Demographic restrictions:** women-only, globally open. Surfaced as
   chips on the cluster header.
 - **Authority terminology:** "Admin / Managers" — the platform default.
   Premium clusters can override but Sisters in Dua keeps the default.

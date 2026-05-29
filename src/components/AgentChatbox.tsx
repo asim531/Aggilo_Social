@@ -211,7 +211,7 @@ export default function AgentChatbox({
             {newExchangeCount} new
           </span>
         )}
-        <svg className="w-3.5 h-3.5 text-slate-400 shrink-0 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -228,9 +228,15 @@ export default function AgentChatbox({
         aria-label="Room Workshop — Clio and Sage building for the room"
       >
         {/* Header — service framing, not surveillance */}
-        <div className="flex items-center gap-2 mb-1">
+        <button
+          type="button"
+          onClick={handleToggleMinimize}
+          className="w-full flex items-center gap-2 mb-1 cursor-pointer"
+          aria-label="Minimize Room Workshop"
+          title="Minimize"
+        >
           <span className="text-cyan-600 text-base shrink-0">🛠️</span>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 text-left">
             <span className="text-xs font-semibold text-slate-800">
               Room Workshop
             </span>
@@ -238,15 +244,16 @@ export default function AgentChatbox({
               Live
             </span>
           </div>
-          <button
-            onClick={handleToggleMinimize}
-            className="text-slate-400 hover:text-slate-600 text-base leading-none shrink-0"
-            aria-label="Minimize Room Workshop"
-            title="Minimize"
+          <svg
+            className="w-4 h-4 text-slate-400 hover:text-slate-600 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
           >
-            —
-          </button>
-        </div>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
         {/* Subtitle — tells members what they're looking at, in service terms */}
         <p className="text-[11px] text-slate-500/80 leading-snug mb-2.5">
