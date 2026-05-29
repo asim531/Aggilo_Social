@@ -33,6 +33,24 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      const msg = (error.message || "").toLowerCase();
+      const code = (error.code || "").toLowerCase();
+
+      const isUserNotFound =
+        msg.includes("signups not allowed") ||
+        msg.includes("user not found") ||
+        msg.includes("email not found") ||
+        msg.includes("does not exist") ||
+        code.includes("not_found") ||
+        code.includes("user_not_found");
+
+      if (!isUserNotFound) {
+        // Rate limit, email provider error, etc. — user exists but we
+        // couldn't send. Show "Check your email" rather than signup.
+        console.warn("[check-email] signInWithOtp error (existing user):", error.message);
+        return NextResponse.json({ exists: true });
+      }
+
       return NextResponse.json({ exists: false });
     }
     return NextResponse.json({ exists: true });
