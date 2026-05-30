@@ -1,12 +1,56 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import Analytics from "@/components/Analytics";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const siteUrl = basePath
+  ? `https://mvp.aggilo.in${basePath}`
+  : "http://localhost:3001";
+
 export const metadata: Metadata = {
-  title: "Long Conversation — Aggilo",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Long Conversation — Aggilo",
+    template: "%s — Long Conversation",
+  },
   description:
     "A text-only space for intellectually serious young Indians who are done with apps. Where you're known by what you say — nothing else.",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "./",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    siteName: "Long Conversation",
+    title: "Long Conversation — Aggilo",
+    description:
+      "A text-only space for intellectually serious young Indians who are done with apps. Where you're known by what you say — nothing else.",
+    url: "./",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Long Conversation — Aggilo",
+    description:
+      "A text-only space for intellectually serious young Indians who are done with apps. Where you're known by what you say — nothing else.",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#fafaf9",
 };
 
 export default function RootLayout({

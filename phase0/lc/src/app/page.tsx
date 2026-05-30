@@ -9,12 +9,50 @@
  * person scroll past. The filter is in the specificity, not in a gate.
  */
 
+import type { Metadata } from "next";
 import { CLUSTER } from "@/lib/cluster";
 import AuthForm from "@/components/AuthForm";
 
+export const metadata: Metadata = {
+  title: "Long Conversation",
+  description:
+    "A space where words are the only currency. Join a text-only room designed to help you truly understand people on a deeper level.",
+  openGraph: {
+    title: "Long Conversation — Where you're known by what you say",
+    description:
+      "A space where words are the only currency. Join a text-only room designed to help you truly understand people on a deeper level.",
+  },
+  twitter: {
+    title: "Long Conversation — Where you're known by what you say",
+    description:
+      "A space where words are the only currency. Join a text-only room designed to help you truly understand people on a deeper level.",
+  },
+};
+
 export default function LandingPage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Long Conversation — Aggilo",
+    description:
+      "A text-only space for intellectually serious young Indians who are done with apps. Where you're known by what you say — nothing else.",
+    url: "https://mvp.aggilo.in/c/long-conversation",
+    inLanguage: "en",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "Aggilo",
+      url: "https://aggilo.in",
+    },
+  };
+
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-16 bg-lc-surface">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData),
+        }}
+      />
       {/* ── Hero ───────────────────────────────────────────────── */}
       <div className="max-w-md w-full text-center mb-10">
         <p className="text-xs uppercase tracking-[0.2em] text-lc-muted mb-6">
