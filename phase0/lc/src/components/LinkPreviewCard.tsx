@@ -17,6 +17,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
+import { withBasePath } from "@/lib/path";
 
 interface LinkPreview {
   id: string;
@@ -64,7 +65,7 @@ export default function LinkPreviewCard({ url }: LinkPreviewCardProps) {
 
       // Trigger unfurl + Sage review
       try {
-        const res = await fetch("/api/links/unfurl", {
+        const res = await fetch(withBasePath("/api/links/unfurl"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url }),
