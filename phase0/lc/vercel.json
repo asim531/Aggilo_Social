@@ -14,7 +14,7 @@
 
   "crons": [
     {
-      "path": "/c/long-conversation/api/notifications/reengagement",
+      "path": "/api/notifications/reengagement",
       "schedule": "0 3 * * *"
     }
   ],
