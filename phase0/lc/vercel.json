@@ -1,6 +1,17 @@
 {
   "framework": "nextjs",
 
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/c/long-conversation/api/:path*"
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "/c/long-conversation/_next/:path*"
+    }
+  ],
+
   "crons": [
     {
       "path": "/c/long-conversation/api/notifications/reengagement",
