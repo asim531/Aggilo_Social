@@ -54,10 +54,9 @@ const SOURCE_LABELS: Record<WelfareRow["source"], string> = {
 export default async function WelfarePage({
   searchParams,
 }: {
-  searchParams: Promise<{ show?: string }>;
+  searchParams: { show?: string };
 }) {
-  const params = await searchParams;
-  const showResolved = params.show === "resolved";
+  const showResolved = searchParams.show === "resolved";
 
   const supabase = await createClient();
 

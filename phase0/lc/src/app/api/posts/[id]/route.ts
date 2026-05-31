@@ -14,10 +14,10 @@ import { withBasePath } from "@/lib/path";
  */
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     const { content } = (await request.json()) as { content?: string };
 
     if (!content || typeof content !== "string" || !content.trim()) {

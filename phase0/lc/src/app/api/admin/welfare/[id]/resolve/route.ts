@@ -16,10 +16,10 @@ import { CLUSTER_ID } from "@/lib/cluster";
  */
 export async function POST(
   _request: Request,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = params;
     if (!id || typeof id !== "string") {
       return NextResponse.json({ error: "id required" }, { status: 400 });
     }
