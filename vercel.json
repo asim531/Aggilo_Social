@@ -16,11 +16,11 @@
     },
     {
       "source": "/c/research-circle-mj",
-      "destination": "https://research-circle-95i39hpj6-asims-projects-065723f3.vercel.app/c/research-circle-mj"
+      "destination": "https://research-circle-a179bx2zd-asims-projects-065723f3.vercel.app/c/research-circle-mj"
     },
     {
       "source": "/c/research-circle-mj/:path*",
-      "destination": "https://research-circle-95i39hpj6-asims-projects-065723f3.vercel.app/c/research-circle-mj/:path*"
+      "destination": "https://research-circle-a179bx2zd-asims-projects-065723f3.vercel.app/c/research-circle-mj/:path*"
     }
   ]
 }
