@@ -15,13 +15,18 @@
 The marketing site (`launch/landing/`, static HTML+JS) is the canonical
 Vercel project bound to `aggilo.in`. Each cluster lives in its own
 Vercel project (`lc/` is the first; `mvp/` is the second) and ships
-independently. The marketing project's `vercel.json` carries a
-rewrite rule that proxies `/c/<slug>/*` requests to the relevant
-cluster deployment. The browser's URL bar always shows
-`aggilo.in/c/<slug>/...` — never the underlying `*.vercel.app`
-hostname. Each cluster app sets `basePath` in `next.config.mjs` so
-its own internal links and API routes line up with the public
-rewritten path.
+independently.
+
+**CRITICAL:** The rewrite rules live in **ROOT `vercel.json` on `main`
+branch** (the `aggilo-social` Vercel project that serves
+`mvp.aggilo.in`). NOT in `phase0/mvp/vercel.json`, NOT in
+`launch/landing/vercel.json`. Those files are stale references —
+only the root `vercel.json` on `main` is deployed. Each rewrite entry
+proxies `/c/<slug>/*` requests to the relevant cluster deployment.
+The browser's URL bar always shows `mvp.aggilo.in/c/<slug>/...` —
+never the underlying `*.vercel.app` hostname. Each cluster app sets
+`basePath` in `next.config.mjs` so its own internal links and API
+routes line up with the public rewritten path.
 
 ---
 
@@ -40,14 +45,15 @@ rewritten path.
 The static HTML, the `submit.php` form handler, and the rewrite rules
 all live here. No Next.js, no build step.
 
-The rewrite rules live in `launch/landing/vercel.json`. The current
-file rewrites:
+The rewrite rules live in **ROOT `vercel.json` on `main` branch**.
+The current file rewrites:
 
-- `aggilo.in/c/long-conversation` → LC project root
-- `aggilo.in/c/long-conversation/:path*` → LC project's matching path
+- `mvp.aggilo.in/c/long-conversation` → LC project
+- `mvp.aggilo.in/c/research-circle-mj` → RC_MJ project
 
-When a second cluster ships, add two more entries to the `rewrites`
-array (the bare-prefix and the `:path*` form).
+When a new cluster ships, add two more entries to the `rewrites`
+array (the bare-prefix and the `:path*` form), commit to `main`,
+and push. Vercel auto-rebuilds the `aggilo-social` project.
 
 ### 2. Long Conversation — `aggilo-long-conversation`
 
@@ -110,23 +116,32 @@ before LC magic links work in production:
 ### Auth → URL Configuration → Site URL
 
 ```
-https://aggilo.in
+https://mvp.aggilo.in
 ```
 
-This is the platform-wide Site URL. Both MVP (Sisters in Dua) and LC
-share the same Supabase project, so the Site URL is the marketing
-domain.
+This is the platform-wide Site URL. All clusters share the same
+Supabase project, so the Site URL is the main domain. Do NOT leave
+this as `localhost` — if you do, magic-link emails will send users to
+`http://localhost:3000/cluster?code=...` instead of the production URL.
 
 ### Auth → URL Configuration → Redirect URLs (allow-list)
 
-Add every callback URL the platform needs to accept:
+Add every callback URL the platform needs to accept, **including BOTH
+the clean URL and the raw `.vercel.app` URL**:
 
 ```
-https://aggilo.in/c/long-conversation/auth/callback
-https://aggilo.in/auth/callback              ← MVP, if it's served at the root
-http://localhost:3001/auth/callback          ← LC dev
-http://localhost:3000/auth/callback          ← MVP dev
+https://mvp.aggilo.in/c/long-conversation/auth/confirm
+https://mvp.aggilo.in/c/research-circle-mj/auth/confirm
+https://<lc-deployment>.vercel.app/c/long-conversation/auth/confirm
+https://<rcmj-deployment>.vercel.app/c/research-circle-mj/auth/confirm
 ```
+
+The raw `.vercel.app` URL is required because Supabase validates the
+`Origin` header against the allow-list. When a user accesses the app
+through the rewrite (`mvp.aggilo.in/c/...`), the browser's `Origin`
+is the underlying deployment URL, not the rewritten one. If only the
+clean URL is in the allow-list, Supabase falls back to the Site URL
+and magic links break.
 
 Without the production callback in this list, Supabase rejects the
 magic link with "redirect URL not allowed". This is the single most
@@ -208,7 +223,7 @@ Concrete steps when, e.g., spinning up a `study-circle` cluster:
 2. Deploy as its own Vercel project with **Root Directory** = `study`.
    Note the assigned `*.vercel.app` URL.
 3. Set `NEXT_PUBLIC_BASE_PATH=/c/study-circle` on that project.
-4. Add to `launch/landing/vercel.json`:
+4. Add to **ROOT `vercel.json` on `main` branch**:
 
    ```jsonc
    {
@@ -221,10 +236,13 @@ Concrete steps when, e.g., spinning up a `study-circle` cluster:
    }
    ```
 
-5. Redeploy the marketing project (Vercel rebuilds on `vercel.json`
-   change automatically).
-6. Add `https://aggilo.in/c/study-circle/auth/callback` to the
-   Supabase Auth Redirect URL allow-list.
+5. Commit and push to `main`. Vercel rebuilds the `aggilo-social`
+   project automatically.
+6. Add **BOTH** of these to the Supabase Auth Redirect URL allow-list:
+   ```
+   https://mvp.aggilo.in/c/study-circle/auth/confirm
+   https://study-aggilo.vercel.app/c/study-circle/auth/confirm
+   ```
 7. Smoke-test per the section above.
 
 ---

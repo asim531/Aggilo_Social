@@ -182,10 +182,11 @@ between clusters.
 Per `phase0/docs/DEPLOYMENT_AGGILO_IN_REWRITE.md`:
 
 1. Create a new Vercel project. Root Directory = `phase0/<app_folder>`.
+   **Production Branch** must be set to `chore/phase0-folder-reshape`.
 2. Set production env vars (Supabase, LLM, basePath = `/c/<slug>`,
-   APP_URL = `https://aggilo.in`, FOUNDING_MEMBER_EMAILS).
+   APP_URL = `https://mvp.aggilo.in`, FOUNDING_MEMBER_EMAILS).
 3. Deploy. Note the Vercel-assigned `*.vercel.app` URL.
-4. Add the rewrite to `launch/landing/vercel.json`:
+4. Add the rewrite to **ROOT `vercel.json` on `main` branch`**:
    ```jsonc
    {
      "source": "/c/<slug>",
@@ -196,10 +197,22 @@ Per `phase0/docs/DEPLOYMENT_AGGILO_IN_REWRITE.md`:
      "destination": "https://<deployment>.vercel.app/c/<slug>/:path*"
    }
    ```
-5. Redeploy the marketing site (Vercel auto-rebuilds on `vercel.json`
-   change).
-6. Add `https://aggilo.in/c/<slug>/auth/callback` to the Supabase Auth
-   Redirect URL allow-list.
+   ⚠️ **CRITICAL:** The rewrite lives in the ROOT `vercel.json` on `main`
+   (the `aggilo-social` project that serves `mvp.aggilo.in`), NOT in
+   `phase0/mvp/vercel.json` or `launch/landing/vercel.json`. The
+   `phase0/mvp/vercel.json` is for reference only — the deployed file is
+   the root one.
+5. Commit and push the root `vercel.json` change to `main` branch.
+   Vercel auto-rebuilds the `aggilo-social` project on push.
+6. Add **BOTH** of these to the Supabase Auth Redirect URL allow-list:
+   ```
+   https://mvp.aggilo.in/c/<slug>/auth/confirm
+   https://<deployment>.vercel.app/c/<slug>/auth/confirm
+   ```
+   The direct `.vercel.app` URL is required because Supabase uses the
+   request's `Origin` header to validate redirects. If only the clean URL
+   is in the allow-list, Supabase falls back to the Site URL (which may
+   be `localhost` from dev testing) and magic links break.
 7. Smoke test per the deployment guide.
 
 The magic-link email template
@@ -255,6 +268,29 @@ re-introduce:
 - **Hardcoding cluster_id at component level.** Every component reads
   it from `@/lib/cluster`. Don't string-literal "long_conversation"
   anywhere.
+- **Putting the cluster card at `app/c/<slug>/page.tsx`.** When
+  `basePath` is set in production, Next.js strips the prefix before
+  routing. So `/c/<slug>` internally maps to `/`, which means
+  `app/page.tsx` serves the cluster card — NOT
+  `app/c/<slug>/page.tsx`. The latter is only reachable in dev (when
+  basePath is empty). The fix used in RC_MJ:
+  - `app/page.tsx` → contains the full cluster card (async server
+    component with `loadActivity()`, metadata, etc.)
+  - `app/c/<slug>/page.tsx` → dev-only redirect to `/`
+  - `redirect("/c/<slug>")` anywhere in `app/page.tsx` creates an
+    **infinite redirect loop** in production because the page IS already
+    at `/c/<slug>` after basePath stripping.
+- **Forgetting to update the rewrite destination after each deploy.**
+  Vercel assigns a new `*.vercel.app` URL on every production deploy
+  (the old one still works but may serve stale cache). Always update
+  the root `vercel.json` rewrite `destination` to the **latest**
+  production deployment URL, commit to `main`, and push.
+- **Leaving Supabase Site URL as `localhost`.** If the Site URL in
+  Supabase Dashboard → Auth → URL Configuration is still set to
+  `http://localhost:3000/cluster` (from dev testing), magic-link emails
+  will send users to localhost. Change the Site URL to
+  `https://mvp.aggilo.in` (safe for all clusters) and rely on the
+  per-cluster `emailRedirectTo` + Redirect URLs allow-list for routing.
 
 ---
 
