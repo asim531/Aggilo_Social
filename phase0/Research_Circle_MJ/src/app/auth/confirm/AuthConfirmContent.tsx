@@ -82,7 +82,9 @@ export function AuthConfirmContent() {
       url.searchParams.delete("type");
       window.history.replaceState({}, "", url.toString());
 
-      router.push(withBasePath("/cluster"));
+      // router.push auto-prepends basePath — do NOT wrap with withBasePath()
+      // or the URL becomes /c/<slug>/c/<slug>/cluster (double basePath → 404)
+      router.push("/cluster");
     }
 
     run();

@@ -15,6 +15,9 @@
  * Use `withBasePath("/api/clio/chat")` everywhere those three
  * patterns appear. In dev (BASE_PATH="") the helper is a no-op.
  *
+ * ⚠️ NEVER use withBasePath() with router.push() or <Link> — they
+ * auto-prepend basePath and will create a double basePath (404).
+ *
  * The constant is read from NEXT_PUBLIC_BASE_PATH so it's available
  * on both server and client. Keep it in sync with `next.config.mjs`.
  */

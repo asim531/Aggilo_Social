@@ -291,6 +291,19 @@ re-introduce:
   will send users to localhost. Change the Site URL to
   `https://mvp.aggilo.in` (safe for all clusters) and rely on the
   per-cluster `emailRedirectTo` + Redirect URLs allow-list for routing.
+- **Using `withBasePath()` with `router.push()` or `<Link>`.** Next.js
+  `router.push()` and `<Link>` auto-prepend `basePath`. Wrapping the
+  path with `withBasePath()` creates a double basePath:
+  ```typescript
+  // WRONG — produces /c/<slug>/c/<slug>/cluster (404)
+  router.push(withBasePath("/cluster"));
+
+  // CORRECT — Next.js handles basePath automatically
+  router.push("/cluster");
+  ```
+  Only use `withBasePath()` for raw browser APIs that don't know about
+  Next.js basePath: `fetch()`, `window.location.href`,
+  `window.open()`, and server-side `NextResponse.redirect()`.
 
 ---
 
