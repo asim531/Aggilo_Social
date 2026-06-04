@@ -28,6 +28,12 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTopicName, setNewTopicName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Debug: log mount
+  useEffect(() => {
+    console.log('[TopicBar] mounted');
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,8 +45,9 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
         if (!cancelled) {
           setTopics((data.topics ?? []) as Topic[]);
         }
-      } catch {
-        // silent — bar stays empty if topics don't load
+      } catch (err) {
+        console.error('[TopicBar] fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load topics');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -68,6 +75,15 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3 text-xs bg-red-50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-800/30">
+        <span className="text-red-800 dark:text-red-200 font-medium">⚠️ Topics Error:</span>
+        <span className="text-red-700 dark:text-red-300">{error}</span>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
