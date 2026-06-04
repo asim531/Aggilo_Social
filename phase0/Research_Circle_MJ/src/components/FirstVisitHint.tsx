@@ -37,7 +37,7 @@ export default function FirstVisitHint({
           >
             Take a minute
           </button>{" "}
-          to see how this room works.
+          to see how this room works, and tag your posts with topics so they stay findable.
         </p>
         <button
           type="button"

@@ -49,6 +49,8 @@ interface PostCardProps {
   sageThinking?: boolean;
   /** Signal that @Sage was invoked for a given thread root id. */
   onSageInvoked?: (threadRootId: string) => void;
+  /** Called when a topic chip on this post is clicked — should filter feed. */
+  onSelectTopic?: (topic: Topic) => void;
 }
 
 function formatTimestamp(iso: string): string {
@@ -76,6 +78,7 @@ export default function PostCard({
   onPostEdited,
   sageThinking,
   onSageInvoked,
+  onSelectTopic,
 }: PostCardProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState("");
@@ -357,7 +360,7 @@ export default function PostCard({
           )}
         </div>
       ) : (
-        <PostBody post={post} userId={userId} />
+        <PostBody post={post} userId={userId} onSelectTopic={onSelectTopic} />
       )}
 
       {/* Reply controls + count + reactions */}
@@ -465,7 +468,7 @@ export default function PostCard({
       {replies.length > 0 && (
         <div className="border-t border-stone-200 dark:border-stone-800 bg-stone-50/30 dark:bg-stone-900/20 divide-y divide-stone-100 dark:divide-stone-800">
           {replies.map((reply) => (
-            <ReplyCard key={reply.id} post={reply} userId={userId} />
+            <ReplyCard key={reply.id} post={reply} userId={userId} onSelectTopic={onSelectTopic} />
           ))}
         </div>
       )}
@@ -480,7 +483,7 @@ export default function PostCard({
  * The post body — extracted so it can render at top level and inside
  * a reply card without duplication.
  */
-function PostBody({ post, userId }: { post: PostWithAuthor; userId?: string }) {
+function PostBody({ post, userId, onSelectTopic }: { post: PostWithAuthor; userId?: string; onSelectTopic?: (topic: Topic) => void }) {
   if (post.is_sage) {
     return (
       <div className="sage-post p-4 bg-husl-sageSoft/30 dark:bg-[#1a2c2b]/30">
@@ -508,7 +511,7 @@ function PostBody({ post, userId }: { post: PostWithAuthor; userId?: string }) {
         {extractUrls(post.content).map(url => (
           <LinkPreviewCard key={url} url={url} />
         ))}
-        <PostMetaRow postId={post.id} userId={userId} />
+        <PostMetaRow postId={post.id} userId={userId} onSelectTopic={onSelectTopic} />
       </div>
     );
   }
@@ -545,7 +548,7 @@ function PostBody({ post, userId }: { post: PostWithAuthor; userId?: string }) {
       {extractUrls(post.content).map(url => (
         <LinkPreviewCard key={url} url={url} />
       ))}
-      <PostMetaRow postId={post.id} userId={userId} />
+      <PostMetaRow postId={post.id} userId={userId} onSelectTopic={onSelectTopic} />
     </div>
   );
 }
@@ -554,7 +557,7 @@ function PostBody({ post, userId }: { post: PostWithAuthor; userId?: string }) {
  * Reply variant — indented, smaller chrome. Sage's care-witness
  * replies in welfare threads render here too.
  */
-function ReplyCard({ post, userId }: { post: PostWithAuthor; userId?: string }) {
+function ReplyCard({ post, userId, onSelectTopic }: { post: PostWithAuthor; userId?: string; onSelectTopic?: (topic: Topic) => void }) {
   if (post.is_sage) {
     return (
       <div className="px-4 py-3 pl-8 bg-husl-sageSoft/20 border-l-2 border-husl-sage/50">
@@ -581,7 +584,7 @@ function ReplyCard({ post, userId }: { post: PostWithAuthor; userId?: string }) 
         {extractUrls(post.content).map(url => (
           <LinkPreviewCard key={url} url={url} />
         ))}
-        <PostMetaRow postId={post.id} userId={userId} />
+        <PostMetaRow postId={post.id} userId={userId} onSelectTopic={onSelectTopic} />
       </div>
     );
   }
@@ -614,7 +617,7 @@ function ReplyCard({ post, userId }: { post: PostWithAuthor; userId?: string }) 
       {extractUrls(post.content).map(url => (
         <LinkPreviewCard key={url} url={url} />
       ))}
-      <PostMetaRow postId={post.id} />
+      <PostMetaRow postId={post.id} onSelectTopic={onSelectTopic} />
     </div>
   );
 }
@@ -623,7 +626,7 @@ function ReplyCard({ post, userId }: { post: PostWithAuthor; userId?: string }) 
  * PostMetaRow — topics and attachments for a single post.
  * Fetches on mount and subscribes to realtime changes.
  */
-function PostMetaRow({ postId, userId }: { postId: string; userId?: string }) {
+function PostMetaRow({ postId, userId, onSelectTopic }: { postId: string; userId?: string; onSelectTopic?: (topic: Topic) => void }) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [attachments, setAttachments] = useState<PostAttachment[]>([]);
   const [analysisTimedOut, setAnalysisTimedOut] = useState(false);
@@ -706,7 +709,11 @@ function PostMetaRow({ postId, userId }: { postId: string; userId?: string }) {
               key={t.id}
               topic={t}
               onClick={() => {
-                window.location.href = withBasePath(`/cluster/topics/${t.slug}`);
+                if (onSelectTopic) {
+                  onSelectTopic(t);
+                } else {
+                  window.location.href = withBasePath(`/cluster/topics/${t.slug}`);
+                }
               }}
             />
           ))}

@@ -27,6 +27,7 @@ interface ClusterFeedProps {
   activeTopic?: Topic | null;
   readingFilter?: "unread" | "reading" | "read" | null;
   sortOrder?: "oldest" | "newest";
+  onSelectTopic?: (topic: Topic | null) => void;
 }
 
 export default function ClusterFeed({
@@ -36,10 +37,12 @@ export default function ClusterFeed({
   activeTopic,
   readingFilter,
   sortOrder = "oldest",
+  onSelectTopic,
 }: ClusterFeedProps) {
   const { posts, addOptimisticPost, replaceOptimisticPost, updatePost, pollForSageReply } =
     useRealtimePosts({ initialPosts });
   const [matchingPostIds, setMatchingPostIds] = useState<Set<string> | null>(null);
+  const [topicPostIds, setTopicPostIds] = useState<Set<string> | null>(null);
   const supabase = createClient();
 
   // Track which top-level post IDs are awaiting a Sage response.
@@ -84,6 +87,27 @@ export default function ClusterFeed({
 
     fetchMatching();
   }, [readingFilter, userId]);
+
+  // Fetch posts that belong to the active topic
+  useEffect(() => {
+    if (!activeTopic) {
+      setTopicPostIds(null);
+      return;
+    }
+
+    const topicId = activeTopic.id;
+    async function fetchTopicPosts() {
+      const { data: rows } = await supabase
+        .from("post_topics")
+        .select("post_id")
+        .eq("topic_id", topicId);
+
+      const ids = new Set((rows ?? []).map((r: { post_id: string }) => r.post_id));
+      setTopicPostIds(ids);
+    }
+
+    fetchTopicPosts();
+  }, [activeTopic]);
 
   const handleSageInvoked = useCallback(
     (threadRootId: string) => {
@@ -166,10 +190,17 @@ export default function ClusterFeed({
       return { topLevel: filtered, repliesByParent };
     }
 
+    // Apply topic filter: only posts linked to the active topic
+    if (activeTopic && topicPostIds) {
+      const filtered = topLevel.filter((p) => topicPostIds.has(p.id));
+      if (sortOrder === "newest") filtered.reverse();
+      return { topLevel: filtered, repliesByParent };
+    }
+
     if (sortOrder === "newest") topLevel.reverse();
 
     return { topLevel, repliesByParent };
-  }, [posts, readingFilter, matchingPostIds, sortOrder]);
+  }, [posts, readingFilter, matchingPostIds, sortOrder, activeTopic, topicPostIds]);
 
   return (
     <>
@@ -178,7 +209,16 @@ export default function ClusterFeed({
         className="max-w-3xl mx-auto px-4 py-6 space-y-3"
       >
         {topLevel.length === 0 ? (
-          readingFilter ? (
+          activeTopic ? (
+            <div className="bg-husl-card dark:bg-[#14161a] border border-stone-200 dark:border-stone-800 rounded-lg p-6 text-center transition-colors">
+              <p className="text-sm font-medium text-stone-600 dark:text-stone-300">
+                No posts tagged with <span className="font-semibold text-husl-ink dark:text-white">{activeTopic.name}</span> yet.
+              </p>
+              <p className="text-xs text-stone-400 dark:text-stone-500 mt-1">
+                Be the first to post about this topic, or pick another from the bar above.
+              </p>
+            </div>
+          ) : readingFilter ? (
             <div className="bg-husl-card dark:bg-[#14161a] border border-stone-200 dark:border-stone-800 rounded-lg p-6 text-center transition-colors">
               <p className="text-sm font-medium text-stone-600 dark:text-stone-300">
                 No papers marked as <span className="capitalize font-semibold text-husl-ink dark:text-white">{readingFilter}</span>
@@ -213,6 +253,7 @@ export default function ClusterFeed({
               onPostEdited={updatePost}
               sageThinking={sageThinkingPosts.has(post.id)}
               onSageInvoked={handleSageInvoked}
+              onSelectTopic={onSelectTopic}
             />
           ))
         )}

@@ -43,6 +43,8 @@ import ClioTipLayer from "./ClioTipLayer";
 import ThreadSearchBar from "./ThreadSearchBar";
 import PaperReadingFilter from "./PaperReadingFilter";
 import PaperIndex from "./PaperIndex";
+import TopicBar from "./TopicBar";
+import TopicsTab from "./TopicsTab";
 import { ThemeProvider } from "./ThemeProvider";
 import type { PostWithAuthor, Profile, Topic } from "@/lib/types";
 import { PresenceProvider } from "@/lib/presence-context";
@@ -68,6 +70,7 @@ export default function ClusterShell({
   const [showTour, setShowTour] = useState(false);
   const [showFoundingFeedback, setShowFoundingFeedback] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showTopicsTab, setShowTopicsTab] = useState(false);
   const [activeTopic, setActiveTopic] = useState<Topic | null>(initialActiveTopic);
   const [readingFilter, setReadingFilter] = useState<"unread" | "reading" | "read" | null>(null);
   const [sortOrder, setSortOrder] = useState<"oldest" | "newest">("oldest");
@@ -141,6 +144,15 @@ export default function ClusterShell({
   function handleOpenFeedback() {
     setShowFeedback(true);
     track("feedback_modal_opened");
+  }
+
+  function handleSelectTopic(topic: Topic | null) {
+    setActiveTopic(topic);
+    if (topic) {
+      track("topic_selected", { slug: topic.slug, name: topic.name });
+    } else {
+      track("topic_cleared");
+    }
   }
 
   // Cadence-exchange auto-trigger (invisible to the user). Keeps the
@@ -254,12 +266,13 @@ export default function ClusterShell({
               <span className="text-sm font-semibold text-husl-ink dark:text-stone-200">{activeTopic.name}</span>
               <span className="text-[10px] text-husl-muted dark:text-stone-400">{activeTopic.post_count} posts</span>
             </div>
-            <a
-              href={withBasePath("/cluster")}
+            <button
+              type="button"
+              onClick={() => handleSelectTopic(null)}
               className="text-xs text-husl-clio dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium"
             >
               Back to all posts
-            </a>
+            </button>
           </div>
         )}
 
@@ -268,6 +281,13 @@ export default function ClusterShell({
             <ThreadSearchBar />
           </div>
           <PaperIndex />
+        </div>
+        <div className="max-w-3xl mx-auto px-4">
+          <TopicBar
+            activeTopicSlug={activeTopic?.slug ?? null}
+            onSelectTopic={handleSelectTopic}
+            onOpenTopicsTab={() => setShowTopicsTab(true)}
+          />
         </div>
         <PaperReadingFilter userId={userId} activeFilter={readingFilter} onChange={setReadingFilter} sortOrder={sortOrder} onSortChange={setSortOrder} />
 
@@ -285,6 +305,7 @@ export default function ClusterShell({
           activeTopic={activeTopic}
           readingFilter={readingFilter}
           sortOrder={sortOrder}
+          onSelectTopic={handleSelectTopic}
         />
         <AgentChatbox />
       </main>
@@ -323,6 +344,12 @@ export default function ClusterShell({
       <FeedbackModal
         open={showFeedback}
         onClose={() => setShowFeedback(false)}
+      />
+
+      <TopicsTab
+        open={showTopicsTab}
+        onClose={() => setShowTopicsTab(false)}
+        onSelectTopic={(topic) => handleSelectTopic(topic)}
       />
       </div>
     </PresenceProvider>

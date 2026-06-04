@@ -68,6 +68,10 @@ export default function PostComposer({
   );
   const [availableTopics, setAvailableTopics] = useState<Topic[]>([]);
   const [showTopicDropdown, setShowTopicDropdown] = useState(false);
+  const [topicSearch, setTopicSearch] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newTopicName, setNewTopicName] = useState("");
+  const [creatingTopic, setCreatingTopic] = useState(false);
   const placeholder = pickPlaceholder();
 
   // Load available topics for the dropdown
@@ -209,6 +213,38 @@ export default function PostComposer({
     [content, submitting, userId, profile, onOptimisticPost, onConfirmPost, onSageInvoked, selectedTopicIds, selectedFile]
   );
 
+  async function handleCreateTopic() {
+    const name = newTopicName.trim();
+    if (!name || creatingTopic) return;
+    setCreatingTopic(true);
+    try {
+      const res = await fetch(withBasePath("/api/topics"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = (await res.json()) as { topic?: Topic; error?: string };
+      if (data.topic) {
+        setAvailableTopics((prev) => [...prev, data.topic!]);
+        setSelectedTopicIds((prev) => [...prev, data.topic!.id]);
+        setNewTopicName("");
+        setShowCreateForm(false);
+        setTopicSearch("");
+        track("topic_created_from_composer", { name: data.topic!.name });
+      } else {
+        setError(data.error ?? "Couldn't create topic.");
+      }
+    } catch {
+      setError("Network error creating topic.");
+    } finally {
+      setCreatingTopic(false);
+    }
+  }
+
+  const filteredTopics = topicSearch.trim()
+    ? availableTopics.filter((t) => t.name.toLowerCase().includes(topicSearch.toLowerCase()))
+    : availableTopics;
+
   const handleTipMe = useCallback(async () => {
     if (requestingTip) return;
     setRequestingTip(true);
@@ -338,7 +374,11 @@ export default function PostComposer({
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setShowTopicDropdown((v) => !v)}
+                onClick={() => {
+                  setShowTopicDropdown((v) => !v);
+                  setShowCreateForm(false);
+                  setTopicSearch("");
+                }}
                 className="text-[11px] text-husl-muted dark:text-stone-400 hover:text-husl-clio dark:hover:text-amber-400 transition-colors flex items-center gap-1"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -346,27 +386,111 @@ export default function PostComposer({
                 </svg>
                 Topics
               </button>
-              {showTopicDropdown && availableTopics.length > 0 && (
-                <div className="absolute bottom-full left-0 mb-1 w-48 max-h-40 overflow-y-auto rounded-lg border border-stone-200 dark:border-stone-700 bg-husl-card dark:bg-[#14161a] shadow-lg z-50 p-1">
-                  {availableTopics.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedTopicIds((prev) =>
-                          prev.includes(t.id)
-                            ? prev.filter((id) => id !== t.id)
-                            : [...prev, t.id]
-                        );
-                      }}
-                      className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${
-                        selectedTopicIds.includes(t.id) ? "text-husl-clio dark:text-amber-400 font-medium" : "text-husl-ink dark:text-stone-200"
-                      }`}
-                    >
-                      {selectedTopicIds.includes(t.id) ? "✓ " : ""}
-                      {t.name}
-                    </button>
-                  ))}
+              {showTopicDropdown && (
+                <div className="absolute bottom-full left-0 mb-1 w-56 max-h-52 overflow-y-auto rounded-lg border border-stone-200 dark:border-stone-700 bg-husl-card dark:bg-[#14161a] shadow-lg z-50 p-1">
+                  {/* Search/filter */}
+                  {!showCreateForm && (
+                    <div className="px-1.5 pb-1 space-y-1">
+                      <input
+                        type="text"
+                        value={topicSearch}
+                        onChange={(e) => setTopicSearch(e.target.value)}
+                        placeholder="Filter topics…"
+                        className="w-full px-2 py-1 text-xs rounded border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-husl-ink dark:text-stone-200 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-husl-clio"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <p className="text-[10px] text-husl-muted dark:text-stone-500">
+                        Topics help others find this post by theme.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Topic list */}
+                  {!showCreateForm && (
+                    <>
+                      {filteredTopics.length === 0 ? (
+                        <p className="px-2 py-1.5 text-[11px] text-husl-muted dark:text-stone-500">
+                          {topicSearch ? "No matching topics." : "No topics yet."}
+                        </p>
+                      ) : (
+                        filteredTopics.map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedTopicIds((prev) =>
+                                prev.includes(t.id)
+                                  ? prev.filter((id) => id !== t.id)
+                                  : [...prev, t.id]
+                              );
+                            }}
+                            className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${
+                              selectedTopicIds.includes(t.id) ? "text-husl-clio dark:text-amber-400 font-medium" : "text-husl-ink dark:text-stone-200"
+                            }`}
+                          >
+                            {selectedTopicIds.includes(t.id) ? "✓ " : ""}
+                            {t.name}
+                          </button>
+                        ))
+                      )}
+                      <div className="border-t border-stone-100 dark:border-stone-800 mt-1 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCreateForm(true);
+                            setNewTopicName(topicSearch);
+                          }}
+                          className="w-full text-left px-2 py-1.5 text-xs text-husl-clio dark:text-amber-400 hover:bg-stone-50 dark:hover:bg-stone-800 rounded transition-colors flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          {topicSearch ? `Create "${topicSearch}"` : "Create new topic"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Inline create form */}
+                  {showCreateForm && (
+                    <div className="px-1.5 py-1 space-y-2">
+                      <p className="text-[10px] text-husl-muted dark:text-stone-500">Name your topic</p>
+                      <input
+                        type="text"
+                        value={newTopicName}
+                        onChange={(e) => setNewTopicName(e.target.value)}
+                        placeholder="e.g., Machine Learning"
+                        className="w-full px-2 py-1 text-xs rounded border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-husl-ink dark:text-stone-200 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-husl-clio"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void handleCreateTopic();
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCreateForm(false);
+                            setNewTopicName("");
+                          }}
+                          className="text-[10px] text-husl-muted dark:text-stone-400 hover:text-husl-ink px-2 py-1 rounded hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleCreateTopic()}
+                          disabled={!newTopicName.trim() || creatingTopic}
+                          className="text-[10px] px-2 py-1 rounded bg-husl-clio text-white disabled:opacity-40 hover:bg-amber-700 transition-colors"
+                        >
+                          {creatingTopic ? "Creating…" : "Create"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
