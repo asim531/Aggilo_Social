@@ -31,7 +31,7 @@ export default function CardThemeToggle() {
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    const initial = saved ?? "system";
+    const initial = saved ?? "light";
     const effective = resolve(initial);
     setResolved(effective);
     document.documentElement.classList.toggle("dark", effective === "dark");

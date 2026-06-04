@@ -133,7 +133,7 @@ export default async function ClusterCardPage() {
           __html: `
             (function() {
               try {
-                var theme = localStorage.getItem('rcmj-theme') || 'system';
+                var theme = localStorage.getItem('rcmj-theme') || 'light';
                 var resolved = theme === 'system'
                   ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
                   : theme;
