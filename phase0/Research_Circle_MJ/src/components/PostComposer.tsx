@@ -367,48 +367,67 @@ export default function PostComposer({
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-4 py-3">
         {/* File preview + analysis status */}
         {(selectedFile || attachmentRecord) && (
-          <div className={`mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors ${uploading ? 'bg-amber-50/50 border-amber-200 text-amber-700' : attachmentRecord?.white_paper_tools_enabled ? 'bg-emerald-50/50 border-emerald-200 text-emerald-700' : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-husl-ink dark:text-stone-200'}`}>
-            {uploading ? (
-              <svg className="w-4 h-4 text-amber-500 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            ) : analysisStatus === "analyzing" ? (
-              <svg className="w-4 h-4 text-husl-clio animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            ) : attachmentRecord?.white_paper_tools_enabled ? (
-              <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 text-husl-clio shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-            )}
-            <span className="truncate flex-1">
-              {uploading
-                ? `Uploading ${selectedFile?.name ?? attachmentRecord?.file_name}…`
-                : analysisStatus === "analyzing"
-                ? (() => {
-                    const prog = (attachmentRecord as any)?.analysis_progress;
-                    if (prog && prog.total > 0) {
-                      return `Analyzing in parts — ${prog.completed ?? 0} of ${prog.total} steps`;
-                    }
-                    return `Analyzing ${attachmentRecord?.file_name}…`;
-                  })()
-                : attachmentRecord?.white_paper_tools_enabled
-                ? `Research paper detected — ${attachmentRecord.doc_title || attachmentRecord.file_name}`
-                : selectedFile?.name ?? attachmentRecord?.file_name}
-            </span>
-            {!uploading && (
-              <button
-                type="button"
-                onClick={() => { setSelectedFile(null); setAttachmentRecord(null); setAnalysisStatus("idle"); }}
-                className="text-husl-muted dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400"
-              >
-                Remove
-              </button>
-            )}
+          <div className={`mb-2 flex flex-col gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-colors ${uploading ? 'bg-amber-50/50 border-amber-200 text-amber-700' : attachmentRecord?.white_paper_tools_enabled ? 'bg-emerald-50/50 border-emerald-200 text-emerald-700' : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-husl-ink dark:text-stone-200'}`}>
+            <div className="flex items-center gap-2">
+              {uploading ? (
+                <svg className="w-4 h-4 text-amber-500 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ) : analysisStatus === "analyzing" ? (
+                <svg className="w-4 h-4 text-husl-clio animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ) : attachmentRecord?.white_paper_tools_enabled ? (
+                <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-husl-clio shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              )}
+              <span className="truncate flex-1">
+                {uploading
+                  ? `Uploading ${selectedFile?.name ?? attachmentRecord?.file_name}…`
+                  : analysisStatus === "analyzing"
+                  ? (() => {
+                      const prog = (attachmentRecord as any)?.analysis_progress;
+                      if (prog && prog.total > 0) {
+                        const pct = Math.round(((prog.completed ?? 0) / prog.total) * 100);
+                        return `Analyzing in parts — ${prog.completed ?? 0}/${prog.total} (${pct}%)`;
+                      }
+                      return `Analyzing ${attachmentRecord?.file_name}…`;
+                    })()
+                  : attachmentRecord?.white_paper_tools_enabled
+                  ? `Research paper detected — ${attachmentRecord.doc_title || attachmentRecord.file_name}`
+                  : selectedFile?.name ?? attachmentRecord?.file_name}
+              </span>
+              {!uploading && (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedFile(null); setAttachmentRecord(null); setAnalysisStatus("idle"); }}
+                  className="text-husl-muted dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            {/* Progress bar during chunked analysis */}
+            {(() => {
+              const prog = (attachmentRecord as any)?.analysis_progress;
+              if (analysisStatus === "analyzing" && prog && prog.total > 0) {
+                const pct = Math.min(100, Math.round(((prog.completed ?? 0) / prog.total) * 100));
+                return (
+                  <div className="w-full h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-husl-clio rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
 
