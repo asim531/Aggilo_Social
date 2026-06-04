@@ -132,6 +132,7 @@ export default function PostComposer({
       onOptimisticPost(optimisticPost);
       track("post_composed", { length: trimmed.length });
       setContent("");
+      setSelectedTopicIds([]);
 
       // ── Server insert ──────────────────────────────────────────
       // Two-step approach (resilient to embed ambiguity):
@@ -410,7 +411,23 @@ export default function PostComposer({
                 Topics
               </button>
               {showTopicDropdown && (
-                <div className="absolute bottom-full left-0 mb-1 w-56 max-h-52 overflow-y-auto rounded-lg border border-stone-200 dark:border-stone-700 bg-husl-card dark:bg-[#14161a] shadow-lg z-50 p-1">
+                <div ref={dropdownRef} className="absolute bottom-full left-0 mb-1 w-56 max-h-52 overflow-y-auto rounded-lg border border-stone-200 dark:border-stone-700 bg-husl-card dark:bg-[#14161a] shadow-lg z-50 p-1">
+                  {/* Close button */}
+                  <div className="flex items-center justify-between px-1.5 pt-0.5 pb-1">
+                    <span className="text-[10px] font-medium text-husl-muted dark:text-stone-500">Topics</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowTopicDropdown(false);
+                        setShowCreateForm(false);
+                      }}
+                      className="text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                   {/* Search/filter */}
                   {!showCreateForm && (
                     <div className="px-1.5 pb-1 space-y-1">
