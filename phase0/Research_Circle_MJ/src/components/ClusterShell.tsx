@@ -282,7 +282,8 @@ export default function ClusterShell({
           </div>
           <PaperIndex />
         </div>
-        <div className="max-w-3xl mx-auto px-4">
+        <div className="max-w-3xl mx-auto px-4 bg-stone-100 dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 py-2">
+          <div className="text-xs font-medium text-stone-600 dark:text-stone-300 mb-1">📁 Topics:</div>
           <TopicBar
             activeTopicSlug={activeTopic?.slug ?? null}
             onSelectTopic={handleSelectTopic}
