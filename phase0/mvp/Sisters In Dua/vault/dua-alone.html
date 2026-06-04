@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Du'a for the Lonely Soul</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8cb7a;
+    --gold-dim: #7a6230;
+    --bg-deep: #0b0d0f;
+    --bg-card: #11140f;
+    --bg-mid: #161a14;
+    --text-main: #e8e0d0;
+    --text-muted: #9a9080;
+    --emerald: #2d5a3d;
+    --emerald-light: #4a9e6a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background-color: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'EB Garamond', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Starfield background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(45, 90, 61, 0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(201, 168, 76, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .star {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    background: rgba(201, 168, 76, 0.6);
+    border-radius: 50%;
+    animation: twinkle var(--dur, 4s) ease-in-out infinite;
+    animation-delay: var(--del, 0s);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.8); }
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 60px 30px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeUp 1.2s ease both;
+  }
+
+  .bismillah {
+    font-family: 'Amiri', serif;
+    font-size: 2rem;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    margin-bottom: 20px;
+    opacity: 0.85;
+  }
+
+  .ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 16px 0;
+    color: var(--gold-dim);
+    font-size: 1.1rem;
+    letter-spacing: 0.3em;
+  }
+
+  .ornament::before, .ornament::after {
+    content: '';
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 5vw, 2.6rem);
+    font-weight: 300;
+    color: var(--text-main);
+    line-height: 1.3;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+
+  .header .subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  /* ── Arabic Card ── */
+  .arabic-card {
+    background: linear-gradient(135deg, rgba(201,168,76,0.07) 0%, rgba(17,20,15,0.95) 50%, rgba(45,90,61,0.08) 100%);
+    border: 1px solid rgba(201,168,76,0.22);
+    border-radius: 4px;
+    padding: 48px 40px;
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 1.4s ease both 0.2s;
+  }
+
+  .arabic-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .arabic-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .corner {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-color: var(--gold-dim);
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .corner-tl { top: 10px; left: 10px; border-width: 1px 0 0 1px; }
+  .corner-tr { top: 10px; right: 10px; border-width: 1px 1px 0 0; }
+  .corner-bl { bottom: 10px; left: 10px; border-width: 0 0 1px 1px; }
+  .corner-br { bottom: 10px; right: 10px; border-width: 0 1px 1px 0; }
+
+  .arabic-text {
+    font-family: 'Amiri', serif;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    line-height: 2;
+    color: var(--gold-light);
+    direction: rtl;
+    text-shadow: 0 0 40px rgba(201,168,76,0.2);
+    margin-bottom: 8px;
+  }
+
+  /* ── Sections ── */
+  .section {
+    margin-bottom: 32px;
+    animation: fadeUp 1.4s ease both;
+  }
+
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.4s; }
+  .section:nth-child(5) { animation-delay: 0.5s; }
+  .section:nth-child(6) { animation-delay: 0.6s; }
+  .section:nth-child(7) { animation-delay: 0.7s; }
+
+  .section-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(201,168,76,0.3), transparent);
+  }
+
+  /* Transliteration */
+  .transliteration-box {
+    background: rgba(201,168,76,0.04);
+    border-left: 2px solid var(--gold-dim);
+    padding: 20px 24px;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .transliteration-box p {
+    font-family: 'EB Garamond', serif;
+    font-size: 1.25rem;
+    font-style: italic;
+    color: var(--gold-light);
+    line-height: 1.9;
+    letter-spacing: 0.02em;
+  }
+
+  /* Translation */
+  .translation-box {
+    background: rgba(45,90,61,0.12);
+    border: 1px solid rgba(74,158,106,0.2);
+    padding: 24px 28px;
+    border-radius: 4px;
+  }
+
+  .translation-box p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    line-height: 1.8;
+    color: var(--text-main);
+  }
+
+  .translation-box p strong {
+    color: var(--emerald-light);
+    font-weight: 600;
+  }
+
+  /* Word breakdown */
+  .word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .word-item {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(201,168,76,0.1);
+    padding: 16px 18px;
+    border-radius: 4px;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .word-item:hover {
+    border-color: rgba(201,168,76,0.35);
+    background: rgba(201,168,76,0.05);
+  }
+
+  .word-arabic {
+    font-family: 'Amiri', serif;
+    font-size: 1.4rem;
+    color: var(--gold);
+    direction: rtl;
+    margin-bottom: 4px;
+  }
+
+  .word-translit {
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--gold-dim);
+    margin-bottom: 6px;
+    font-family: 'EB Garamond', serif;
+  }
+
+  .word-meaning {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  /* Reference */
+  .reference-box {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 22px 26px;
+    border-radius: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .ref-item {
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .ref-key {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .ref-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    color: var(--text-main);
+  }
+
+  .ref-val.grade {
+    color: var(--emerald-light);
+  }
+
+  /* Context / Relevance */
+  .prose {
+    font-family: 'EB Garamond', serif;
+    font-size: 1.15rem;
+    line-height: 1.9;
+    color: #c8bfb0;
+  }
+
+  .prose p + p {
+    margin-top: 14px;
+  }
+
+  .prose em {
+    color: var(--gold-light);
+    font-style: italic;
+  }
+
+  .callout {
+    background: linear-gradient(135deg, rgba(45,90,61,0.15), rgba(11,13,15,0.6));
+    border-left: 3px solid var(--emerald-light);
+    padding: 20px 24px;
+    border-radius: 0 4px 4px 0;
+    margin-top: 16px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--text-main);
+    line-height: 1.7;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 60px;
+    text-align: center;
+    animation: fadeUp 1.4s ease both 0.8s;
+  }
+
+  .footer .gold-line {
+    width: 60px;
+    height: 1px;
+    background: var(--gold-dim);
+    margin: 0 auto 20px;
+  }
+
+  .footer p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--text-muted);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 600px) {
+    .page { padding: 40px 20px 60px; }
+    .arabic-card { padding: 32px 22px; }
+    .word-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div class="stars" id="stars"></div>
+
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="bismillah">بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيمِ</div>
+    <div class="ornament">✦</div>
+    <h1>Du'a for the Soul That Feels Alone</h1>
+    <p class="subtitle">When you have no one left — say this</p>
+  </header>
+
+  <!-- Arabic Text -->
+  <div class="arabic-card">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+    <p class="arabic-text">
+      يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ<br>
+      أَصْلِحْ لِي شَأْنِي كُلَّهُ<br>
+      وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ
+    </p>
+  </div>
+
+  <!-- Transliteration -->
+  <div class="section">
+    <div class="section-label">Transliteration</div>
+    <div class="transliteration-box">
+      <p>
+        Yā Ḥayyu yā Qayyūm, bi-raḥmatika astaghīth,<br>
+        aṣliḥ lī sha'nī kullahu,<br>
+        wa lā takilnī ilā nafsī ṭarfata 'ayn
+      </p>
+    </div>
+  </div>
+
+  <!-- Translation -->
+  <div class="section">
+    <div class="section-label">Translation</div>
+    <div class="translation-box">
+      <p>
+        <strong>"O Ever-Living, O Sustainer of all existence —</strong><br>
+        by Your mercy I seek relief.<br>
+        Rectify all my affairs for me,<br>
+        <strong>and do not leave me to myself even for the blink of an eye."</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Word Breakdown -->
+  <div class="section">
+    <div class="section-label">Word by Word</div>
+    <div class="word-grid">
+      <div class="word-item">
+        <div class="word-arabic">يَا حَيُّ</div>
+        <div class="word-translit">Yā Ḥayyu</div>
+        <div class="word-meaning">O Ever-Living — whose life has no beginning or end</div>
+      </div>
+      <div class="word-item">
+        <div class="word-arabic">يَا قَيُّومُ</div>
+        <div class="word-translit">Yā Qayyūm</div>
+        <div class="word-meaning">O Self-Sustaining — who needs nothing, yet sustains all creation</div>
+      </div>
+      <div class="word-item">
+        <div class="word-arabic">بِرَحْمَتِكَ</div>
+        <div class="word-translit">Bi-raḥmatika</div>
+        <div class="word-meaning">By Your mercy — making mercy the means of the plea</div>
+      </div>
+      <div class="word-item">
+        <div class="word-arabic">أَسْتَغِيثُ</div>
+        <div class="word-translit">Astaghīth</div>
+        <div class="word-meaning">I seek rescue — a cry for help in distress</div>
+      </div>
+      <div class="word-item">
+        <div class="word-arabic">أَصْلِحْ شَأْنِي كُلَّهُ</div>
+        <div class="word-translit">Aṣliḥ sha'nī kullahu</div>
+        <div class="word-meaning">Rectify ALL my affairs — nothing left out</div>
+      </div>
+      <div class="word-item">
+        <div class="word-arabic">طَرْفَةَ عَيْنٍ</div>
+        <div class="word-translit">Ṭarfata 'ayn</div>
+        <div class="word-meaning">The blink of an eye — the smallest measure of time</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reference -->
+  <div class="section">
+    <div class="section-label">Hadith Reference</div>
+    <div class="reference-box">
+      <div class="ref-item">
+        <div class="ref-key">Narrator</div>
+        <div class="ref-val">Anas ibn Malik (رضي الله عنه)</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-key">Source</div>
+        <div class="ref-val">Jami' at-Tirmidhi — 3524</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-key">Book / Hadith</div>
+        <div class="ref-val">Book 48, Hadith 155</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-key">Grade</div>
+        <div class="ref-val grade">Isnād Ḥasan (al-Albānī) · Ṣaḥīḥ (al-Mundhiri)</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-key">Occasion</div>
+        <div class="ref-val">Said by the Prophet ﷺ whenever distress befell him</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context & Relevance -->
+  <div class="section">
+    <div class="section-label">Context &amp; Relevance</div>
+    <div class="prose">
+      <p>
+        This du'a was the supplication of the Prophet Muhammad ﷺ himself — not reserved for ordinary moments, but brought out specifically in times of <em>distress</em>. When everything felt heavy and human support had its limits, this was his refuge.
+      </p>
+      <p>
+        The two Names invoked — <em>Al-Ḥayy</em> and <em>Al-Qayyūm</em> — are among the greatest Names of Allah. Al-Ḥayy means the one whose life is eternal and uninterrupted. Al-Qayyūm means the one who stands by Himself and upon whom all of existence depends every single moment. These names affirm a radical truth: while every human support can collapse, Allah's life and sustaining power never waver.
+      </p>
+      <p>
+        The closing phrase — <em>"do not leave me to myself even for the blink of an eye"</em> — is a confession of helplessness that becomes a source of strength. It acknowledges that the self, without divine guidance, is fragile. To say this is to hand the weight entirely over.
+      </p>
+    </div>
+    <div class="callout">
+      "Loneliness in Islam is not emptiness — it is a clearing. When every door closes, this du'a teaches you to knock on the only door that never closes."
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="gold-line"></div>
+    <p>Reference: Hisham Abu Yusuf — <em>When You Have No One Left… Say This Du'a</em></p>
+  </footer>
+
+</div>
+
+<script>
+  // Generate stars
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top  = Math.random() * 100 + '%';
+    s.style.setProperty('--dur', (3 + Math.random() * 5) + 's');
+    s.style.setProperty('--del', (Math.random() * 6) + 's');
+    const size = Math.random() < 0.15 ? 2 : 1;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    container.appendChild(s);
+  }
+</script>
+
+</body>
+</html>

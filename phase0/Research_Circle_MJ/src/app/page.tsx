@@ -12,7 +12,7 @@ const ogImage = "https://mvp.aggilo.in/api/og/research-circle";
 
 export const metadata: Metadata = {
   title: `${CLUSTER.displayName} — ${CLUSTER.tagline} · Aggilo`,
-  description: CLUSTER.shortDescription,
+  description: CLUSTER.shortDescription + " [DEPLOY_TEST_2024_06_04]",
   alternates: { canonical: siteUrl },
   openGraph: {
     title: CLUSTER.displayName,

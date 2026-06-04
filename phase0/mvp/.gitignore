@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+
+# production
+build/
+
+# env files (NEVER commit these)
+.env
+.env.local
+.env.*.local
+
+# debug
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# typescript build cache (regenerated on each build)
+tsconfig.tsbuildinfo
