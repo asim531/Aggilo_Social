@@ -47,6 +47,7 @@ function AuthFormContent({ compact = false }: { compact?: boolean }) {
   const [country, setCountry] = useState(searchParams.get("country") || "");
   const [city, setCity] = useState("");
   const [affirmAffiliation, setAffirmAffiliation] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [step, setStep] = useState<SignupStep>(
     searchParams.get("founder") === "tas" ? "nickname" : "email"
   );
@@ -637,6 +638,21 @@ function AuthFormContent({ compact = false }: { compact?: boolean }) {
             </label>
           </div>
 
+          <div className="rounded-lg bg-stone-50 dark:bg-[#14161a] border border-stone-200 dark:border-stone-700 p-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="accent-husl-clio mt-0.5"
+                required
+              />
+              <span className="text-xs text-husl-ink dark:text-stone-200 leading-snug">
+                I agree to the <a href="/terms" target="_blank" className="text-husl-clio underline hover:text-amber-700">Terms of Service</a> and <a href="/privacy" target="_blank" className="text-husl-clio underline hover:text-amber-700">Privacy Policy</a>. I understand that my posts and profile are visible to other members of this research circle, and that Aggilo processes my data in accordance with the Information Technology Act, 2000 and the Digital Personal Data Protection Act, 2023 of India.
+              </span>
+            </label>
+          </div>
+
           <div>
             <label
               htmlFor="country"
@@ -687,7 +703,7 @@ function AuthFormContent({ compact = false }: { compact?: boolean }) {
           )}
           <button
             type="submit"
-            disabled={state === "loading" || !country.trim() || !affirmAffiliation}
+            disabled={state === "loading" || !country.trim() || !affirmAffiliation || !acceptedTerms}
             className="w-full py-3 px-4 rounded-lg font-medium text-white bg-husl-clio hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {state === "loading" ? "Sending link…" : "Enter Research Circle MJ"}
