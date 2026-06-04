@@ -1,0 +1,317 @@
+/**
+ * GLOBAL CSS
+ * ----------
+ * Tailwind CSS directives + Aggilo-specific base styles.
+ * This file is imported by layout.tsx and applied to every page.
+ */
+
+/* Tailwind layers — these generate all the utility classes */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ────────────────────────────────────────────────────────────────
+ * Aggilo accent budget — six surface colours, full and stable
+ * ────────────────────────────────────────────────────────────────
+ *
+ * The platform's colour vocabulary is fixed at six accents. Each one
+ * carries a specific meaning. New surfaces should reuse one of these,
+ * not introduce a seventh.
+ *
+ *   aggilo-deep (--aggilo-deep)   Brand. Navbar, primary actions, "Just
+ *                                  Clio · forgets" tab, post-author bubble.
+ *   amber                         Cluster persistence — "Just Clio ·
+ *                                  remembers" tab, compose-bar warmth,
+ *                                  help section.
+ *   rose                          Welfare handoff. Lowest-saturation use
+ *                                  reserved for the safety floor.
+ *   amber (handoff variant)       Personal-disclosure handoff (different
+ *                                  weight than the cluster-persistence
+ *                                  amber — context disambiguates).
+ *   indigo                        Fiqh-with-distress handoff.
+ *   sky / cyan                    Workshop / agent infrastructure (Sage
+ *                                  ↔ Clio dialogue strip, OG accents).
+ *   emerald                       Sage's verified content + the tour
+ *                                  popover's surface highlight. Note
+ *                                  the dual role: emerald is "verified"
+ *                                  and "this is here" — same family,
+ *                                  different intensity.
+ *
+ * If you find yourself reaching for a seventh hue, instead either:
+ *   1. Reuse the closest existing accent and adjust intensity, or
+ *   2. Open a UX issue to retire one of the six before adding.
+ * ────────────────────────────────────────────────────────────── */
+
+/* Belt-and-braces Arabic font — guarantees Naskh rendering even if the
+   next/font/google CSS variable doesn't propagate to a particular subtree.
+   Same families served by Google Fonts CDN. */
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&display=swap');
+
+/* ── Base styles ─────────────────────────────────────────────────
+ * Applied globally via Tailwind's @layer base.
+ * Keep this minimal — use Tailwind utilities in components.
+ * ────────────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  :root {
+    --tajweed-ikhfaa: #d97706;
+    --tajweed-idghaam: #2563eb;
+    --tajweed-iqlab: #7c3aed;
+    --tajweed-qalqalah: #dc2626;
+    --tajweed-ghunnah: #059669;
+    --tajweed-madd: #0891b2;
+    --tajweed-hamzah-wasl: #6b7280;
+  }
+}
+
+@layer components {
+  /**
+   * sage-post — Sage's Timeline contributions.
+   *
+   * Visual intent: present but not dominant. Sage is a presence in the
+   * room, not a headline. Her posts should feel like a quiet contribution
+   * alongside member posts, not an announcement above them.
+   *
+   * Changes from V3.1:
+   *   - Removed the heavy emerald-50 background tint (was too prominent)
+   *   - Replaced with a very subtle left border only (2px, muted green)
+   *   - Slightly reduced font weight on Sage's name
+   *   - The dua reference card inside still has its own emerald tint —
+   *     that's content, not chrome, so it keeps its warmth
+   */
+  .sage-post {
+    @apply border-l-2 border-emerald-300/60 bg-emerald-50/20;
+  }
+
+  /**
+   * sage-glow — soft pulsing glow used by SageConsideringIndicator on
+   * in-flight Sage posts. Communicates "Sage is forming a response" before
+   * the message lands. Subtle, not attention-grabbing.
+   */
+  .sage-glow {
+    animation: sage-glow-pulse 1.6s ease-in-out infinite;
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.25);
+  }
+
+  @keyframes sage-glow-pulse {
+    0%, 100% { opacity: 0.8; }
+    50%      { opacity: 1; }
+  }
+
+  /**
+   * clio-fab-idle — Clio breathes gently when she is present but not
+   * actively thinking. She is the intelligence layer of the room.
+   *
+   * Visual: a soft outer halo grows and recedes around her. The avatar
+   * itself stays perfectly still — pulsing the avatar made it feel like
+   * a notification badge or a flicker. A halo communicates "I'm here,
+   * alive, watching over this space" without demanding attention or
+   * making the button feel unstable.
+   *
+   * Stops when the panel opens or when she is actively thinking
+   * (clio-fab-thinking takes over).
+   */
+  .clio-fab-idle {
+    animation: clio-idle-halo 3.6s ease-in-out infinite;
+  }
+
+  @keyframes clio-idle-halo {
+    0%, 100% {
+      box-shadow:
+        0 4px 12px rgba(8, 145, 178, 0.20),
+        0 0 0 0 rgba(8, 145, 178, 0.35);
+    }
+    50% {
+      box-shadow:
+        0 4px 12px rgba(8, 145, 178, 0.20),
+        0 0 0 8px rgba(8, 145, 178, 0.05);
+    }
+  }
+
+  .arabic-text {
+    font-family: "Amiri", "Scheherazade New", var(--font-amiri), var(--font-scheherazade), "Noto Naskh Arabic", serif;
+    font-size: 26px;
+    line-height: 2.2;
+    direction: rtl;
+    text-align: right;
+    font-weight: 400;
+    /* Force the browser to actually use the loaded Arabic faces even when
+       the line happens to have ASCII fallback characters mixed in. */
+    font-feature-settings: "calt" 1, "liga" 1;
+  }
+
+  .tajweed-ikhfaa { color: var(--tajweed-ikhfaa); }
+  .tajweed-idghaam { color: var(--tajweed-idghaam); }
+  .tajweed-iqlab { color: var(--tajweed-iqlab); }
+  .tajweed-qalqalah { color: var(--tajweed-qalqalah); }
+  .tajweed-ghunnah { color: var(--tajweed-ghunnah); }
+  .tajweed-madd { color: var(--tajweed-madd); }
+  .tajweed-hamzah-wasl { color: var(--tajweed-hamzah-wasl); }
+
+  .dua-reference .arabic-text {
+    @apply text-gray-900;
+  }
+
+  .clio-fab {
+    @apply fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full shadow-lg
+           flex items-center justify-center cursor-pointer
+           transition-all duration-300 hover:scale-110;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+  }
+
+  /**
+   * V3 Phase 6 (updated V3.1): Clio FAB inside cluster screens.
+   *
+   * Position: top-right, 44px (WCAG 2.5.5 minimum target), anchored just
+   * below the Navbar with an 8px gap. The !important suffix on top-right
+   * is defensive — Tailwind's JIT can interleave conflicting positioning
+   * utilities depending on class order, and this surface is critical
+   * enough to lock the position.
+   *
+   * Panel expands downward-leftward (transform-origin: top right in component).
+   */
+  .clio-fab-cluster {
+    position: fixed !important;
+    top: 72px !important;          /* 64px Navbar + 8px gap */
+    right: 16px !important;
+    left: auto !important;
+    bottom: auto !important;
+    width: 44px !important;
+    height: 44px !important;
+    z-index: 50;
+    border-radius: 9999px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, #0891b2, #0e7490);
+  }
+  .clio-fab-cluster:hover {
+    transform: scale(1.1);
+  }
+
+  /**
+   * cluster-clio-anchor: wrapper div in ClusterShell that positions the FAB.
+   * The actual positioning is handled by .clio-fab-cluster above.
+   */
+  .cluster-clio-anchor {
+    @apply contents;
+  }
+
+  .clio-fab-thinking {
+    animation: clio-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes clio-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3); }
+    50% { transform: scale(1.08); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5); }
+  }
+
+  .typing-dots span {
+    @apply inline-block w-2 h-2 rounded-full bg-gray-400;
+    animation: typing-bounce 1.4s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
+  }
+
+  /**
+   * Onboarding micro-animations — depict Clio appointing Sage, and the
+   * ongoing Clio↔Sage dialogue. Used by ClioWelcome.tsx steps 2 and 3.
+   */
+
+  /* Step 2: a glowing dot travels Clio → Sage */
+  @keyframes appoint-beam {
+    0%   { left: 0; opacity: 0; }
+    20%  { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { left: calc(100% - 12px); opacity: 0; }
+  }
+  .animate-appoint-beam {
+    animation: appoint-beam 1.4s ease-in-out 0.4s 1 forwards;
+  }
+
+  /* Step 2: Sage scales in after the beam reaches her */
+  @keyframes appoint-sage-arrival {
+    0%   { opacity: 0; transform: translateY(-50%) scale(0.6); }
+    100% { opacity: 1; transform: translateY(-50%) scale(1); }
+  }
+  .animate-appoint-sage-arrival {
+    animation: appoint-sage-arrival 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s 1 backwards;
+  }
+
+  /* Step 3: alternating bubble pulses — Clio first, then Sage, on a loop */
+  @keyframes collaborate-bubble-clio {
+    0%, 25%   { opacity: 0; transform: translateY(8px) scale(0.85); }
+    30%, 55%  { opacity: 1; transform: translateY(0) scale(1); }
+    60%, 100% { opacity: 0; transform: translateY(-4px) scale(0.95); }
+  }
+  .animate-collaborate-bubble-clio {
+    animation: collaborate-bubble-clio 4s ease-in-out infinite;
+  }
+
+  @keyframes collaborate-bubble-sage {
+    0%, 55%   { opacity: 0; transform: translateY(8px) scale(0.85); }
+    60%, 85%  { opacity: 1; transform: translateY(0) scale(1); }
+    90%, 100% { opacity: 0; transform: translateY(-4px) scale(0.95); }
+  }
+  .animate-collaborate-bubble-sage {
+    animation: collaborate-bubble-sage 4s ease-in-out infinite;
+  }
+}
+
+
+/* ── Clio show-around bubble ───────────────────────────────────────── */
+/*
+ * First-visit bubble that points at the Clio FAB inside a cluster.
+ * Anchored top-right, just below the FAB (which sits at top:72px).
+ * On phones we expand to span most of the viewport width minus a small
+ * gutter; on tablets and up we cap at ~16rem and right-anchor.
+ *
+ * The pulse animation fires once on mount, fades, and never returns.
+ * It draws the eye for the first ~3 seconds without becoming nagging
+ * ambient motion.
+ */
+@layer components {
+  .clio-show-around-bubble {
+    /* Sit below the FAB (FAB top:72px + 44px height + ~12px gap = ~128px). */
+    top: 128px;
+    right: 12px;
+    /* Phone: room minus the FAB gutter. Tablet+: capped, right-anchored. */
+    width: calc(100vw - 24px);
+    max-width: 18rem;
+    animation: clio-show-around-pulse 3s ease-out 1;
+  }
+
+  @media (min-width: 640px) {
+    .clio-show-around-bubble {
+      width: 18rem;
+    }
+  }
+
+  @keyframes clio-show-around-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgb(16 185 129 / 0.45);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgb(16 185 129 / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgb(16 185 129 / 0);
+    }
+  }
+}

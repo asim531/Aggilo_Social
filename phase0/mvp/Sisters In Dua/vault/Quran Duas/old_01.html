@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quranic Duas Collection</title>
+    <!-- Google Fonts: Roboto for English, Amiri for Arabic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #27ae60;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --context-bg: #e8f5e9;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+
+        /* Card Styling */
+        .dua-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid #e1e1e1;
+            transition: transform 0.2s ease;
+        }
+
+        .dua-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Header Styling */
+        .dua-header {
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .ref-tag {
+            font-weight: 700;
+            background-color: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .topic-tag {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Body Styling */
+        .dua-body {
+            padding: 25px;
+        }
+
+        .arabic {
+            font-family: 'Amiri', serif;
+            font-size: 32px;
+            color: #000;
+            text-align: right;
+            direction: rtl;
+            line-height: 2.2;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 15px;
+        }
+
+        .transliteration {
+            color: #555;
+            font-style: italic;
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        .translation {
+            color: var(--primary-color);
+            font-weight: 500;
+            font-size: 1.15rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        /* Context Box Styling */
+        .context-box {
+            background-color: var(--context-bg);
+            border-left: 5px solid var(--accent-color);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.95rem;
+            color: #2d3436;
+            margin-top: 20px;
+        }
+
+        .info-block {
+            margin-bottom: 12px;
+        }
+
+        .info-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 700;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .hadith-ref {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            display: block;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 600px) {
+            .dua-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .arabic {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Selected Quranic Duas</h1>
+
+        <!-- Al-Imran 3:26 -->
+        <div class="dua-card">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:26</span>
+                <span class="topic-tag">Sovereignty & Debt</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">قُلِ اللَّهُمَّ مَالِكَ الْمُلْكِ تُؤْتِي الْمُلْكَ مَن تَشَاءُ وَتَنزِعُ الْمُلْكَ مِمَّن تَشَاءُ وَتُعِزُّ مَن تَشَاءُ وَتُذِلُّ مَن تَشَاءُ ۖ بِيَدِكَ الْخَيْرُ ۖ إِنَّكَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ</div>
+                <div class="transliteration">Qulillahumma Malikal-mulki tu'til-mulka man tasha'u wa tanzi'ul-mulka mimman tasha'u wa tu'izzu man tasha'u wa tudhillu man tasha'u, biyadikal-khayr, innaka 'ala kulli shay'in qadir.</div>
+                <div class="translation">"Say: O Allah! Owner of Sovereignty! You give sovereignty to whom You will, and You withdraw sovereignty from whom You will. You honor whom You will, and You humble whom You will. In Your hand is [all] good. Indeed, You are over all things competent."</div>
+                
+                <div class="context-box">
+                    <div class="info-block">
+                        <span class="info-label">Context</span>
+                        Revealed when the Prophet (ﷺ) promised the Muslims they would conquer Persia and Rome. The hypocrites mocked this, asking how a small desert group could defeat superpowers. This verse affirms that Allah alone controls power.
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">Relevance</span>
+                        <strong>Debt Relief:</strong> The Prophet (ﷺ) taught Mu'adh ibn Jabal (RA) to recite this to clear debts, even if they were as large as a mountain of gold. Also used to acknowledge Allah's control during political or workplace struggles.
+                        <span class="hadith-ref">Reference: Al-Mu'jam al-Kabir (Tabarani); Authenticated in Sahih al-Targhib (1821)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Al-Imran 3:38 -->
+        <div class="dua-card">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:38</span>
+                <span class="topic-tag">Pure Offspring</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ هَبْ لِي مِن لَّدُنكَ ذُرِّيَّةً طَيِّبَةً ۖ إِنَّكَ سَمِيعُ الدُّعَاءِ</div>
+                <div class="transliteration">Rabbi hab li min ladunka dhurriyyatan tayyibah, innaka sami'ud-du'a.</div>
+                <div class="translation">"My Lord! Bestow upon me from Your presence a goodly offspring. Indeed, You are the Hearer of Prayer."</div>
+                
+                <div class="context-box">
+                    <div class="info-block">
+                        <span class="info-label">Context</span>
+                        Prophet Zakariya (AS) was old and his wife barren. When he saw out-of-season fruits provided miraculously to Maryam (AS), he realized that if Allah can provide sustenance out of season, He can provide a child to an old man.
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">Relevance</span>
+                        <strong>Infertility & Parenting:</strong> The primary Dua for couples struggling to conceive, and for parents asking Allah to make their children "Tayyibah" (pure and righteous).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Al-Imran 3:53 -->
+        <div class="dua-card">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Imran 3:53</span>
+                <span class="topic-tag">To Be Recorded as Believers</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبَّنَا آمَنَّا بِمَا أَنزَلْتَ وَاتَّبَعْنَا الرَّسُولَ فَاكْتُبْنَا مَعَ الشَّاهِدِينَ</div>
+                <div class="transliteration">Rabbana amanna bima anzalta wattaba'nar-rasula faktubna ma'ash-shahidin.</div>
+                <div class="translation">"Our Lord! We believe in that which You have revealed and we follow the Messenger, so write us down among those who witness (to the truth)."</div>
+                
+                <div class="context-box">
+                    <div class="info-block">
+                        <span class="info-label">Context</span>
+                        The prayer of the <em>Hawariyyun</em> (Disciples of Jesus/Isa AS). When Isa (AS) asked "Who are my helpers for Allah?", the disciples stood up, declared belief, and made this Dua.
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">Relevance</span>
+                        <strong>Steadfastness:</strong> Recited to renew commitment to Islam, especially when feeling like a minority or surrounded by disbelief.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- At-Tawbah 9:129 -->
+        <div class="dua-card">
+            <div class="dua-header">
+                <span class="ref-tag">At-Tawbah 9:129</span>
+                <span class="topic-tag">Ultimate Sufficiency</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">حَسْبِيَ اللَّهُ لاَ إِلَٰهَ إِلاَّ هُوَ ۖ عَلَيْهِ تَوَكَّلْتُ ۖ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ</div>
+                <div class="transliteration">Hasbiyallahu la ilaha illa hu, 'alayhi tawakkaltu wa huwa Rabbul-'arshil-'azim.</div>
+                <div class="translation">"Allah is sufficient for me. There is no God save Him. In Him have I put my trust, and He is Lord of the Tremendous Throne."</div>
+                
+                <div class="context-box">
+                    <div class="info-block">
+                        <span class="info-label">Context</span>
+                        The final verse of Surah At-Tawbah. Allah instructs the Prophet (ﷺ) that if people turn away from the message, he should not despair but recite this phrase.
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">Relevance</span>
+                        <strong>Anxiety & Worry:</strong> The Prophet (ﷺ) said whoever recites this <strong>7 times morning and evening</strong>, Allah will suffice him for whatever worries him in this world and the Hereafter.
+                        <span class="hadith-ref">Reference: Sunan Abi Dawud 5081</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Al-Qasas 28:21 -->
+        <div class="dua-card">
+            <div class="dua-header">
+                <span class="ref-tag">Al-Qasas 28:21</span>
+                <span class="topic-tag">Safety from Oppressors</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">رَبِّ نَجِّنِي مِنَ الْقَوْمِ الظَّالِمِينَ</div>
+                <div class="transliteration">Rabbi najjini minal-qawmiz-zalimin.</div>
+                <div class="translation">"My Lord! Save me from the wrongdoing folk."</div>
+                
+                <div class="context-box">
+                    <div class="info-block">
+                        <span class="info-label">Context</span>
+                        Recited by Prophet Musa (Moses AS) as he fled Egypt in fear for his life, having no direction, supplies, or protection after the accidental killing of an Egyptian.
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">Relevance</span>
+                        <strong>Danger & Escape:</strong> Used when facing physical danger, lawsuits, tyrant bosses, or when trying to escape a toxic environment or relationship.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ghafir 40:44 -->
+        <div class="dua-card">
+            <div class="dua-header">
+                <span class="ref-tag">Ghafir 40:44</span>
+                <span class="topic-tag">Entrusting Affairs to Allah</span>
+            </div>
+            <div class="dua-body">
+                <div class="arabic">وَأُفَوِّضُ أَمْرِي إِلَى اللَّهِ ۚ إِنَّ اللَّهَ بَصِيرٌ بِالْعِبَادِ</div>
+                <div class="transliteration">Wa ufawwidu amri ilallah, innallaha basirun bil-'ibad.</div>
+                <div class="translation">"And I entrust my affair to Allah. Indeed, Allah is Seer of (His) servants."</div>
+                
+                <div class="context-box">
+                    <div class="info-block">
+                        <span class="info-label">Context</span>
+                        Spoken by the "Believer from the family of Pharaoh" who hid his faith but eventually spoke up to defend Musa (AS). When threatened with plots, he resigned his outcome to Allah.
+                    </div>
+                    <div class="info-block">
+                        <span class="info-label">Relevance</span>
+                        <strong>Overwhelming Stress:</strong> Used when the outcome is out of your hands. The Quran confirms immediately after: <em>"So Allah protected him from the evils which they plotted."</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

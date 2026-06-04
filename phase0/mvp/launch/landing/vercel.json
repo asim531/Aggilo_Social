@@ -1,0 +1,35 @@
+{
+  "rewrites": [
+    {
+      "source": "/c/long-conversation",
+      "destination": "https://aggilo-long-conversation.vercel.app/c/long-conversation"
+    },
+    {
+      "source": "/c/long-conversation/:path*",
+      "destination": "https://aggilo-long-conversation.vercel.app/c/long-conversation/:path*"
+    }
+  ],
+
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        }
+      ]
+    }
+  ],
+
+  "cleanUrls": true,
+  "trailingSlash": false
+}

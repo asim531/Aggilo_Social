@@ -1,4 +1,5 @@
 {
+  "_comment": "REFERENCE ONLY — this file is NOT deployed. The actual rewrite rules live in ROOT vercel.json on main branch (aggilo-social project). Keep this in sync so the reference copy is always up to date.",
   "crons": [
     {
       "path": "/api/admin/atlas/tick",
@@ -16,11 +17,11 @@
     },
     {
       "source": "/c/research-circle-mj",
-      "destination": "https://research-circle-mj.vercel.app/c/research-circle-mj"
+      "destination": "https://research-circle-95i39hpj6-asims-projects-065723f3.vercel.app/c/research-circle-mj"
     },
     {
       "source": "/c/research-circle-mj/:path*",
-      "destination": "https://research-circle-mj.vercel.app/c/research-circle-mj/:path*"
+      "destination": "https://research-circle-95i39hpj6-asims-projects-065723f3.vercel.app/c/research-circle-mj/:path*"
     }
   ]
 }

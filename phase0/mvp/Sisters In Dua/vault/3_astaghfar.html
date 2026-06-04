@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Dhikr & Supplications</title>
+    <!-- Google Fonts: 'Amiri' is excellent for Arabic readability; 'Lato' for English -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2e7d32; /* Islamic Green */
+            --bg-color: #f4f6f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --secondary-text: #555555;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--secondary-text);
+            font-size: 0.9em;
+        }
+
+        /* Card Styling */
+        .dhikr-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .dhikr-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .dhikr-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .frequency {
+            background-color: #e8f5e9;
+            color: var(--primary-color);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        /* Arabic Text Styling */
+        .arabic-text {
+            font-family: 'Amiri', serif;
+            font-size: 32px;
+            direction: rtl;
+            text-align: right;
+            line-height: 2.2;
+            color: #000;
+            margin-bottom: 20px;
+            word-spacing: 2px;
+        }
+
+        /* Transliteration Styling */
+        .transliteration {
+            font-style: italic;
+            color: #444;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .label {
+            font-weight: bold;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* Translation Styling */
+        .translation {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-size: 1.05em;
+        }
+
+        /* Details & Reference */
+        .details {
+            font-size: 0.9em;
+            color: var(--secondary-text);
+            background-color: #f0f4f8;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .ref-title {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 600px) {
+            .arabic-text {
+                font-size: 26px;
+                text-align: center; /* Center Arabic on mobile for better focus */
+            }
+            .dhikr-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Daily Adhkar & Supplications</h1>
+            <p class="subtitle">Authentic invocations from the Sunnah</p>
+        </header>
+
+        <!-- CARD 1 -->
+        <div class="dhikr-card">
+            <div class="dhikr-header">
+                <span class="dhikr-title">1. The Great Istighfar</span>
+                <span class="frequency">3x after each Shalat</span>
+            </div>
+
+            <div class="arabic-text">
+                أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيَّ الْقَيُّومَ وَأَتُوبُ إِلَيْهِ
+            </div>
+
+            <span class="label">Transliteration</span>
+            <div class="transliteration">
+                Astaghfirullāhal-'aẓīm, alladhī lā ilāha illā huwal-ḥayyul-qayyūm, wa atūbu ilayh.
+            </div>
+
+            <span class="label">Translation</span>
+            <div class="translation">
+                "I seek the forgiveness of Allah the Mighty, whom there is no deity except Him, the Ever-Living, the Eternal/Sustainer, and I repent to Him."
+            </div>
+
+            <div class="details">
+                <span class="ref-title">Reference:</span> Sunan al-Tirmidhi (3577) & Abi Dawud (1517).<br>
+                <span class="ref-title">Virtue:</span> The Prophet ﷺ said whoever recites this, his sins will be forgiven even if he had fled from the battlefield (a major sin).
+            </div>
+        </div>
+
+        <!-- CARD 2 -->
+        <div class="dhikr-card">
+            <div class="dhikr-header">
+                <span class="dhikr-title">2. Tasbih (Glory to Allah)</span>
+                <span class="frequency">100x Daily</span>
+            </div>
+
+            <div class="arabic-text">
+                سُبْحَانَ اللَّهِ وَبِحَمْدِهِ
+            </div>
+
+            <span class="label">Transliteration</span>
+            <div class="transliteration">
+                Subḥānallāhi wa biḥamdih.
+            </div>
+
+            <span class="label">Translation</span>
+            <div class="translation">
+                "Glory be to Allah and His is the praise."
+            </div>
+
+            <div class="details">
+                <span class="ref-title">Reference:</span> Sahih al-Bukhari (6405).<br>
+                <span class="ref-title">Virtue:</span> Whoever says this 100 times a day, his sins will be forgiven even if they were as much as the foam of the sea.
+            </div>
+        </div>
+
+        <!-- CARD 3 -->
+        <div class="dhikr-card">
+            <div class="dhikr-header">
+                <span class="dhikr-title">3. Sayyidul Istighfar</span>
+                <span class="frequency">Morning & Evening</span>
+            </div>
+
+            <div class="arabic-text">
+                اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي، فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ
+            </div>
+
+            <span class="label">Transliteration</span>
+            <div class="transliteration">
+                Allāhumma anta rabbī lā ilāha illā ant, khalaqtanī wa anā ʿabduk, wa anā ʿalā ʿahdika wa waʿdika mastaṭaʿt, aʿūdhu bika min sharri mā ṣanaʿt, abūʾu laka bi-niʿmatika ʿalayya, wa abūʾu bi-dhanbī, faghfir lī, fa-innahu lā yaghfiru-dhunūba illā ant.
+            </div>
+
+            <span class="label">Translation</span>
+            <div class="translation">
+                "O Allah, You are my Lord, there is no god but You. You created me and I am Your slave. I keep Your covenant and Your promise to the best of my ability. I seek refuge in You from the evil of what I have done. I acknowledge Your favor upon me, and I acknowledge my sin. So forgive me, for verily, no one forgives sins except You."
+            </div>
+
+            <div class="details">
+                <span class="ref-title">Reference:</span> Sahih al-Bukhari (6306).<br>
+                <span class="ref-title">Virtue:</span> The Master of Seeking Forgiveness. Whoever says this with firm faith in the morning/evening and dies before the next cycle enters Paradise.
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
