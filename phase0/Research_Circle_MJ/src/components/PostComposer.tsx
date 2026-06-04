@@ -26,7 +26,7 @@ import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
 import { withBasePath } from "@/lib/path";
 import { track } from "@/lib/track";
-import type { PostWithAuthor, Profile, Topic } from "@/lib/types";
+import type { PostWithAuthor, Profile, Topic, PostAttachment } from "@/lib/types";
 
 interface PostComposerProps {
   userId: string;
@@ -65,6 +65,8 @@ export default function PostComposer({
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [attachmentRecord, setAttachmentRecord] = useState<PostAttachment | null>(null);
+  const [analysisStatus, setAnalysisStatus] = useState<"idle" | "uploading" | "analyzing" | "done" | "failed">("idle");
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(
     activeTopic ? [activeTopic.id] : []
   );
@@ -88,6 +90,51 @@ export default function PostComposer({
       .catch(() => {});
     return () => { cancelled = true; };
   }, []);
+
+  // Realtime: watch attachment analysis status
+  useEffect(() => {
+    if (!attachmentRecord) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel("attachment-" + attachmentRecord.id)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "post_attachments",
+          filter: `id=eq.${attachmentRecord.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as PostAttachment;
+          setAttachmentRecord(updated);
+          if (updated.extracted_at) {
+            setAnalysisStatus("done");
+          }
+        }
+      )
+      .subscribe();
+
+    // Fallback polling
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("post_attachments")
+        .select("*")
+        .eq("id", attachmentRecord.id)
+        .maybeSingle();
+      if (data) {
+        setAttachmentRecord(data as PostAttachment);
+        if (data.extracted_at) {
+          setAnalysisStatus("done");
+        }
+      }
+    }, 5000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, [attachmentRecord?.id]);
 
 
   // Close dropdown on outside click
@@ -207,6 +254,7 @@ export default function PostComposer({
       // ── Upload file if selected ────────────────────────────────
       if (selectedFile) {
         setUploading(true);
+        setAnalysisStatus("uploading");
         const formData = new FormData();
         formData.append("file", selectedFile);
         formData.append("post_id", inserted.id);
@@ -214,10 +262,19 @@ export default function PostComposer({
           method: "POST",
           body: formData,
         })
-          .then(() => {
+          .then(async (res) => {
+            if (res.ok) {
+              const data = (await res.json()) as { attachment?: PostAttachment };
+              if (data.attachment) {
+                setAttachmentRecord(data.attachment);
+                setAnalysisStatus("analyzing");
+              }
+            }
             setSelectedFile(null);
           })
-          .catch(() => {})
+          .catch(() => {
+            setAnalysisStatus("failed");
+          })
           .finally(() => setUploading(false));
       }
 
@@ -234,7 +291,7 @@ export default function PostComposer({
 
       setSubmitting(false);
     },
-    [content, submitting, userId, profile, onOptimisticPost, onConfirmPost, onSageInvoked, onTopicsAssigned, selectedTopicIds, selectedFile, availableTopics]
+    [content, submitting, userId, profile, onOptimisticPost, onConfirmPost, onSageInvoked, onTopicsAssigned, selectedTopicIds, selectedFile, availableTopics, analysisStatus, attachmentRecord]
   );
 
   async function handleCreateTopic() {
@@ -299,23 +356,39 @@ export default function PostComposer({
   return (
     <div id="husl-post-composer" className="sticky bottom-0 z-30 bg-husl-card/95 dark:bg-[#14161a]/95 backdrop-blur border-t border-stone-200 dark:border-stone-800 transition-colors pb-[env(safe-area-inset-bottom)]">
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto px-4 py-3">
-        {/* File preview + CIM status */}
-        {selectedFile && (
-          <div className={`mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors ${uploading ? 'bg-amber-50/50 border-amber-200 text-amber-700' : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-husl-ink dark:text-stone-200'}`}>
+        {/* File preview + analysis status */}
+        {(selectedFile || attachmentRecord) && (
+          <div className={`mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors ${uploading ? 'bg-amber-50/50 border-amber-200 text-amber-700' : attachmentRecord?.white_paper_tools_enabled ? 'bg-emerald-50/50 border-emerald-200 text-emerald-700' : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-husl-ink dark:text-stone-200'}`}>
             {uploading ? (
               <svg className="w-4 h-4 text-amber-500 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            ) : analysisStatus === "analyzing" ? (
+              <svg className="w-4 h-4 text-husl-clio animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            ) : attachmentRecord?.white_paper_tools_enabled ? (
+              <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             ) : (
               <svg className="w-4 h-4 text-husl-clio shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             )}
-            <span className="truncate flex-1">{uploading ? `Uploading ${selectedFile.name}…` : selectedFile.name}</span>
+            <span className="truncate flex-1">
+              {uploading
+                ? `Uploading ${selectedFile?.name ?? attachmentRecord?.file_name}…`
+                : analysisStatus === "analyzing"
+                ? `Analyzing ${attachmentRecord?.file_name}…`
+                : attachmentRecord?.white_paper_tools_enabled
+                ? `Research paper detected — ${attachmentRecord.doc_title || attachmentRecord.file_name}`
+                : selectedFile?.name ?? attachmentRecord?.file_name}
+            </span>
             {!uploading && (
               <button
                 type="button"
-                onClick={() => setSelectedFile(null)}
+                onClick={() => { setSelectedFile(null); setAttachmentRecord(null); setAnalysisStatus("idle"); }}
                 className="text-husl-muted dark:text-stone-400 hover:text-rose-600 dark:hover:text-rose-400"
               >
                 Remove
