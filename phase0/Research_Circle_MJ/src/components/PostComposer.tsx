@@ -270,11 +270,19 @@ export default function PostComposer({
                 setAttachmentRecord(data.attachment);
                 setAnalysisStatus("analyzing");
               }
+              setSelectedFile(null);
+            } else if (res.status === 409) {
+              const data = (await res.json()) as { error?: string; message?: string };
+              setError(data.message ?? "A file with this name already exists. Please rename your file and try again.");
+              setAnalysisStatus("idle");
+            } else {
+              setError("Upload failed. Please try again.");
+              setAnalysisStatus("idle");
             }
-            setSelectedFile(null);
           })
           .catch(() => {
-            setAnalysisStatus("failed");
+            setError("Upload failed. Please try again.");
+            setAnalysisStatus("idle");
           })
           .finally(() => setUploading(false));
       }
