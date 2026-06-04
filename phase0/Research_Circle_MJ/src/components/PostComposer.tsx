@@ -108,7 +108,8 @@ export default function PostComposer({
         (payload) => {
           const updated = payload.new as PostAttachment;
           setAttachmentRecord(updated);
-          if (updated.extracted_at) {
+          // "processing" means chunked deep-analysis is still running
+          if (updated.doc_type === "research_paper" || updated.doc_type === "document") {
             setAnalysisStatus("done");
           }
         }
@@ -124,7 +125,7 @@ export default function PostComposer({
         .maybeSingle();
       if (data) {
         setAttachmentRecord(data as PostAttachment);
-        if (data.extracted_at) {
+        if (data.doc_type === "research_paper" || data.doc_type === "document") {
           setAnalysisStatus("done");
         }
       }
@@ -380,7 +381,13 @@ export default function PostComposer({
               {uploading
                 ? `Uploading ${selectedFile?.name ?? attachmentRecord?.file_name}…`
                 : analysisStatus === "analyzing"
-                ? `Analyzing ${attachmentRecord?.file_name}…`
+                ? (() => {
+                    const prog = (attachmentRecord as any)?.analysis_progress;
+                    if (prog && prog.total > 0) {
+                      return `Analyzing in parts — ${prog.completed ?? 0} of ${prog.total} steps`;
+                    }
+                    return `Analyzing ${attachmentRecord?.file_name}…`;
+                  })()
                 : attachmentRecord?.white_paper_tools_enabled
                 ? `Research paper detected — ${attachmentRecord.doc_title || attachmentRecord.file_name}`
                 : selectedFile?.name ?? attachmentRecord?.file_name}

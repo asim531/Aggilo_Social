@@ -21,40 +21,10 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { CLUSTER_ID } from "@/lib/cluster";
 import { extractTextFromPdf } from "@/lib/pdf-extract";
-import { llmCall, llmEmbedding } from "@/lib/llm";
+import { llmCall } from "@/lib/llm";
 import { buildCimMessages } from "@/lib/prompts/content-intelligence";
-import { buildDiagramPrompt } from "@/lib/prompts/white-paper/diagram-prompt";
-import {
-  buildDecompositionPrompt,
-  type DecompositionPass,
-} from "@/lib/prompts/white-paper/decompose-prompts";
 import { buildMetadataExtractPrompt } from "@/lib/prompts/white-paper/metadata-extract";
-import { buildCitationExtractPrompt } from "@/lib/prompts/white-paper/citation-extract";
 import type { PostAttachment } from "@/lib/types";
-
-const DECOMPOSITION_PASSES: DecompositionPass[] = [
-  "problem",
-  "structure",
-  "argument",
-  "terminology",
-  "gaps",
-  "results",
-  "compression",
-];
-
-const DIAGRAM_TYPES: Array<"concept_map" | "process_flow" | "architecture" | "argument_tree"> = [
-  "concept_map",
-  "process_flow",
-  "architecture",
-  "argument_tree",
-];
-
-const DEFAULT_TAGS = [
-  { name: "#summary", color: "#2d6a4f" },
-  { name: "#methodology", color: "#1d4ed8" },
-  { name: "#limitations", color: "#b45309" },
-  { name: "#discussion", color: "#7c3aed" },
-];
 
 export async function POST(request: Request) {
   try {
@@ -198,161 +168,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ outcome: "classified_non_research", doc_type: docType });
     }
 
-    // ── 6. Generate embedding for semantic search ────────────────
-    try {
-      const embedding = await llmEmbedding(extractedText);
-      await admin.from("paper_embeddings").insert({
-        attachment_id,
-        embedding: JSON.stringify(embedding),
-      });
-    } catch (err) {
-      console.warn("[analyze] embedding generation failed:", err instanceof Error ? err.message : String(err));
-    }
+    // ── 6. Start chunked deep analysis ───────────────────────────
+    // Vercel Hobby = 10s function limit. Long papers blow past that.
+    // Solution: chain multiple analyze-step calls, each with its own 10s budget.
+    const origin = new URL(request.url).origin;
+    await admin
+      .from("post_attachments")
+      .update({
+        doc_type: "processing",
+        white_paper_tools_enabled: false,
+        analysis_progress: { current_step: "embedding", completed: 0, total: 14 },
+      })
+      .eq("id", attachment_id);
 
-    // ── 7. Extract citations and link to existing papers ─────────
-    try {
-      const citeMessages = buildCitationExtractPrompt(extractedText);
-      const citeLLM = await llmCall({
-        messages: citeMessages,
-        operationKey: "citation_extract",
-        temperature: 0.3,
-        maxTokens: 800,
-        responseFormat: { type: "json_object" },
-      });
-      const citations = JSON.parse(citeLLM.content) as Array<{ title: string; context: string }>;
-      if (citations.length > 0) {
-        // Fetch all existing doc_titles and file_names in cluster
-        const { data: existingDocs } = await admin
-          .from("post_attachments")
-          .select("id, doc_title, file_name")
-          .eq("cluster_id", CLUSTER_ID)
-          .neq("id", attachment_id);
+    void fetch(`${origin}/api/upload/analyze-step`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attachment_id, step: "embedding" }),
+    }).catch(() => {});
 
-        for (const cite of citations) {
-          const cited = (existingDocs ?? []).find((d) => {
-            const target = (d.doc_title || d.file_name || "").toLowerCase();
-            return target.includes(cite.title.toLowerCase()) || cite.title.toLowerCase().includes(target);
-          });
-          if (cited) {
-            await admin.from("paper_citations").insert({
-              citing_attachment_id: attachment_id,
-              cited_attachment_id: cited.id,
-              mention_context: cite.context,
-            });
-          }
-        }
-      }
-    } catch (err) {
-      console.warn("[analyze] citation extraction failed:", err instanceof Error ? err.message : String(err));
-    }
-
-    // ── 8. Create default discussion tags ────────────────────────
-    for (const tag of DEFAULT_TAGS) {
-      await admin.from("paper_tags").insert({
-        attachment_id,
-        cluster_id: CLUSTER_ID,
-        name: tag.name,
-        color: tag.color,
-      });
-    }
-
-    // ── 9. Generate diagrams (fire-and-forget, best-effort) ──────
-    for (const diagramType of DIAGRAM_TYPES) {
-      console.log("[analyze] generating diagram:", diagramType);
-      try {
-        const messages = buildDiagramPrompt({
-          type: diagramType,
-          extractedText,
-          docTitle: docTitle,
-        });
-        const llmRes = await llmCall({
-          messages,
-          operationKey: `diagram_${diagramType}`,
-          temperature: 0.4,
-          maxTokens: 2500,
-        });
-        let svgData = llmRes.content;
-        let caption: string | null = null;
-
-        // Strip markdown code fences if present
-        const fenceStripped = svgData
-          .replace(/^```(?:json)?\s*/, "")
-          .replace(/\s*```\s*$/, "");
-
-        // If content starts with <svg, treat as raw SVG
-        if (fenceStripped.trim().startsWith("<svg")) {
-          svgData = fenceStripped.trim();
-        } else {
-          // Try to extract JSON object from the text
-          const jsonMatch = fenceStripped.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              const parsed = JSON.parse(jsonMatch[0]) as { svg?: string; caption?: string };
-              if (parsed.svg) svgData = parsed.svg;
-              if (parsed.caption) caption = parsed.caption;
-            } catch {
-              // Leave as raw content — will likely fail SVG render
-            }
-          }
-        }
-
-        // Skip storing if no valid SVG was produced
-        if (!svgData.trim().startsWith("<svg")) {
-          console.warn(`[analyze] diagram ${diagramType} returned non-SVG content, skipping`);
-          continue;
-        }
-        await admin.from("paper_diagrams").insert({
-          attachment_id,
-          cluster_id: CLUSTER_ID,
-          type: diagramType,
-          title: `${docTitle ?? "Paper"} — ${diagramType.replace("_", " ")}`,
-          svg_data: svgData,
-          caption,
-        });
-      } catch (err) {
-        console.warn(`[analyze] diagram ${diagramType} failed:`, err instanceof Error ? err.message : String(err));
-      }
-    }
-
-    // ── 10. Run all 6 decomposition passes (cumulative context) ──
-    const accumulatedPasses: Array<{ pass_type: string; title: string; content: string; key_points: string[] }> = [];
-    for (const pass of DECOMPOSITION_PASSES) {
-      console.log("[analyze] running decomposition pass:", pass);
-      try {
-        const messages = buildDecompositionPrompt(pass, extractedText, docTitle, accumulatedPasses);
-        const llmRes = await llmCall({
-          messages,
-          operationKey: `decompose_${pass}`,
-          temperature: 0.3,
-          maxTokens: 1200,
-          responseFormat: { type: "json_object" },
-        });
-        const result = JSON.parse(llmRes.content);
-        await admin.from("paper_decompositions").insert({
-          attachment_id,
-          cluster_id: CLUSTER_ID,
-          pass_type: pass,
-          result_json: result,
-        });
-        // Accumulate for subsequent passes
-        accumulatedPasses.push({
-          pass_type: pass,
-          title: result.title ?? pass,
-          content: result.content ?? "",
-          key_points: result.key_points ?? [],
-        });
-      } catch (err) {
-        console.warn(`[analyze] decomposition ${pass} failed:`, err instanceof Error ? err.message : String(err));
-      }
-    }
-
-    // ── 11. Sage notification removed ────────────────────────────
-    // The welcome banner in PostCard handles this UX more cleanly.
-    // A separate Sage reply saying "below" was confusing because the
-    // analysis cards actually render above the reply thread.
-
-    console.log("[analyze] complete — research_paper, attachment:", attachment_id);
-    return NextResponse.json({ outcome: "analyzed", doc_type: "research_paper" });
+    console.log("[analyze] kicked off chunked deep analysis for attachment:", attachment_id);
+    return NextResponse.json({ outcome: "chunked_analysis_started", doc_type: "processing" });
   } catch (err) {
     console.warn(
       "[analyze] unexpected error:",
