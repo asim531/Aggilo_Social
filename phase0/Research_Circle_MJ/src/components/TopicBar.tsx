@@ -76,6 +76,18 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  // Fallback: listen for topic-created custom event from PostComposer
+  useEffect(() => {
+    function handleTopicCreated() {
+      fetch(withBasePath("/api/topics"))
+        .then((r) => r.json())
+        .then((d) => setTopics((d.topics ?? []) as Topic[]))
+        .catch(() => {});
+    }
+    window.addEventListener("topic-created", handleTopicCreated);
+    return () => window.removeEventListener("topic-created", handleTopicCreated);
+  }, []);
+
   if (error) {
     return (
       <div className="flex items-center gap-2 px-4 py-3 text-xs bg-red-50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-800/30">

@@ -255,6 +255,8 @@ export default function PostComposer({
         setShowCreateForm(false);
         setTopicSearch("");
         track("topic_created_from_composer", { name: data.topic!.name });
+        // Notify TopicBar to refresh
+        window.dispatchEvent(new CustomEvent("topic-created", { detail: data.topic }));
       } else {
         setError(data.error ?? "Couldn't create topic.");
       }
