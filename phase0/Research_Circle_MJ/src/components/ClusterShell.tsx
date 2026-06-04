@@ -43,7 +43,7 @@ import ClioTipLayer from "./ClioTipLayer";
 import ThreadSearchBar from "./ThreadSearchBar";
 import PaperReadingFilter from "./PaperReadingFilter";
 import PaperIndex from "./PaperIndex";
-import TopicBar from "./TopicBarSimple";
+import TopicBar from "./TopicBar";
 import TopicsTab from "./TopicsTab";
 import { ThemeProvider } from "./ThemeProvider";
 import type { PostWithAuthor, Profile, Topic } from "@/lib/types";
@@ -283,7 +283,7 @@ export default function ClusterShell({
           <PaperIndex />
         </div>
         <div className="max-w-3xl mx-auto px-4 bg-stone-100 dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 py-2">
-          <div className="text-xs font-medium text-stone-600 dark:text-stone-300 mb-1">📁 Topics:</div>
+          <div className="text-xs font-medium text-stone-600 dark:text-stone-300 mb-1">🏷️ Discussion Topics (filter posts by theme):</div>
           <TopicBar
             activeTopicSlug={activeTopic?.slug ?? null}
             onSelectTopic={handleSelectTopic}

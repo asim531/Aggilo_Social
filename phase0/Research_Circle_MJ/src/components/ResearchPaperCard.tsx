@@ -257,10 +257,10 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
   }
 
   const tabs: { key: TabKey; label: string; count?: number }[] = [
-    { key: "analysis", label: "Analysis", count: decompositions.length },
-    { key: "diagrams", label: "Diagrams", count: diagrams.length },
-    { key: "citations", label: "Citations" },
-    { key: "discuss", label: "Discuss" },
+    { key: "analysis", label: "📄 Analysis", count: decompositions.length },
+    { key: "diagrams", label: "📊 Diagrams", count: diagrams.length },
+    { key: "citations", label: "📚 Citations" },
+    { key: "discuss", label: "💬 Discuss" },
   ];
 
 

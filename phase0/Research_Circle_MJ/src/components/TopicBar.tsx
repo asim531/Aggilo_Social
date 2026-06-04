@@ -98,8 +98,8 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
   if (topics.length === 0) {
     return (
       <div className="flex items-center gap-2 px-4 py-3 text-xs bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-800/30">
-        <span className="text-amber-800 dark:text-amber-200 font-medium">📝 Topics:</span>
-        <span className="text-amber-700 dark:text-amber-300">Organize posts by theme. Create one when you post, or Sage will suggest them.</span>
+        <span className="text-amber-800 dark:text-amber-200 font-medium">🏷️ Discussion Topics:</span>
+        <span className="text-amber-700 dark:text-amber-300">Organize discussion posts by theme. (Different from paper sections like Analysis/Diagrams)</span>
         <button
           type="button"
           onClick={() => setShowCreateForm(true)}
@@ -177,7 +177,7 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
         onClick={onOpenTopicsTab}
         className="shrink-0 text-xs font-medium px-3 py-1.5 rounded bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors"
       >
-        📁 All topics
+        📁 All Discussion Topics
       </button>
 
       {activeTopic && (
