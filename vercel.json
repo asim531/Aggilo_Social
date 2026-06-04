@@ -1,8 +1,20 @@
 {
-  "crons": [
+  "rewrites": [
     {
-      "path": "/api/admin/atlas/tick",
-      "schedule": "0 * * * *"
+      "source": "/c/long-conversation",
+      "destination": "https://aggilo-long-conversation.vercel.app/c/long-conversation"
+    },
+    {
+      "source": "/c/long-conversation/:path*",
+      "destination": "https://aggilo-long-conversation.vercel.app/c/long-conversation/:path*"
+    },
+    {
+      "source": "/c/research-circle-mj",
+      "destination": "https://research-circle-mj.vercel.app/c/research-circle-mj"
+    },
+    {
+      "source": "/c/research-circle-mj/:path*",
+      "destination": "https://research-circle-mj.vercel.app/c/research-circle-mj/:path*"
     }
   ]
 }
