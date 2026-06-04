@@ -24,6 +24,7 @@ import { extractTextFromPdf } from "@/lib/pdf-extract";
 import { llmCall } from "@/lib/llm";
 import { buildCimMessages } from "@/lib/prompts/content-intelligence";
 import { buildMetadataExtractPrompt } from "@/lib/prompts/white-paper/metadata-extract";
+import { resolvePublicUrl } from "@/lib/path";
 import type { PostAttachment } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -171,17 +172,16 @@ export async function POST(request: Request) {
     // ── 6. Start chunked deep analysis ───────────────────────────
     // Vercel Hobby = 10s function limit. Long papers blow past that.
     // Solution: chain multiple analyze-step calls, each with its own 10s budget.
-    const origin = new URL(request.url).origin;
     await admin
       .from("post_attachments")
       .update({
         doc_type: "processing",
         white_paper_tools_enabled: false,
-        analysis_progress: { current_step: "embedding", completed: 0, total: 14 },
+        analysis_progress: { steps: {}, current_step: "embedding", completed: 0, total: 14 },
       })
       .eq("id", attachment_id);
 
-    void fetch(`${origin}/api/upload/analyze-step`, {
+    void fetch(resolvePublicUrl(request, "/api/upload/analyze-step"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ attachment_id, step: "embedding" }),

@@ -15,6 +15,7 @@ import { llmCall, llmEmbedding } from "@/lib/llm";
 import { buildDiagramPrompt } from "@/lib/prompts/white-paper/diagram-prompt";
 import { buildDecompositionPrompt } from "@/lib/prompts/white-paper/decompose-prompts";
 import { buildCitationExtractPrompt } from "@/lib/prompts/white-paper/citation-extract";
+import { resolvePublicUrl } from "@/lib/path";
 
 const STEPS = [
   "embedding",
@@ -87,7 +88,8 @@ export async function POST(request: Request) {
     const docTitle: string | null = att.doc_title ?? null;
     const fileName: string = att.file_name ?? "";
 
-    const progress: Record<string, boolean> = (att.analysis_progress as Record<string, boolean>) ?? {};
+    const progress = (att.analysis_progress as any) ?? {};
+    const steps: Record<string, boolean> = progress.steps ?? {};
     const stepIdx = STEPS.indexOf(currentStep);
     if (stepIdx === -1) {
       return NextResponse.json({ error: "invalid_step" }, { status: 400 });
@@ -245,7 +247,13 @@ export async function POST(request: Request) {
           .update({
             doc_type: "research_paper",
             white_paper_tools_enabled: true,
-            "analysis_progress": { done: true, total_steps: STEPS.length, completed_at: new Date().toISOString() },
+            analysis_progress: {
+              steps: { ...steps, [currentStep]: true },
+              done: true,
+              completed: STEPS.length,
+              total: STEPS.length,
+              completed_at: new Date().toISOString(),
+            },
           })
           .eq("id", attachment_id);
         console.log("[analyze-step] finalize complete — attachment:", attachment_id);
@@ -254,13 +262,13 @@ export async function POST(request: Request) {
     }
 
     // Mark step done and update progress
-    progress[currentStep] = true;
-    const completedCount = Object.values(progress).filter(Boolean).length;
+    steps[currentStep] = true;
+    const completedCount = Object.keys(steps).filter((k) => steps[k]).length;
     await admin
       .from("post_attachments")
       .update({
         analysis_progress: {
-          ...progress,
+          steps,
           current_step: currentStep,
           completed: completedCount,
           total: STEPS.length,
@@ -271,8 +279,7 @@ export async function POST(request: Request) {
     // ── Trigger next step ────────────────────────────────────────
     const nextStep = STEPS[stepIdx + 1];
     if (nextStep) {
-      const origin = new URL(request.url).origin;
-      void fetch(`${origin}/api/upload/analyze-step`, {
+      void fetch(resolvePublicUrl(request, "/api/upload/analyze-step"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attachment_id, step: nextStep }),
