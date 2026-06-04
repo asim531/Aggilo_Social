@@ -21,7 +21,7 @@
  * non-prescriptive.
  */
 
-import { useState, useCallback, useEffect, type FormEvent, type ChangeEvent } from "react";
+import { useState, useCallback, useEffect, useRef, type FormEvent, type ChangeEvent } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
 import { withBasePath } from "@/lib/path";
@@ -34,6 +34,7 @@ interface PostComposerProps {
   onOptimisticPost: (post: PostWithAuthor) => void;
   onConfirmPost: (tempId: string, confirmed: PostWithAuthor) => void;
   onSageInvoked?: (threadRootId: string) => void;
+  onTopicsAssigned?: (postId: string, topics: Topic[]) => void;
   activeTopic?: Topic | null;
 }
 
@@ -55,6 +56,7 @@ export default function PostComposer({
   onOptimisticPost,
   onConfirmPost,
   onSageInvoked,
+  onTopicsAssigned,
   activeTopic,
 }: PostComposerProps) {
   const [content, setContent] = useState("");
@@ -72,6 +74,7 @@ export default function PostComposer({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTopicName, setNewTopicName] = useState("");
   const [creatingTopic, setCreatingTopic] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const placeholder = pickPlaceholder();
 
   // Load available topics for the dropdown
@@ -87,6 +90,19 @@ export default function PostComposer({
   }, []);
 
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showTopicDropdown) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowTopicDropdown(false);
+        setShowCreateForm(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showTopicDropdown]);
+
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -95,6 +111,8 @@ export default function PostComposer({
 
       setSubmitting(true);
       setError(null);
+      setShowTopicDropdown(false);
+      setShowCreateForm(false);
 
       // ── Optimistic insert ──────────────────────────────────────
       const tempId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -177,6 +195,11 @@ export default function PostComposer({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ topic_ids: selectedTopicIds }),
+        }).then(() => {
+          if (onTopicsAssigned) {
+            const assignedTopics = availableTopics.filter((t) => selectedTopicIds.includes(t.id));
+            onTopicsAssigned(inserted.id, assignedTopics);
+          }
         }).catch(() => {});
       }
 
@@ -210,7 +233,7 @@ export default function PostComposer({
 
       setSubmitting(false);
     },
-    [content, submitting, userId, profile, onOptimisticPost, onConfirmPost, onSageInvoked, selectedTopicIds, selectedFile]
+    [content, submitting, userId, profile, onOptimisticPost, onConfirmPost, onSageInvoked, onTopicsAssigned, selectedTopicIds, selectedFile, availableTopics]
   );
 
   async function handleCreateTopic() {

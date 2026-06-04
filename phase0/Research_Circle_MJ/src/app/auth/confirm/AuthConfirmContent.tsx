@@ -22,7 +22,17 @@ export function AuthConfirmContent() {
     const errorDesc = params.get("error_description");
 
     if (!code) {
-      setErrorMsg(errorDesc ?? "No confirmation code found.");
+      // No code — user likely pressed back after successful auth.
+      // Check if they already have a session.
+      (async () => {
+        const supabase = createAuthClient();
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          router.replace("/cluster");
+        } else {
+          router.replace("/");
+        }
+      })();
       return;
     }
 

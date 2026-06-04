@@ -109,6 +109,13 @@ export default function ClusterFeed({
     fetchTopicPosts();
   }, [activeTopic]);
 
+  const handleTopicsAssigned = useCallback(
+    (postId: string, topics: Topic[]) => {
+      updatePost({ id: postId, topics } as Partial<PostWithAuthor> & { id: string });
+    },
+    [updatePost]
+  );
+
   const handleSageInvoked = useCallback(
     (threadRootId: string) => {
       setSageThinkingPosts((prev) => new Set(prev).add(threadRootId));
@@ -265,6 +272,7 @@ export default function ClusterFeed({
         onOptimisticPost={addOptimisticPost}
         onConfirmPost={replaceOptimisticPost}
         onSageInvoked={handleSageInvoked}
+        onTopicsAssigned={handleTopicsAssigned}
         activeTopic={activeTopic}
       />
     </>

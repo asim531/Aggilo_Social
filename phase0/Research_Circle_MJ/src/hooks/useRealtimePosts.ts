@@ -136,12 +136,54 @@ export function useRealtimePosts({ initialPosts }: UseRealtimePostsArgs) {
           if (oldRow.id) removePost(oldRow.id);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[realtime] channel status:", status);
+        if (status === "SUBSCRIBED") {
+          console.log("[realtime] channel subscribed — live updates active");
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [insertPost, updatePost, removePost]);
+
+  // Polling fallback for all posts. Realtime may silently fail when
+  // the table isn't published for replication or RLS blocks events.
+  // Poll every 5s for posts newer than the latest we have.
+  useEffect(() => {
+    const supabase = createClient();
+    const interval = setInterval(async () => {
+      const latest = posts.reduce(
+        (max, p) => (p.created_at > max ? p.created_at : max),
+        "1970-01-01T00:00:00Z"
+      );
+      const { data } = await supabase
+        .from("posts")
+        .select("*")
+        .eq("cluster_id", CLUSTER_ID)
+        .gt("created_at", latest)
+        .order("created_at", { ascending: true })
+        .limit(20);
+      if (data && data.length > 0) {
+        for (const row of data) {
+          const post = row as PostWithAuthor;
+          if (post.author_id && !post.profiles) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", post.author_id)
+              .eq("cluster_id", CLUSTER_ID)
+              .maybeSingle();
+            insertPost({ ...post, profiles: profile ?? null });
+          } else {
+            insertPost(post);
+          }
+        }
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [posts, insertPost]);
 
   // Polling fallback for Sage replies. Realtime may silently fail for
   // admin-inserted rows (service role bypasses RLS; Realtime RLS may
