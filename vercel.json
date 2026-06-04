@@ -1,10 +1,4 @@
 {
-  "crons": [
-    {
-      "path": "/api/admin/atlas/tick",
-      "schedule": "0 3 * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/c/long-conversation",
@@ -16,11 +10,11 @@
     },
     {
       "source": "/c/research-circle-mj",
-      "destination": "https://research-circle-a179bx2zd-asims-projects-065723f3.vercel.app/c/research-circle-mj"
+      "destination": "https://research-circle-mj.vercel.app/c/research-circle-mj"
     },
     {
       "source": "/c/research-circle-mj/:path*",
-      "destination": "https://research-circle-a179bx2zd-asims-projects-065723f3.vercel.app/c/research-circle-mj/:path*"
+      "destination": "https://research-circle-mj.vercel.app/c/research-circle-mj/:path*"
     }
   ]
 }
