@@ -103,6 +103,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ outcome: "extraction_failed" });
     }
 
+    // CRITICAL: mark as extracted immediately so the UI doesn't stay stuck
+    // on "Analyzing" if later LLM calls time out on Vercel Hobby (10s limit)
+    await admin
+      .from("post_attachments")
+      .update({ extracted_text: extractedText, extracted_at: new Date().toISOString(), doc_type: "processing" })
+      .eq("id", attachment_id);
+
     // ── 3. CIM classification ─────────────────────────────────────
     // Try LLM first, fall back to filename heuristics (handles LLM 404)
     let docType: string;
