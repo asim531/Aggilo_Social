@@ -380,21 +380,26 @@ export default function PostComposer({
         <div className="mt-1.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* File upload */}
-            <label className="cursor-pointer text-[11px] text-husl-muted dark:text-stone-400 hover:text-husl-clio dark:hover:text-amber-400 transition-colors flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-              </svg>
-              Attach
-              <input
-                type="file"
-                className="hidden"
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  const f = e.target.files?.[0] ?? null;
-                  setSelectedFile(f);
-                }}
-                accept=".pdf,.doc,.docx,.txt,image/*,video/*"
-              />
-            </label>
+            <div className="flex flex-col">
+              <label className="cursor-pointer text-[11px] text-husl-muted dark:text-stone-400 hover:text-husl-clio dark:hover:text-amber-400 transition-colors flex items-center gap-1">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+                Attach
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const f = e.target.files?.[0] ?? null;
+                    setSelectedFile(f);
+                  }}
+                  accept=".pdf,.doc,.docx,.txt,image/*,video/*"
+                />
+              </label>
+              <span className="text-[9px] text-stone-400 dark:text-stone-500 mt-0.5">
+                PDFs named with &quot;paper&quot;, &quot;research&quot;, &quot;study&quot; etc. get auto-analyzed
+              </span>
+            </div>
 
             {/* Topic selector */}
             <div className="relative">
