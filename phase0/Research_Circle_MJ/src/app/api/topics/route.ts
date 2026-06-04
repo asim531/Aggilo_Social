@@ -31,7 +31,10 @@ export async function GET() {
       return NextResponse.json({ error: "db_error" }, { status: 500 });
     }
 
-    return NextResponse.json({ topics: (topics ?? []) as Topic[] });
+    return NextResponse.json(
+      { topics: (topics ?? []) as Topic[] },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (err) {
     console.warn("[topics] GET error:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: "server_error" }, { status: 500 });

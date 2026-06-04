@@ -31,3 +31,5 @@ tsconfig.tsbuildinfo
 
 # vercel build artifacts (never commit)
 .vercel/
+.vercel
+.env*

@@ -32,7 +32,7 @@ export default function TopicsTab({ open, onClose, onSelectTopic }: TopicsTabPro
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch(withBasePath("/api/topics"));
+        const res = await fetch(withBasePath("/api/topics"), { cache: "no-store" });
         if (!res.ok) throw new Error("fetch_failed");
         const data = await res.json();
         if (!cancelled) setTopics((data.topics ?? []) as Topic[]);

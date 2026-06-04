@@ -39,7 +39,7 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch(withBasePath("/api/topics"));
+        const res = await fetch(withBasePath("/api/topics"), { cache: "no-store" });
         if (!res.ok) throw new Error("topics_fetch_failed");
         const data = await res.json();
         if (!cancelled) {
