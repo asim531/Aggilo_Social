@@ -43,7 +43,7 @@ import ClioTipLayer from "./ClioTipLayer";
 import ThreadSearchBar from "./ThreadSearchBar";
 import PaperReadingFilter from "./PaperReadingFilter";
 import PaperIndex from "./PaperIndex";
-import TopicBar from "./TopicBar";
+import TopicBar from "./TopicBarSimple";
 import TopicsTab from "./TopicsTab";
 import { ThemeProvider } from "./ThemeProvider";
 import type { PostWithAuthor, Profile, Topic } from "@/lib/types";
