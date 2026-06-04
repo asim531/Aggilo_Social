@@ -81,14 +81,15 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
 
   if (topics.length === 0) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 text-[11px] text-husl-muted">
-        <span>Topics organize posts by theme. Create one when you post, or Sage will suggest them.</span>
+      <div className="flex items-center gap-2 px-4 py-3 text-xs bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-800/30">
+        <span className="text-amber-800 dark:text-amber-200 font-medium">📝 Topics:</span>
+        <span className="text-amber-700 dark:text-amber-300">Organize posts by theme. Create one when you post, or Sage will suggest them.</span>
         <button
           type="button"
           onClick={() => setShowCreateForm(true)}
-          className="text-husl-clio dark:text-amber-400 hover:underline font-medium"
+          className="px-2 py-1 rounded bg-amber-600 text-white text-[11px] font-medium hover:bg-amber-700 transition-colors"
         >
-          Create topic
+          + Create topic
         </button>
         {showCreateForm && (
           <div className="flex items-center gap-1.5">
@@ -154,13 +155,13 @@ export default function TopicBar({ activeTopicSlug, onSelectTopic, onOpenTopicsT
   }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 border-b border-stone-100 overflow-x-auto scrollbar-hide">
+    <div className="flex items-center gap-2 px-4 py-2 bg-stone-50 dark:bg-stone-800/50 border-b border-stone-200 dark:border-stone-700 overflow-x-auto scrollbar-hide">
       <button
         type="button"
         onClick={onOpenTopicsTab}
-        className="shrink-0 text-[10px] font-medium px-2 py-1 rounded bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
+        className="shrink-0 text-xs font-medium px-3 py-1.5 rounded bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors"
       >
-        All topics
+        📁 All topics
       </button>
 
       {activeTopic && (
