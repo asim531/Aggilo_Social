@@ -1,8 +1,4 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-};
+"use client";
 
 export default function PrivacyPage() {
   return (
