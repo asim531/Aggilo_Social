@@ -76,6 +76,7 @@ export default function PostComposer({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTopicName, setNewTopicName] = useState("");
   const [creatingTopic, setCreatingTopic] = useState(false);
+  const [lastTip, setLastTip] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const placeholder = pickPlaceholder();
 
@@ -337,6 +338,20 @@ export default function PostComposer({
     ? availableTopics.filter((t) => t.name.toLowerCase().includes(topicSearch.toLowerCase()))
     : availableTopics;
 
+  // Listen for incoming tips and show inline
+  useEffect(() => {
+    function handleTipAvailable(e: Event) {
+      const detail = (e as CustomEvent).detail as { tip?: string };
+      if (detail?.tip) {
+        setLastTip(detail.tip);
+        // Auto-dismiss after 12 seconds
+        setTimeout(() => setLastTip(null), 12000);
+      }
+    }
+    window.addEventListener("clio-tip-available", handleTipAvailable);
+    return () => window.removeEventListener("clio-tip-available", handleTipAvailable);
+  }, []);
+
   const handleTipMe = useCallback(async () => {
     if (requestingTip) return;
     setRequestingTip(true);
@@ -391,10 +406,13 @@ export default function PostComposer({
                   ? `Uploading ${selectedFile?.name ?? attachmentRecord?.file_name}…`
                   : analysisStatus === "analyzing"
                   ? (() => {
-                      const prog = (attachmentRecord as any)?.analysis_progress;
+                      const prog = attachmentRecord?.analysis_progress;
                       if (prog && prog.total > 0) {
                         const pct = Math.round(((prog.completed ?? 0) / prog.total) * 100);
-                        return `Analyzing in parts — ${prog.completed ?? 0}/${prog.total} (${pct}%)`;
+                        const remaining = prog.total - prog.completed;
+                        const eta = remaining > 0 ? (remaining * 6 < 60 ? "< 1 min" : `~${Math.ceil((remaining * 6) / 60)} min`) : "";
+                        const stepName = prog.current_step?.replace(/_/g, " ") ?? "";
+                        return `${stepName}… — ${prog.completed ?? 0}/${prog.total} (${pct}%)${eta ? ` · ${eta} remaining` : ""}`;
                       }
                       return `Analyzing ${attachmentRecord?.file_name}…`;
                     })()
@@ -412,17 +430,23 @@ export default function PostComposer({
                 </button>
               )}
             </div>
-            {/* Progress bar during chunked analysis */}
+            {/* Progress bar + ETA during chunked analysis */}
             {(() => {
-              const prog = (attachmentRecord as any)?.analysis_progress;
+              const prog = attachmentRecord?.analysis_progress;
               if (analysisStatus === "analyzing" && prog && prog.total > 0) {
                 const pct = Math.min(100, Math.round(((prog.completed ?? 0) / prog.total) * 100));
                 return (
-                  <div className="w-full h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-husl-clio rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%` }}
-                    />
+                  <div className="w-full space-y-1">
+                    <div className="w-full h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-husl-clio rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-stone-500">
+                      <span>{prog.completed}/{prog.total} steps</span>
+                      {pct > 0 && <span>{pct}%</span>}
+                    </div>
                   </div>
                 );
               }
@@ -665,6 +689,16 @@ export default function PostComposer({
             {requestingTip ? "Asking Clio..." : "Tip me, Clio"}
           </button>
         </div>
+        {lastTip && (
+          <div
+            onClick={() => setLastTip(null)}
+            className="mt-2 px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-xs text-husl-clio dark:text-amber-400 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+            title="Click to dismiss"
+          >
+            <span className="font-medium">Clio says:</span>{" "}
+            <span className="text-stone-700 dark:text-stone-300">{lastTip}</span>
+          </div>
+        )}
       </form>
     </div>
   );

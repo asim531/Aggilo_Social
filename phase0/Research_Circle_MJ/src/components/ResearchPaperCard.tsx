@@ -27,6 +27,8 @@ interface ResearchPaperCardProps {
 }
 
 export default function ResearchPaperCard({ attachment, userId }: ResearchPaperCardProps) {
+  const prog = attachment.analysis_progress;
+  const isAnalyzing = prog ? prog.completed < prog.total : false;
   const [activeTab, setActiveTab] = useState<TabKey>("analysis");
   const [decompositions, setDecompositions] = useState<any[]>([]);
   const [diagrams, setDiagrams] = useState<any[]>([]);
@@ -417,7 +419,7 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
             data-tab={t.key}
             type="button"
             onClick={() => setActiveTab(t.key)}
-            className={`text-[11px] font-medium px-2.5 py-1.5 transition-colors relative ${
+            className={`text-[11px] font-medium px-2.5 py-1.5 transition-colors relative min-w-[72px] whitespace-nowrap ${
               activeTab === t.key
                 ? "text-husl-ink dark:text-stone-200"
                 : "text-husl-muted dark:text-stone-400 hover:text-husl-ink dark:hover:text-stone-200"
@@ -433,9 +435,6 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
           </button>
         ))}
       </div>
-
-      {/* Metadata card */}
-      <PaperMetadataCard attachment={attachment} />
 
       {/* Tab content */}
       <div className="px-3 py-2">
@@ -463,6 +462,7 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
           <>
             {activeTab === "analysis" && (
               <div className="space-y-2">
+                <PaperMetadataCard attachment={attachment} />
                 <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-husl-sageSoft/20">
                   <div className="relative w-4 h-4 rounded-full overflow-hidden bg-white/60 shrink-0">
                     <img
@@ -501,16 +501,7 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
                     Sage · Diagrams
                   </span>
                 </div>
-                {diagrams.length === 0 ? (
-                  <div className="flex items-center gap-2 px-2 py-3 rounded-lg border border-amber-200 bg-amber-50/50 text-xs text-stone-600">
-                    <svg className="w-3 h-3 text-amber-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Diagrams are being generated — check back in about a minute.
-                  </div>
-                ) : (
-                  <PaperDiagramViewer diagrams={diagrams} />
-                )}
+                <PaperDiagramViewer diagrams={diagrams} isAnalyzing={isAnalyzing} extractedText={attachment.extracted_text ?? ""} />
               </div>
             )}
             {activeTab === "citations" && (
@@ -527,11 +518,11 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
                     Sage · Citations
                   </span>
                 </div>
-                <PaperCitationLinks attachmentId={attachment.id} />
+                <PaperCitationLinks attachmentId={attachment.id} isAnalyzing={isAnalyzing} />
               </div>
             )}
             {activeTab === "discuss" && (
-              <PaperTagThreads attachmentId={attachment.id} userId={userId} />
+              <PaperTagThreads attachmentId={attachment.id} userId={userId} isAnalyzing={isAnalyzing} />
             )}
           </>
         )}

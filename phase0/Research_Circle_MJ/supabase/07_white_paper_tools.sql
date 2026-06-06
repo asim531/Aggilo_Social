@@ -121,6 +121,22 @@ create table if not exists public.paper_comments (
    on public.paper_comments for delete
    using (auth.uid() = author_id);
 
+-- Add to realtime publication so INSERT events broadcast
+ do $$ begin
+   if not exists (
+     select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'paper_tags'
+   ) then
+     alter publication supabase_realtime add table public.paper_tags;
+   end if;
+ end $$;
+
+ do $$ begin
+   if not exists (
+     select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'paper_comments'
+   ) then
+     alter publication supabase_realtime add table public.paper_comments;
+   end if;
+ end $$;
 
 -- ┌──────────────────────────────────────────────────────────────────┐
 -- │  STEP 4: paper_diagrams — AI-generated SVG diagrams               │

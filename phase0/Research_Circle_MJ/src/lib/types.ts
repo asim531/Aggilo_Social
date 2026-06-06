@@ -166,6 +166,17 @@ export interface PostAttachment {
   keywords: string[] | null;
   /** Paper lifecycle status. */
   paper_status: string | null;
+  /** Live progress tracking for chunked analysis. */
+  analysis_progress: {
+    steps: Record<string, boolean>;
+    current_step: string;
+    current_chunk?: number;
+    total_chunks?: number;
+    completed: number;
+    total: number;
+    done?: boolean;
+    completed_at?: string;
+  } | null;
 }
 
 /** Post enriched with author, topics, and attachments. */

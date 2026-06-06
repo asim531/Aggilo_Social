@@ -5,7 +5,7 @@
  * Each tag has its own comment thread. Members can add comments.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
 
@@ -27,9 +27,10 @@ interface PaperComment {
 interface PaperTagThreadsProps {
   attachmentId: string;
   userId: string;
+  isAnalyzing?: boolean;
 }
 
-export default function PaperTagThreads({ attachmentId, userId }: PaperTagThreadsProps) {
+export default function PaperTagThreads({ attachmentId, userId, isAnalyzing }: PaperTagThreadsProps) {
   const [tags, setTags] = useState<PaperTag[]>([]);
   const [comments, setComments] = useState<Record<string, PaperComment[]>>({});
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -40,6 +41,12 @@ export default function PaperTagThreads({ attachmentId, userId }: PaperTagThread
   const [newTagName, setNewTagName] = useState("");
   const [creatingTag, setCreatingTag] = useState(false);
   const [threadQuery, setThreadQuery] = useState("");
+  const tagsRef = useRef<PaperTag[]>([]);
+
+  // Keep tagsRef in sync so realtime handler always sees latest tags
+  useEffect(() => {
+    tagsRef.current = tags;
+  }, [tags]);
 
   const supabase = createClient();
 
@@ -116,17 +123,32 @@ export default function PaperTagThreads({ attachmentId, userId }: PaperTagThread
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "paper_comments" },
-        (payload) => {
-          const newComment = payload.new as PaperComment;
-          setTags((currentTags) => {
-            if (currentTags.some((t) => t.id === newComment.tag_id)) {
-              setComments((prev) => ({
-                ...prev,
-                [newComment.tag_id]: [...(prev[newComment.tag_id] || []), newComment],
-              }));
-            }
-            return currentTags;
-          });
+        async (payload) => {
+          const raw = payload.new as PaperComment;
+          if (!tagsRef.current.some((t) => t.id === raw.tag_id)) return;
+
+          // Fetch author nickname — realtime payload has no joined data
+          let nickname = "Member";
+          try {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("nickname")
+              .eq("id", raw.author_id)
+              .single();
+            if (profile?.nickname) nickname = profile.nickname;
+          } catch {
+            /* ignore */
+          }
+
+          const enriched: PaperComment = {
+            ...raw,
+            profiles: { nickname },
+          };
+
+          setComments((prev) => ({
+            ...prev,
+            [raw.tag_id]: [...(prev[raw.tag_id] || []), enriched],
+          }));
         }
       )
       .on(
@@ -141,7 +163,11 @@ export default function PaperTagThreads({ attachmentId, userId }: PaperTagThread
           setActiveTag(newTag.id);
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) {
+          console.warn("[PaperTagThreads] realtime subscription error:", err.message);
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -153,14 +179,24 @@ export default function PaperTagThreads({ attachmentId, userId }: PaperTagThread
     e.preventDefault();
     if (!activeTag || !newComment.trim() || submitting) return;
 
+    const body = newComment.trim();
     setSubmitting(true);
-    const { error } = await supabase.from("paper_comments").insert({
+    const { data, error } = await supabase.from("paper_comments").insert({
       tag_id: activeTag,
       author_id: userId,
-      body: newComment.trim(),
-    });
+      body,
+    }).select("id, tag_id, author_id, body, created_at").single();
 
-    if (!error) {
+    if (!error && data) {
+      // Optimistic UI: show immediately, let realtime sync cross-tab
+      const enriched: PaperComment = {
+        ...data,
+        profiles: { nickname: "You" },
+      };
+      setComments((prev) => ({
+        ...prev,
+        [activeTag]: [...(prev[activeTag] || []), enriched],
+      }));
       setNewComment("");
     }
     setSubmitting(false);
@@ -206,15 +242,26 @@ export default function PaperTagThreads({ attachmentId, userId }: PaperTagThread
     );
   }
 
-  if (tags.length === 0) {
-    return <p className="text-xs text-husl-muted py-2">No discussion threads yet.</p>;
-  }
-
   const activeTagObj = tags.find((t) => t.id === activeTag);
   const activeComments = comments[activeTag || ""] || [];
 
   return (
     <div>
+      {/* Contextual banner when no tags exist */}
+      {tags.length === 0 && (
+        <div className="mb-2 px-3 py-2.5 rounded-lg border border-amber-100 bg-amber-50/40 text-xs text-stone-600">
+          {isAnalyzing ? (
+            <span>
+              Analysis in progress — discussion threads will unlock once complete.
+            </span>
+          ) : (
+            <span>
+              No threads yet. Create one to start discussing.
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Thread search + selector */}
       <div className="mb-2">
         <input
@@ -253,7 +300,12 @@ export default function PaperTagThreads({ attachmentId, userId }: PaperTagThread
           <button
             type="button"
             onClick={() => setShowNewTagForm(true)}
-            className="shrink-0 text-[10px] font-medium px-2 py-1 rounded border border-dashed border-stone-300 text-stone-500 hover:border-husl-clio hover:text-husl-clio transition-colors"
+            disabled={isAnalyzing && tags.length === 0}
+            className={`shrink-0 text-[10px] font-medium px-2 py-1 rounded border border-dashed transition-colors ${
+              isAnalyzing && tags.length === 0
+                ? "border-stone-200 text-stone-300 cursor-not-allowed"
+                : "border-stone-300 text-stone-500 hover:border-husl-clio hover:text-husl-clio"
+            }`}
           >
             + New thread
           </button>

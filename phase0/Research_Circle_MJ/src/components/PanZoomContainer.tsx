@@ -38,7 +38,6 @@ export default function PanZoomContainer({ children, className = "" }: PanZoomCo
   );
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
     setDragging(true);
     lastPos.current = { x: e.clientX, y: e.clientY };
   }, []);
@@ -67,7 +66,7 @@ export default function PanZoomContainer({ children, className = "" }: PanZoomCo
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
-      style={{ cursor: dragging ? "grabbing" : "grab" }}
+      style={{ cursor: dragging ? "grabbing" : "grab", touchAction: "none" }}
     >
       <div
         style={{

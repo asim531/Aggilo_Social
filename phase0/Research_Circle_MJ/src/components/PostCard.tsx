@@ -730,44 +730,79 @@ function PostMetaRow({ postId, userId, onSelectTopic }: { postId: string; userId
       {userId && attachments
         .filter((att) => att.white_paper_tools_enabled)
         .map((att) => (
-          <div key={`analysis-wrap-${att.id}`} className="space-y-2">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/20 text-xs text-emerald-700 dark:text-emerald-400">
-              <svg className="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Research paper detected.
-            </div>
-            <ResearchPaperCard attachment={att} userId={userId} />
-          </div>
+          <ResearchPaperCard key={`analysis-wrap-${att.id}`} attachment={att} userId={userId} />
         ))}
       {/* PDFs still being analyzed */}
       {attachments
         .filter((att) => att.file_type === "application/pdf" && !att.white_paper_tools_enabled)
-        .map((att) => (
-          <div key={`analyzing-${att.id}`} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-amber-50/50 dark:bg-amber-900/20 text-xs text-stone-600 dark:text-stone-300">
-            {!analysisTimedOut ? (
-              <>
-                <svg className="w-3 h-3 text-amber-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Analyzing <b>{att.file_name}</b> — about a minute.
-              </>
-            ) : (
-              <>
-                <svg className="w-3 h-3 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Analysis for <b>{att.file_name}</b> is taking longer.
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-amber-600 font-medium hover:underline ml-1"
-                >
-                  Refresh
-                </button>
-              </>
-            )}
-          </div>
-        ))}
+        .map((att) => {
+          const prog = att.analysis_progress;
+          const hasProgress = prog && prog.total > 0;
+          const pct = hasProgress ? Math.min(100, Math.round((prog.completed / prog.total) * 100)) : 0;
+          const remainingSteps = hasProgress ? prog.total - prog.completed : 0;
+          const etaSeconds = remainingSteps * 6;
+          const etaText = remainingSteps > 0
+            ? etaSeconds < 60
+              ? "< 1 min"
+              : `~${Math.ceil(etaSeconds / 60)} min`
+            : "";
+          const stepLabel = hasProgress
+            ? formatStepLabel(prog.current_step, prog.current_chunk, prog.total_chunks)
+            : "Analyzing…";
+
+          return (
+            <div key={`analyzing-${att.id}`} className="flex flex-col gap-1.5 px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-amber-50/50 dark:bg-amber-900/20 text-xs text-stone-600 dark:text-stone-300">
+              <div className="flex items-center gap-2">
+                {!analysisTimedOut ? (
+                  <svg className="w-3 h-3 text-amber-500 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+                <span className="truncate flex-1">
+                  {hasProgress ? (
+                    <>
+                      <span className="font-medium">{stepLabel}</span>
+                      {" — "}
+                      <b>{att.file_name}</b>
+                      {etaText && <span className="ml-1 text-amber-600">{etaText} remaining</span>}
+                    </>
+                  ) : (
+                    <>
+                      Analyzing <b>{att.file_name}</b> — about a minute.
+                    </>
+                  )}
+                </span>
+                {!hasProgress && analysisTimedOut && (
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-amber-600 font-medium hover:underline shrink-0"
+                  >
+                    Refresh
+                  </button>
+                )}
+              </div>
+              {/* Live progress bar */}
+              {hasProgress && (
+                <div className="w-full space-y-1">
+                  <div className="w-full h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-husl-clio rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-stone-500">
+                    <span>{prog.completed}/{prog.total} steps</span>
+                    {pct > 0 && <span>{pct}%</span>}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
     </div>
   );
 }
@@ -856,6 +891,35 @@ function AttachmentPreview({ attachment }: { attachment: PostAttachment }) {
       <span className="text-[10px] text-husl-muted dark:text-stone-400">{(attachment.file_size / 1024).toFixed(0)} KB</span>
     </a>
   );
+}
+
+/**
+ * Format a raw step name into a human-friendly label.
+ * e.g. "decompose_structure" -> "Decomposing structure…"
+ */
+function formatStepLabel(step: string, currentChunk?: number, totalChunks?: number): string {
+  const STEP_NAMES: Record<string, string> = {
+    embedding: "Embedding",
+    citations: "Extracting citations",
+    diagram_concept_map: "Diagramming concept map",
+    diagram_process_flow: "Diagramming process flow",
+    diagram_architecture: "Diagramming architecture",
+    diagram_argument_tree: "Diagramming argument tree",
+    decompose_problem: "Decomposing problem",
+    decompose_structure: "Decomposing structure",
+    decompose_argument: "Decomposing argument",
+    decompose_terminology: "Decomposing terminology",
+    decompose_gaps: "Analyzing evidence & gaps",
+    decompose_results: "Analyzing results",
+    decompose_compression: "Compressing analysis",
+    tags_and_finalize: "Finalizing",
+  };
+
+  const base = STEP_NAMES[step] ?? step.replace(/_/g, " ");
+  const suffix = currentChunk && totalChunks && totalChunks > 1
+    ? ` (chunk ${currentChunk}/${totalChunks})`
+    : "";
+  return `${base}…${suffix}`;
 }
 
 function MemberIdentity({ profile }: { profile: Profile | null }) {

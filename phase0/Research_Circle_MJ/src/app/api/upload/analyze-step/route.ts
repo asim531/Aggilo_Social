@@ -6,6 +6,11 @@
  *
  * Steps: embedding → citations → diagrams (x4) → decomposition (x6) → tags → finalize
  * After each step completes, it triggers the next step until all are done.
+ *
+ * Large-document support:
+ *   - Text is split into ~8000-char chunks (see src/lib/chunking.ts).
+ *   - Steps that consume the full text now process each chunk and merge results.
+ *   - Per-chunk progress is written to analysis_progress so the UI stays live.
  */
 
 import { NextResponse } from "next/server";
@@ -16,6 +21,7 @@ import { buildDiagramPrompt } from "@/lib/prompts/white-paper/diagram-prompt";
 import { buildDecompositionPrompt } from "@/lib/prompts/white-paper/decompose-prompts";
 import { buildCitationExtractPrompt } from "@/lib/prompts/white-paper/citation-extract";
 import { resolvePublicUrl } from "@/lib/path";
+import { chunkText } from "@/lib/chunking";
 
 const STEPS = [
   "embedding",
@@ -41,22 +47,153 @@ const DIAGRAM_TYPES: Array<"concept_map" | "process_flow" | "architecture" | "ar
   "argument_tree",
 ];
 
-const DECOMPOSITION_PASSES = [
-  "problem",
-  "structure",
-  "argument",
-  "terminology",
-  "gaps",
-  "results",
-  "compression",
-];
-
 const DEFAULT_TAGS = [
   { name: "#summary", color: "#2d6a4f" },
   { name: "#methodology", color: "#1d4ed8" },
   { name: "#limitations", color: "#b45309" },
   { name: "#discussion", color: "#7c3aed" },
 ];
+
+/** Update live progress including chunk-level info. */
+async function writeProgress(
+  admin: ReturnType<typeof createAdminClient>,
+  attachment_id: string,
+  steps: Record<string, boolean>,
+  currentStep: string,
+  currentChunk?: number,
+  totalChunks?: number
+) {
+  const completedCount = Object.keys(steps).filter((k) => steps[k]).length;
+  await admin
+    .from("post_attachments")
+    .update({
+      analysis_progress: {
+        steps,
+        current_step: currentStep,
+        current_chunk: currentChunk,
+        total_chunks: totalChunks,
+        completed: completedCount,
+        total: STEPS.length,
+      },
+    })
+    .eq("id", attachment_id);
+}
+
+/** Summarize all chunks into one short narrative for diagram generation. */
+async function synthesizeForDiagrams(
+  chunks: string[],
+  docTitle: string | null
+): Promise<string> {
+  if (chunks.length <= 1) return chunks[0] ?? "";
+  const excerpts = chunks
+    .map((c, i) => `--- SECTION ${i + 1} ---\n${c.slice(0, 1200)}`)
+    .join("\n\n");
+  const messages = [
+    {
+      role: "system" as const,
+      content: `You are a research paper summarizer. Given excerpts from different sections of a paper, produce a concise 250-word summary covering the key concepts, methods, findings, and structure. This summary will be used to generate a visual diagram. Be factual and dense.`,
+    },
+    {
+      role: "user" as const,
+      content: `Paper title: ${docTitle ?? "Untitled"}\n\nExcerpts:\n${excerpts}\n\nWrite the summary now.`,
+    },
+  ];
+  const res = await llmCall({
+    messages,
+    operationKey: "diagram_synthesis",
+    temperature: 0.3,
+    maxTokens: 600,
+  });
+  return res.content.trim();
+}
+
+/** Attempt to parse LLM response into {svg, caption}. Retry once on failure. */
+async function tryParseDiagramResponse(
+  raw: string,
+  type: string,
+  docTitle: string | null
+): Promise<{ svg: string; caption: string | null } | null> {
+  const attempt = (text: string): { svg: string; caption: string | null } | null => {
+    const fenceStripped = text.replace(/^```(?:json)?\s*/, "").replace(/\s*```\s*$/, "");
+    if (fenceStripped.trim().startsWith("<svg")) {
+      return { svg: fenceStripped.trim(), caption: null };
+    }
+    const jsonMatch = fenceStripped.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]) as { svg?: string; caption?: string };
+        if (parsed.svg && parsed.svg.trim().startsWith("<svg")) {
+          return { svg: parsed.svg.trim(), caption: parsed.caption ?? null };
+        }
+      } catch {}
+    }
+    // Fallback: raw SVG anywhere in the response
+    const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/);
+    if (svgMatch) {
+      return { svg: svgMatch[0], caption: null };
+    }
+    return null;
+  };
+
+  const first = attempt(raw);
+  if (first) return first;
+
+  // Retry once with explicit correction prompt
+  console.warn(`[analyze-step] diagram ${type} parse failed, retrying...`);
+  const retryMessages = [
+    {
+      role: "system" as const,
+      content: `You are a diagram repair engine. The previous response could not be parsed. Re-emit the exact same diagram SVG and caption, but wrapped in a clean JSON object with keys "svg" and "caption". No markdown fences.`,
+    },
+    {
+      role: "user" as const,
+      content: `Paper: ${docTitle ?? "Untitled"}\n\nPrevious response:\n${raw.slice(0, 3000)}\n\nRe-emit as clean JSON now.`,
+    },
+  ];
+  try {
+    const retryLLM = await llmCall({
+      messages: retryMessages,
+      operationKey: `diagram_${type}_retry`,
+      temperature: 0.3,
+      maxTokens: 2500,
+    });
+    const second = attempt(retryLLM.content);
+    if (second) return second;
+  } catch {
+    // swallow
+  }
+  return null;
+}
+
+/** Build a synthesis prompt that merges partial decomposition results. */
+function buildSynthesisPrompt(
+  pass: string,
+  docTitle: string | null,
+  partials: Array<{ title: string; content: string; key_points: string[] }>
+) {
+  return [
+    {
+      role: "system" as const,
+      content: `You are a document analysis engine. You have received partial analyses of different sections of the same paper. Synthesize them into ONE concise, unified analysis for the "${pass}" pass.
+
+RULES:
+- Remove redundancies, resolve contradictions, preserve unique insights.
+- content: 3–5 bullet points, each ≤15 words. No long paragraphs. No filler phrases (e.g. "It is important to note that").
+- key_points: 3–5 standalone takeaway phrases, each ≤10 words.
+- title: 2–4 words max.
+- Respond in valid JSON with keys: title (string), content (string with bullets separated by "\n- "), key_points (string array).`,
+    },
+    {
+      role: "user" as const,
+      content: `Paper: ${docTitle ?? "Untitled"}\n\nPartial analyses:\n${partials
+        .map(
+          (p, i) =>
+            `--- PART ${i + 1} ---\nTitle: ${p.title}\nContent: ${p.content.slice(0, 300)}\nKey points: ${p.key_points.join("; ")}`
+        )
+        .join("\n\n")}\n\nSynthesize into a single unified result now.`,
+    },
+  ];
+}
 
 export async function POST(request: Request) {
   try {
@@ -99,11 +236,17 @@ export async function POST(request: Request) {
     switch (currentStep) {
       case "embedding": {
         try {
-          const embedding = await llmEmbedding(extractedText);
-          await admin.from("paper_embeddings").insert({
-            attachment_id,
-            embedding: JSON.stringify(embedding),
-          });
+          const chunks = chunkText(extractedText, 8000);
+          // Process embeddings in parallel (fastest)
+          const embeddings = await Promise.all(
+            chunks.map((chunk) => llmEmbedding(chunk))
+          );
+          for (const emb of embeddings) {
+            await admin.from("paper_embeddings").insert({
+              attachment_id,
+              embedding: JSON.stringify(emb),
+            });
+          }
         } catch (err) {
           console.warn("[analyze-step] embedding failed:", err instanceof Error ? err.message : String(err));
         }
@@ -112,22 +255,34 @@ export async function POST(request: Request) {
 
       case "citations": {
         try {
-          const messages = buildCitationExtractPrompt(extractedText);
-          const citeLLM = await llmCall({
-            messages,
-            operationKey: "citation_extract",
-            temperature: 0.3,
-            maxTokens: 800,
-            responseFormat: { type: "json_object" },
-          });
-          const citations = JSON.parse(citeLLM.content) as Array<{ title: string; context: string }>;
-          if (citations.length > 0) {
+          const chunks = chunkText(extractedText, 8000);
+          const allCitations: Array<{ title: string; context: string }> = [];
+
+          for (let i = 0; i < chunks.length; i++) {
+            await writeProgress(admin, attachment_id, steps, currentStep, i + 1, chunks.length);
+            const messages = buildCitationExtractPrompt(chunks[i]);
+            const citeLLM = await llmCall({
+              messages,
+              operationKey: "citation_extract",
+              temperature: 0.3,
+              maxTokens: 800,
+              responseFormat: { type: "json_object" },
+            });
+            const citations = JSON.parse(citeLLM.content) as Array<{ title: string; context: string }>;
+            for (const c of citations) {
+              if (!allCitations.some((existing) => existing.title.toLowerCase() === c.title.toLowerCase())) {
+                allCitations.push(c);
+              }
+            }
+          }
+
+          if (allCitations.length > 0) {
             const { data: existingDocs } = await admin
               .from("post_attachments")
               .select("id, doc_title, file_name")
               .eq("cluster_id", CLUSTER_ID)
               .neq("id", attachment_id);
-            for (const cite of citations) {
+            for (const cite of allCitations) {
               const cited = (existingDocs ?? []).find((d: any) => {
                 const target = (d.doc_title || d.file_name || "").toLowerCase();
                 return target.includes(cite.title.toLowerCase()) || cite.title.toLowerCase().includes(target);
@@ -153,37 +308,32 @@ export async function POST(request: Request) {
       case "diagram_argument_tree": {
         const dType = currentStep.replace("diagram_", "") as typeof DIAGRAM_TYPES[number];
         try {
-          const messages = buildDiagramPrompt({ type: dType, extractedText, docTitle });
+          // 1. Synthesize all chunks into a concise summary for global awareness
+          const chunks = chunkText(extractedText, 8000);
+          const summary = await synthesizeForDiagrams(chunks, docTitle);
+
+          // 2. Generate diagram from the summary
+          const messages = buildDiagramPrompt({ type: dType, extractedText: summary, docTitle });
           const llmRes = await llmCall({
             messages,
             operationKey: `diagram_${dType}`,
             temperature: 0.4,
             maxTokens: 2500,
           });
-          let svgData = llmRes.content;
-          let caption: string | null = null;
-          const fenceStripped = svgData.replace(/^```(?:json)?\s*/, "").replace(/\s*```\s*$/, "");
-          if (fenceStripped.trim().startsWith("<svg")) {
-            svgData = fenceStripped.trim();
-          } else {
-            const jsonMatch = fenceStripped.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              try {
-                const parsed = JSON.parse(jsonMatch[0]) as { svg?: string; caption?: string };
-                if (parsed.svg) svgData = parsed.svg;
-                if (parsed.caption) caption = parsed.caption;
-              } catch {}
-            }
-          }
-          if (svgData.trim().startsWith("<svg")) {
+
+          // 3. Robust parse with retry on failure
+          const parsed = await tryParseDiagramResponse(llmRes.content, dType, docTitle);
+          if (parsed) {
             await admin.from("paper_diagrams").insert({
               attachment_id,
               cluster_id: CLUSTER_ID,
               type: dType,
               title: `${docTitle ?? fileName} — ${dType.replace("_", " ")}`,
-              svg_data: svgData,
-              caption,
+              svg_data: parsed.svg,
+              caption: parsed.caption,
             });
+          } else {
+            console.warn(`[analyze-step] diagram ${dType} parse failed after retry — skipping`);
           }
         } catch (err) {
           console.warn(`[analyze-step] diagram ${dType} failed:`, err instanceof Error ? err.message : String(err));
@@ -212,20 +362,49 @@ export async function POST(request: Request) {
             content: r.result_json?.content ?? "",
             key_points: r.result_json?.key_points ?? [],
           }));
-          const messages = buildDecompositionPrompt(pass as any, extractedText, docTitle, accumulated);
-          const llmRes = await llmCall({
-            messages,
-            operationKey: `decompose_${pass}`,
-            temperature: 0.3,
-            maxTokens: 1200,
-            responseFormat: { type: "json_object" },
-          });
-          const result = JSON.parse(llmRes.content);
+
+          const chunks = chunkText(extractedText, 8000);
+          const partials: Array<{ title: string; content: string; key_points: string[] }> = [];
+
+          for (let i = 0; i < chunks.length; i++) {
+            await writeProgress(admin, attachment_id, steps, currentStep, i + 1, chunks.length);
+            const messages = buildDecompositionPrompt(pass as any, chunks[i], docTitle, accumulated);
+            const llmRes = await llmCall({
+              messages,
+              operationKey: `decompose_${pass}`,
+              temperature: 0.3,
+              maxTokens: 1200,
+              responseFormat: { type: "json_object" },
+            });
+            const result = JSON.parse(llmRes.content);
+            partials.push({
+              title: result.title ?? pass,
+              content: result.content ?? "",
+              key_points: result.key_points ?? [],
+            });
+          }
+
+          // Synthesize partials into one coherent result
+          let finalResult: { title: string; content: string; key_points: string[] };
+          if (partials.length === 1) {
+            finalResult = partials[0];
+          } else {
+            const synthMessages = buildSynthesisPrompt(pass, docTitle, partials);
+            const synthLLM = await llmCall({
+              messages: synthMessages,
+              operationKey: `decompose_${pass}_synth`,
+              temperature: 0.3,
+              maxTokens: 1200,
+              responseFormat: { type: "json_object" },
+            });
+            finalResult = JSON.parse(synthLLM.content);
+          }
+
           await admin.from("paper_decompositions").insert({
             attachment_id,
             cluster_id: CLUSTER_ID,
             pass_type: pass,
-            result_json: result,
+            result_json: finalResult,
           });
         } catch (err) {
           console.warn(`[analyze-step] decomposition ${pass} failed:`, err instanceof Error ? err.message : String(err));
@@ -263,18 +442,7 @@ export async function POST(request: Request) {
 
     // Mark step done and update progress
     steps[currentStep] = true;
-    const completedCount = Object.keys(steps).filter((k) => steps[k]).length;
-    await admin
-      .from("post_attachments")
-      .update({
-        analysis_progress: {
-          steps,
-          current_step: currentStep,
-          completed: completedCount,
-          total: STEPS.length,
-        },
-      })
-      .eq("id", attachment_id);
+    await writeProgress(admin, attachment_id, steps, currentStep);
 
     // ── Trigger next step ────────────────────────────────────────
     const nextStep = STEPS[stepIdx + 1];

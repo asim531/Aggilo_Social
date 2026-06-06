@@ -33,6 +33,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   isTip?: boolean; // tip messages are visually distinct
+  createdAt?: string; // ISO timestamp for tips
 }
 
 type ActiveTab = "cluster" | "ephemeral";
@@ -79,7 +80,7 @@ export default function ClioFab({ userId }: { userId: string }) {
   useEffect(() => {
     if (open && pendingTip) {
       setClusterMessages((prev) => [
-        { role: "assistant", content: pendingTip, isTip: true },
+        { role: "assistant", content: pendingTip, isTip: true, createdAt: new Date().toISOString() },
         ...prev,
       ]);
       setPendingTip(null);
@@ -314,17 +315,23 @@ export default function ClioFab({ userId }: { userId: string }) {
                   </div>
                 )}
                 {clusterMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`text-sm leading-relaxed ${
-                      msg.role === "user"
-                        ? "text-husl-ink dark:text-stone-200 text-right"
-                        : msg.isTip
-                          ? "text-husl-clio dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 text-xs border border-amber-200 dark:border-amber-800"
-                          : "text-husl-ink dark:text-stone-200"
-                    }`}
-                  >
-                    {msg.content}
+                  <div key={i}>
+                    {msg.isTip && msg.createdAt && (
+                      <p className="text-[10px] text-husl-muted dark:text-stone-500 mb-0.5">
+                        Tip · {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    )}
+                    <div
+                      className={`text-sm leading-relaxed ${
+                        msg.role === "user"
+                          ? "text-husl-ink dark:text-stone-200 text-right"
+                          : msg.isTip
+                            ? "text-husl-clio dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 text-xs border border-amber-200 dark:border-amber-800"
+                            : "text-husl-ink dark:text-stone-200"
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
                   </div>
                 ))}
                 {clusterLoading && (

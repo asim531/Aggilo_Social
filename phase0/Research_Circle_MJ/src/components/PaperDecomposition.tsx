@@ -80,19 +80,18 @@ export default function PaperDecomposition({ items, userId, attachmentId }: Pape
     setPassAnnotations((p) => ({ ...p, [passType]: data ?? [] }));
   }
 
-  const sorted = items
-    .slice()
-    .sort((a, b) => passOrder.indexOf(a.pass_type) - passOrder.indexOf(b.pass_type));
+  const itemMap = new Map(items.map((i) => [i.pass_type, i]));
+  const presentPasses = items.map((i) => i.pass_type);
 
-  // Progressive reveal: stagger each card by 200ms
+  // Progressive reveal: stagger each present card by 200ms
   useEffect(() => {
-    sorted.forEach((item, i) => {
+    presentPasses.forEach((passType, i) => {
       const timer = setTimeout(() => {
-        setRevealed((prev) => new Set(prev).add(item.pass_type));
+        setRevealed((prev) => new Set(prev).add(passType));
       }, i * 200);
       return () => clearTimeout(timer);
     });
-  }, [sorted.map((i) => i.pass_type).join(",")]);
+  }, [presentPasses.join(",")]);
 
   // Fetch annotations for the open pass
   useEffect(() => {
@@ -103,26 +102,70 @@ export default function PaperDecomposition({ items, userId, attachmentId }: Pape
 
   return (
     <div className="space-y-2">
-      {sorted.map((item) => {
-        const isOpen = openPass === item.pass_type;
-        const result = item.result_json;
-        const isRevealed = revealed.has(item.pass_type);
-        const passIndex = passOrder.indexOf(item.pass_type);
+      {passOrder.map((passType) => {
+        const item = itemMap.get(passType);
+        const isOpen = openPass === passType;
+        const isRevealed = revealed.has(passType) || !item;
+        const passIndex = passOrder.indexOf(passType);
         const passNumber = passIndex >= 0 ? passIndex + 1 : "?";
-        const passLabel = `${passNumber}. ${passLabels[item.pass_type] || item.pass_type}`;
+        const passLabel = `${passNumber}. ${passLabels[passType] || passType}`;
+
+        if (!item) {
+          return (
+            <div
+              key={passType}
+              className="border border-stone-200 rounded-lg bg-stone-50/40 overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={() => setOpenPass(isOpen ? null : passType)}
+                className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-stone-50/60 transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
+                    {passLabel}
+                  </span>
+                  <span className="text-xs font-medium text-stone-400 truncate">
+                    Coming soon
+                  </span>
+                  <span className="shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-600">
+                    Analyzing…
+                  </span>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-stone-300 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isOpen && (
+                <div className="px-3 pb-3">
+                  <p className="text-xs text-stone-400 py-2">
+                    Sage is still analyzing this section. It will appear shortly.
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const result = item.result_json;
         const displayTitle = result.title && !isGenericTitle(result.title)
           ? result.title
           : passLabel;
         return (
           <div
-            key={item.pass_type}
+            key={passType}
             className={`border border-stone-200 rounded-lg bg-white overflow-hidden transition-all duration-500 ${
               isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
             }`}
           >
             <button
               type="button"
-              onClick={() => setOpenPass(isOpen ? null : item.pass_type)}
+              onClick={() => setOpenPass(isOpen ? null : passType)}
               className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-stone-50 transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -144,7 +187,21 @@ export default function PaperDecomposition({ items, userId, attachmentId }: Pape
             </button>
             {isOpen && (
               <div className="px-3 pb-3">
-                <p className="text-sm text-husl-ink leading-relaxed mb-3">{result.content}</p>
+                {/* Content as bullet points */}
+                {result.content && (
+                  <ul className="space-y-1 mb-3">
+                    {result.content
+                      .split(/[.!?]\s+/)
+                      .map((s) => s.trim())
+                      .filter((s) => s.length > 10)
+                      .map((sent, i) => (
+                        <li key={`c-${i}`} className="text-xs text-stone-700 leading-snug flex items-start gap-2">
+                          <span className="text-husl-clio mt-0.5 shrink-0">•</span>
+                          <span>{sent.length > 150 ? sent.slice(0, 150).trim() + "…" : sent}</span>
+                        </li>
+                      ))}
+                  </ul>
+                )}
                 {result.key_points && result.key_points.length > 0 && (
                   <ul className="space-y-1 mb-3">
                     {result.key_points.map((kp, i) => (
@@ -156,9 +213,9 @@ export default function PaperDecomposition({ items, userId, attachmentId }: Pape
                   </ul>
                 )}
                 {/* Existing annotations for this pass */}
-                {passAnnotations[item.pass_type] && passAnnotations[item.pass_type].length > 0 && (
+                {passAnnotations[passType] && passAnnotations[passType].length > 0 && (
                   <div className="space-y-1.5 mb-2">
-                    {passAnnotations[item.pass_type].map((anno) => (
+                    {passAnnotations[passType].map((anno) => (
                       <div
                         key={anno.id}
                         className={`text-[11px] px-2 py-1.5 rounded border ${
@@ -190,15 +247,15 @@ export default function PaperDecomposition({ items, userId, attachmentId }: Pape
                     <div className="flex items-center gap-1.5">
                       <input
                         type="text"
-                        value={annoText[item.pass_type] || ""}
-                        onChange={(e) => setAnnoText((p) => ({ ...p, [item.pass_type]: e.target.value }))}
+                        value={annoText[passType] || ""}
+                        onChange={(e) => setAnnoText((p) => ({ ...p, [passType]: e.target.value }))}
                         placeholder="Add a note on this section…"
                         className="flex-1 text-[11px] px-2 py-1 rounded border border-stone-200 bg-white focus:outline-none focus:ring-1 focus:ring-husl-clio"
-                        onKeyDown={(e) => { if (e.key === "Enter") void submitAnnotation(item.pass_type); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") void submitAnnotation(passType); }}
                       />
                       <select
-                        value={annoVis[item.pass_type] || "private"}
-                        onChange={(e) => setAnnoVis((p) => ({ ...p, [item.pass_type]: e.target.value as "public" | "private" }))}
+                        value={annoVis[passType] || "private"}
+                        onChange={(e) => setAnnoVis((p) => ({ ...p, [passType]: e.target.value as "public" | "private" }))}
                         className="text-[10px] px-1.5 py-1 rounded border border-stone-200 bg-white"
                         title="Visibility"
                       >
@@ -207,11 +264,11 @@ export default function PaperDecomposition({ items, userId, attachmentId }: Pape
                       </select>
                       <button
                         type="button"
-                        onClick={() => void submitAnnotation(item.pass_type)}
-                        disabled={!annoText[item.pass_type]?.trim() || submittingAnno[item.pass_type]}
+                        onClick={() => void submitAnnotation(passType)}
+                        disabled={!annoText[passType]?.trim() || submittingAnno[passType]}
                         className="text-[10px] px-2 py-1 rounded bg-husl-clio text-white disabled:opacity-40"
                       >
-                        {submittingAnno[item.pass_type] ? "…" : "Add"}
+                        {submittingAnno[passType] ? "…" : "Add"}
                       </button>
                     </div>
                     <p className="text-[9px] text-stone-400 mt-1">
