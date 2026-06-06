@@ -1,0 +1,23 @@
+name: Deploy Research Circle MJ
+
+on:
+  push:
+    branches: [chore/phase0-folder-reshape]
+    paths: ['phase0/Research_Circle_MJ/**']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: prj_I9gxRN7xTmAcJ7joWUrlGK22rhLE
+        run: vercel deploy --prod --yes --cwd phase0/Research_Circle_MJ --token $VERCEL_TOKEN

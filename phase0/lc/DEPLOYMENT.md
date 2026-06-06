@@ -18,12 +18,6 @@
 > All pushes must go to this branch — pushing to `main` will have
 > **no effect** on the LC deployment.
 
-> [!CAUTION]
-> **Vercel auto-deploy only triggers when the Production Branch matches
-> the branch you push to.** If deployments are not triggering, verify
-> in the Vercel Dashboard:
-> `Project Settings → Git → Production Branch = chore/phase0-folder-reshape`
-
 ## Git Workflow
 
 ```bash
@@ -36,38 +30,40 @@ git commit -m "feat: description"
 git push origin chore/phase0-folder-reshape
 ```
 
+> After pushing, GitHub Actions automatically deploys to Vercel. No manual Vercel steps needed.
+
 ## Quick Checklist Before Pushing
 - [ ] You are on `chore/phase0-folder-reshape` (run `git branch`)
-- [ ] Vercel project "Production Branch" is set to `chore/phase0-folder-reshape`
-- [ ] Root directory in Vercel is `phase0/lc`
+- [ ] You changed files inside `phase0/lc/`
 
-## Troubleshooting: Vercel Did Not Pick Up Changes
+## How Auto-Deploy Works
 
-If a push does NOT trigger a Vercel build:
+A GitHub Action workflow (`.github/workflows/deploy-long-conversation.yml`) runs automatically on every push to `chore/phase0-folder-reshape` that touches `phase0/lc/**` files. It deploys directly to Vercel using the CLI, bypassing the unreliable Vercel Git integration.
 
-1. **Confirm push landed on remote:**
+## Required Secrets (one-time setup)
+
+Add to GitHub → `asim531/Aggilo_Social` → Settings → Secrets → Actions:
+
+| Secret | Value | How to get |
+|--------|-------|------------|
+| `VERCEL_TOKEN` | Your personal token | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+| `VERCEL_ORG_ID` | `team_tgbVy4xnZxKW9hOkn0hY0qEW` | From root `.vercel/repo.json` |
+
+## Troubleshooting
+
+1. **Workflow did not run:**
+   - GitHub → Actions tab → check if the workflow triggered
+   - Only runs when files in `phase0/lc/**` change on `chore/phase0-folder-reshape`
+
+2. **Workflow failed:**
+   - GitHub → Actions → click the red run → read the error log
+   - Common cause: `VERCEL_TOKEN` expired. Generate a new one.
+
+3. **Manual fallback:**
    ```bash
-   git log --oneline -1 origin/chore/phase0-folder-reshape
+   cd phase0/lc
+   vercel deploy --prod --yes
    ```
-   This must match your latest commit.
 
-2. **Check Vercel Dashboard → Deployments tab:**
-   - If no new deployment appears, the webhook likely didn't fire.
-   - Go to `Project Settings → Git` and verify:
-     - **Connected repo:** `asim531/Aggilo_Social`
-     - **Production Branch:** `chore/phase0-folder-reshape`
-     - **Root Directory:** `phase0/lc`
-   - If the branch name doesn't match exactly, Vercel ignores the push.
-
-3. **Manual redeploy (quick fix):**
-   - Vercel Dashboard → Deployments → click latest → "Redeploy"
-   - Or use CLI: `vercel --prod` (from `phase0/lc` directory)
-
-4. **GitHub webhook health:**
-   - GitHub repo → Settings → Webhooks → look for the Vercel webhook
-   - Check "Recent Deliveries" for failures (403/timeout = token issue)
-
-5. **Common gotcha — branch name mismatch:**
-   The branch is `chore/phase0-folder-reshape` (with slashes). Some
-   Vercel UI fields interpret `/` differently. If re-linking, copy-paste
-   the exact branch name.
+## See Also
+- `phase0/docs/GITHUB_VERCEL_WORKFLOW_TUTORIAL.md` — beginner tutorial on Git, Vercel CLI, and GitHub Actions
