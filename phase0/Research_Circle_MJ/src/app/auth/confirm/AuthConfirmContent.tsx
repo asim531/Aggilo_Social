@@ -21,6 +21,12 @@ export function AuthConfirmContent() {
     const code = params.get("code");
     const errorDesc = params.get("error_description");
 
+    if (errorDesc) {
+      console.error("[auth/confirm] URL error_description:", errorDesc);
+      setErrorMsg(errorDesc);
+      return;
+    }
+
     if (!code) {
       // No code — user likely pressed back after successful auth.
       // Check if they already have a session.
@@ -39,18 +45,18 @@ export function AuthConfirmContent() {
     async function run() {
       const supabase = createAuthClient();
 
-      // Clear any stale session / verifier from a previous login attempt.
-      // This prevents PKCE verifier mismatch on magic-link click.
-      await supabase.auth.signOut({ scope: "local" });
-
       const { error: exchangeError, data } = await supabase.auth.exchangeCodeForSession(code!);
 
       if (exchangeError) {
-        console.error("[auth/confirm] exchange error:", exchangeError.message);
-        const msg = exchangeError.message.includes("code verifier") || exchangeError.message.includes("PKCE")
-          ? "Login session expired. Please request a new magic link."
-          : exchangeError.message;
-        setErrorMsg(msg);
+        console.error("[auth/confirm] PKCE exchange error:", exchangeError);
+        // Try to recover — user may already have a valid session from a previous login
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          console.log("[auth/confirm] recovered via existing session");
+          router.replace("/cluster");
+          return;
+        }
+        setErrorMsg(exchangeError.message);
         return;
       }
 
