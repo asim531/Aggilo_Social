@@ -16,7 +16,6 @@ import { llmCall } from "@/lib/llm";
 import { buildCimMessages } from "@/lib/prompts/content-intelligence";
 import { buildMetadataExtractPrompt } from "@/lib/prompts/white-paper/metadata-extract";
 import { withBasePath } from "@/lib/path";
-import { runAnalyzeStep } from "@/lib/analyze-step-worker";
 import type { PostAttachment } from "@/lib/types";
 
 // Build the public URL for triggering the next step in the chain.
@@ -212,18 +211,17 @@ export async function runAnalysis(
     })
     .eq("id", attachmentId);
 
-  console.log("[analysis-worker] awaiting embedding step inline...");
   const analyzeStepUrl = getAnalyzeStepUrl();
-  try {
-    const stepResult = await runAnalyzeStep({
-      attachment_id: attachmentId,
-      step: "embedding",
-      triggerUrl: analyzeStepUrl,
-    });
-    console.log("[analysis-worker] embedding step done:", stepResult);
-  } catch (err) {
-    console.error("[analysis-worker] embedding step failed:", err);
-  }
+  console.log("[analysis-worker] triggering analyze-step at:", analyzeStepUrl);
 
+  void fetch(analyzeStepUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ attachment_id: attachmentId, step: "embedding" }),
+  }).catch((err) => {
+    console.error("[analysis-worker] analyze-step trigger failed:", err);
+  });
+
+  console.log("[analysis-worker] kicked off chunked deep analysis");
   return { outcome: "chunked_analysis_started", doc_type: "processing" };
 }
