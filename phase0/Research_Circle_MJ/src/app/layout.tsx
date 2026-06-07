@@ -66,8 +66,10 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('rcmj-theme') || 'light';
-                  var resolved = theme === 'system'
+                  var theme = localStorage.getItem('rcmj-theme');
+                  var resolved = !theme
+                    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : theme === 'system'
                     ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
                     : theme;
                   if (resolved === 'dark') document.documentElement.classList.add('dark');

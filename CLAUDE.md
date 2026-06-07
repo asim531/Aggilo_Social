@@ -1,23 +1,9 @@
-# Aggilo Social
+# MOVED — See `docs/AI_ASSISTANT_SETUP.md`
 
-## gstack (The Garry Tan Stack)
+This file has been relocated. The canonical AI assistant setup reference now lives at:
 
-**Logic Location:** `C:\Users\HP\.claude\skills\gstack\`
-**Instructions:** 
-1. Load all command definitions and persona logic from the folder above.
-2. For all web browsing/QA, use only the gstack `/browse` or `/qa` tools. 
-3. **NEVER** use `mcp__claude-in-chrome__*` tools.
+**`docs/AI_ASSISTANT_SETUP.md`**
 
-### Global Slash Commands
-- `/office-hours` - YC-style startup diagnostic (CEO Mode)
-- `/plan-ceo-review` - CEO-level plan review
-- `/plan-eng-review` - Engineering/Architecture review
-- `/review` - Perform a PR-style code review
-- `/ship` - Standardized ship workflow
-- `/qa` - Headless browser QA with automatic fixes
-- `/browse` - Standard headless browsing for data/research
-- `/cso` - Security audit (OWASP + STRIDE)
-- `/investigate` - Root-cause debugging tool
-- `/learn` - Absorb new project context or docs
-- `/gstack-upgrade` - Pull the latest gstack changes
-- `/retro` - Run a sprint/task retrospective
+---
+
+*This stub remains at root for backwards compatibility with old session references.*

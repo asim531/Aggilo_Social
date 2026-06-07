@@ -1,6 +1,16 @@
 # Aggilo — System Implementation Prompt
 ## Part 4: AI Agent Architecture & Orchestration
 
+> **Canonical sources:** Agent roles, surfaces, and orchestration are defined primarily in:
+> - `ARCHITECTURE.md`
+> - `AGGILO_PLATFORM_REPORT.md`
+> - `AGGILO_PLATFORM_RULES.md`
+> - `architecture/planning/10_AGENT_PROMPT_REFINEMENT.md`
+> - `architecture/planning/agent_prompts/*.md` (per-agent system prompts)
+> - `AGENT_RUNTIME.md`, `PLATFORM_AGENCY.md`, `CLUSTER_INTELLIGENCE_MODULES.md`
+>
+> This Part 4 file is an implementation helper. If any statement here conflicts with the documents above, the architecture and planning docs **win** and this series is considered secondary.
+
 ---
 
 ## 12. Agent Hierarchy & Roles
@@ -62,7 +72,7 @@ flowchart TD
 | **Scout** | Invisible | Admin-triggered + 6h cron | `scout-low` | Topic reports, auto-clusters (≥90%), suggestion cards |
 | **Atlas** | Invisible | 60s post-join, 6h cycle, 72h silence | `events-medium` | Content cards → Sage curates and posts them to Timeline |
 | **Observer** | Invisible | Continuous passive monitoring (10 domains) | `events-medium` | Platform findings, language-parallel spawn recommendations, tool analysis |
-| **Matchmaker** | Via Clio (Premium) | Premium user chat | `clio-high` | People suggestions, questionnaires, private clusters |
+| **Matchmaker** | Via Clio (Premium) | Premium user chat | `clio-high` | People suggestions, free-text preference learning, private clusters |
 
 ---
 
@@ -172,7 +182,7 @@ Layer 4 — Per-call signals (variable; trim oldest turns first at 80% ceiling)
 | `cluster_discovery` | User searches or asks for suggestions | All users | Search existing clusters, qualify, recommend |
 | `platform_qa` | General questions about Aggilo | All users | Answer from platform rules context |
 | `sage_introduction` | User's first cluster join (one-time) | All users | Introduce Sage as Clio's cluster assistant |
-| `premium_matchmaker` | Premium user initiates matchmaking | Premium only | Preference learning, people search, questionnaire dispatch |
+| `premium_matchmaker` | Premium user initiates matchmaking | Premium only | Preference learning (free-text), people search, private cluster creation |
 | `connection_intro` | Two users should meet | Premium only | Craft specific introduction with texture |
 
 ### 13.5 Cluster Arc State Machine (Backend-Owned, Sage Acts)
@@ -688,7 +698,7 @@ async function checkWelfareEscalation(
 | **Phase 7** | Clio basic chat + LLM Router + BullMQ setup + response logging + Sage introduction beat |
 | **Phase 9** | Atlas full pipeline + Scout crawl cycle + Observer (10 domains) + arc state machine |
 | **Phase 10** | Moderation engine (AI severity) + welfare escalation + passive safety sampling |
-| **Phase 11** | Matchmaker (premium Clio skill) + preference learning + questionnaire dispatch |
+| **Phase 11** | Matchmaker (premium Clio skill) + free-text preference learning + private cluster creation |
 
 ---
 
@@ -1048,6 +1058,10 @@ Sage and Clio discuss in the Room Workshop
     │                          │
     │     needs_building ──────┘──► proposal sits in Workshop ("We'll build this");
     │                               admin builds → tool registered → agents invoke.
+    │                               Observer scores reusability (0-100):
+    │                                 ≥80 → auto-promote to `platform_tools` (global)
+    │                                 50-79 → flag for admin review
+    │                                 <50 → keep cluster-private, re-evaluate 30d
     │
     └─ kind = 'member_feature' ───► row inserted at proposed_in_thoughts
             │

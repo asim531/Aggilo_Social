@@ -13,7 +13,7 @@
 >
 > **Scope**: This document covers **screen layout and rendering only** — what appears on screen, where it appears, and how it is structured visually. Every `[CLIO_ANCHOR: anchor_id]` marker is a hook point only — the full behaviour spec for that anchor lives in **`clio_overlay_prompt.md`**. Clio's character, voice, and personality live in **`clio_character_prompt.md`**. Screen prompts own neither.
 >
-> **Not present screens**: Some screens show `[CLIO]` with "Not present" — these are system-level screens (auth, moderation, invite forms) where Clio does not appear at all.
+> **Not present screens**: Some screens show `[CLIO]` with "Micro-presence" — these are system-level screens (auth, OTP, moderation, invite forms, settings) where Clio steps back for privacy but leaves a tiny continuity signal so users do not feel abandoned. On input-heavy onboarding screens (Year of Birth, Language, Nickname, Location), Clio is genuinely absent to preserve focus.
 >
 > **Clio visual identity**: Clio's appearance is defined by the reference image **`resting01.png`**. All screen prompts depicting Clio must reproduce this visual accurately. Do not invent an alternative design.
 >
@@ -413,19 +413,15 @@ Anchor: `anchor_sage_introduction`
 | **Sage recedes (Phase E)** | Avatar opacity reduces to 60% on her posts — she is still present but visually quieter |
 | **Long-press Sage post** | Same options as Clio: "Not relevant" (sends signal), "Share Post", "Copy Link" |
 
-### Background Intelligence Indicator
+### Background Intelligence Indicator *(REMOVED — R11, 2026-06-05)*
 
-> A persistent ambient micro-animation that communicates Clio, Scout, and Sage are working behind the scenes. Purely visual — not interactive.
-
-| Property | Spec |
-|----------|------|
-| **Element** | 4px filled circle, positioned to the right of the Aggilo logo in the Explore top bar |
-| **Color** | `#0891B2` (primary teal) |
-| **Animation** | Breathing pulse: `opacity: 0.3 → 0.6 → 0.3` on a 3-second cycle, infinite loop |
-| **Visibility** | Always present on Explore screen — first visit and return visits |
-| **Interaction** | None — purely ambient. No tap target, no tooltip |
-| **Purpose** | Subconsciously signals that intelligence is active without naming any agent |
-
+> **Status:** Removed. The 4px breathing pulse dot that was positioned to the
+> right of the Aggilo logo in the Explore top bar has been eliminated. User
+> testing showed the dot was frequently tapped with no response, creating a
+> "broken" feeling. The intelligence is already signaled by Clio's proactive FAB
+> behaviors and curated cluster cards — the dot was redundant decorative noise.
+> If telemetry shows users feel the app is "dead," address it with Clio's
+> proactive behaviors, not ambient decoration.
 
 ### Shadows
 
@@ -454,7 +450,7 @@ Anchor: `anchor_sage_introduction`
 #### Persistent Top Bar (Phase 1)
 | Context | Contents |
 |---------|----------|
-| **Explore** | Aggilo logo + intelligence dot (left), Bell 🔔 with badge (right) |
+| **Explore** | Aggilo logo (left), Bell 🔔 with badge (right) |
 | **Activity** | "Activity" title (center), Bell 🔔 (right) |
 | **You / Profile** | "Profile" title (center), Settings ⚙️ (right) |
 | **In-Cluster** | "← Back" + Cluster name (center) + Messages 💬 (Stage 3, right) + "⋮" (right) |
@@ -593,7 +589,9 @@ Loading state: button disabled + spinner + "Sending..." text.
 Validation: button disabled until valid format. Red error text on blur.
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy." 
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -621,13 +619,17 @@ Below: "Resend code in 0:45" in gray. When timer expires → "Resend Code" teal 
 Below: "Verify & Continue" teal full-width button.
 
 Error state — wrong code: All 6 boxes shake (300ms horizontal shake). Boxes reset.
-Red text: "That code didn't match. Try again." + "3 attempts remaining."
+Red text: "That code didn't match. Try again or resend."
+NO attempt counter displayed.
 
-Error state — too many attempts: Boxes disabled. Red: "Too many attempts."
-Resend link turns active. 60-second cool-off.
+Error state — too many attempts: Boxes disabled briefly. Auto-resend triggers.
+Teal text: "New code sent — check your messages." Resend link active immediately.
+NO 60-second lockout. User is never locked out of their own account.
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -647,7 +649,9 @@ shows OTP screen with welcome-back overlay:
 Same 6-digit input boxes. Same verify button. Confirms returning user identity.
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -688,7 +692,7 @@ Progress dots at bottom: step 1 of 3 (dot 1 filled teal, rest gray).
 NO real name. NO password.
 
 [CLIO]
-Not present on this screen.
+Not present on this screen. (Intentionally absent — input-heavy onboarding screen.)
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -714,7 +718,7 @@ Separator.
 Progress dots: step 2 of 3 (2 dots filled).
 
 [CLIO]
-Not present on this screen.
+Not present on this screen. (Intentionally absent — input-heavy onboarding screen.)
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -737,7 +741,7 @@ Subtitle: "Your nickname is how everyone knows you on Aggilo. Real name stays pr
 Progress dots: step 3 of 3 (all 3 dots filled teal).
 
 [CLIO]
-Not present on this screen.
+Not present on this screen. (Intentionally absent — input-heavy onboarding screen.)
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -795,7 +799,15 @@ Light teal-tinted background (#F0FDFA).
 
 Top: Clio avatar (80px) centered + "Clio" label in teal bold 12px below.
 
-Conversation flow (chat-bubble style, 800ms delays between bubbles — deliberate pacing):
+Conversation flow (chat-bubble style, adaptive pacing):
+
+Deliberate pacing (800ms between bubbles) for bubbles 1–2 only.
+Bubbles 3+ accelerate to 400ms if user has tapped ANY prior bubble OR if
+USER.md reading_speed = 'fast'. Otherwise stays at 800ms.
+
+Tap-to-continue affordance: Any bubble is tappable to reveal the next one immediately.
+Subtle visual cue: next bubble shows a soft teal glow pulse (opacity 0.3 → 0.6, 1s loop)
+until user taps or auto-advances. No explicit "Tap to continue" text.
 
 Clio bubble 1 — Beat 5: Social Proof
   "Here's what I know so far."
@@ -814,7 +826,7 @@ Chip selector row (user taps one):
 
 After user taps (e.g. "Early career craft") — typing indicator "..." for 1.5s, then:
 
-Clio bubble 3:
+Clio bubble 3 (accelerated if user tapped bubble 1 or 2, or is fast reader):
   "Business in Hyderabad. Three clusters already active in that space."
 
 2-second pause. Clio's eyes shift to Curious.
@@ -955,6 +967,12 @@ When results arrive, pill updates to:
   - AGGIL chips (visually subdued, muted text, light gray border): "20-50 yrs" and "English, Hindi"
   - Clio insight line (full-width strip, light teal bg, 14px teal italic):
     "Most people here arrived not knowing anyone."
+    Shown on 1–2 cards per load MAX. Not on every card — when every card has an
+    insight, insights become noise. Only shown when the insight is genuinely novel
+    or emotionally resonant for that cluster.
+  - "Why this?" ℹ️ icon (12px, muted gray) next to insight line. Tapping expands
+    a 1-sentence explanation of Clio's reasoning (e.g. "This cluster's member
+    retention is 40% higher when newcomers see this."). Closes on tap outside.
   - "View Cluster" teal text button (bottom-right of card)
 
 NO score badge. NO match %. NO search bar anywhere.
@@ -964,11 +982,19 @@ Zero-results state:
   - Speech bubble: "Nothing yet. I check every few hours."
   - Tapping opens Clio chat overlay
 
-120-second browse trigger:
-  If user browses 120s without tapping a card:
+Cumulative dwell-time trigger:
+  Trigger fires when cumulative dwell time on Explore (across sessions) exceeds 120s
+  without the user tapping a card OR interacting with Clio FAB.
+  Gated: Does NOT fire if USER.md interaction_rate = 'slow' (set when user consistently
+  reads content slowly or has accessibility settings enabled).
   Clio FAB silently transitions from Resting to Curious (subtle head tilt, soft pulsing glow ring).
   She does NOT open a speech bubble or interrupt. She simply signals availability.
   Tapping the FAB opens Clio chat format as usual.
+
+Kill switch (user preference):
+  Settings → Privacy → "Let Clio know when I am taking my time" (default: ON).
+  When ON: Clio respects slow pacing and never triggers on dwell time.
+  When OFF: Standard cumulative trigger applies.
 
 Clio FAB (48px, peach face, teal ring) bottom-right, 16px from edge, 72px above nav.
 
@@ -1133,7 +1159,10 @@ CLIO INSIGHT PILL:
   Calibrated zero results:
     Clio Prominent (80px, Curious), centered:
     "Nothing fits those settings. Adjust something or start fresh?"
-    "Adjust settings" teal button (reopens AMA panel) | "Show me anything" gray link (resets)
+    Primary action: "Adjust settings" teal button (reopens AMA panel).
+    Secondary action: "Keep my settings but show broader matches" text link (gray, 14px,
+    below the button — visually demoted, not a button). Tapping preserves calibration
+    but widens the geographic or interest radius by one step. Does NOT reset to AGGIL defaults.
 
 Cluster cards: same format as 3.2. Cards reflect calibrated parameters.
 Clio FAB (48px) bottom-right, Resting.
@@ -1435,9 +1464,17 @@ Leave confirmation: bottom dialog.
   "Leave Women Entrepreneurs?" / "You can re-join later if you still meet criteria."
   "Leave" (red filled) + "Stay" (gray outline)
 
-10-Member Milestone card (Founder only — appears above AGGIL section when member count hits 10):
-  Clio (40px, Happy) + speech bubble: "Ten people. That is when clusters start feeling like something."
-  Dismissible by swipe. Never shown again after dismissed.
+10-Member Milestone modal (Founder only — triggered when member count hits 10):
+  Full-screen modal moment. NOT dismissible by swipe. Requires explicit CTA tap to close.
+  Background: subtle animated confetti in teal palette (muted, not gamified — 20 particles max).
+  Clio (80px, Happy, centered):
+    "Ten people. That is when clusters start feeling like something."
+  CTA buttons (stacked, full-width, 16px gap):
+    "Invite more people" (teal filled, 48px) — opens share sheet
+    "See what is happening" (teal outline, 48px) — navigates to Timeline
+  Secondary text below CTAs: "You built this. That matters." (14px, muted gray)
+  Close: "Done" text link at bottom. Tapping any CTA or Done dismisses modal.
+  Never shown again after dismissal.
 
 [CLIO_ANCHOR: anchor_clusterinfo_milestone]
 Bottom Navigation Bar: VISIBLE (dimmed behind sheet).
@@ -1464,7 +1501,9 @@ Cluster mini-preview:
 Footer note: "Anyone with this link will need to match the cluster's AGGIL criteria to join."
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: VISIBLE (dimmed behind sheet).
 ```
 
@@ -1901,11 +1940,16 @@ Activity section (recent):
 
 Important: NO real name. NO email. NO phone. NO exact Year of Birth shown anywhere.
 
-Clio incomplete profile banner (shown only when bio is empty OR interests < 3):
-  Clio (32px, Curious) left-aligned in a light teal banner strip.
-  Speech: "When you are ready, adding a few interests helps me find better spaces for you."
-  "Add Bio" teal text link inline.
-  Dismiss permanently by tapping the '×' button. Not shown when profile is complete.
+Clio profile-completion pulse (opt-in — NOT a banner):
+  When bio is empty OR interests < 3, Clio FAB shows a subtle pulse (opacity 0.5 → 1.0,
+  2s loop, max 3 cycles) with a small question mark badge (8px) in the top-right corner
+  of the FAB. This is the ONLY signal. No banner. No strip. No dismiss button.
+  Tapping the pulsed FAB opens Clio chat:
+    "Want help finding better clusters? Adding interests helps — but only when you are ready."
+    ["Add interests now"] ["Maybe later"]
+  If user taps "Maybe later" → pulse stops, never shown again for this profile state.
+  If user completes profile → pulse condition cleared automatically.
+  Respect minimalism as a valid choice. Never shame.
 
 Clio FAB (48px) bottom-right, Resting.
 
@@ -1984,7 +2028,9 @@ Log Out confirmation: alert dialog.
   "Log Out" (teal) + "Cancel" (gray)
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible (sub-page, back arrow present).
 ```
 
@@ -2155,7 +2201,9 @@ Card 2 — "New to Aggilo?":
 Note at bottom: "Once verified, you will be instantly added to Women Entrepreneurs."
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -2212,7 +2260,9 @@ Below: "By registering, you agree to Aggilo's Terms of Service and Privacy Polic
 NO password field. NO real name field. OTP sent on next step after tapping create.
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -2241,15 +2291,26 @@ Text area: "Additional details (optional)"
 
 "Submit Report" teal button. ✕ (Close icon - with "Discard changes?" dialog if needed).
 
-On submit: toast bar slides up from bottom (full-width, sage-green bg, white text, 4s):
-  "Report received. We review within 24 hours."
+First-time reporter flow (user has never submitted a report):
+  After tapping "Submit Report", a confirmation sheet slides up:
+    "You are about to report this post. This cannot be undone."
+    "Send report" (teal) | "Cancel" (gray outline)
+  Cancel returns to the report sheet. Send proceeds to standard submit.
+
+On submit: toast bar slides up from bottom (full-width, sage-green bg, white text, 5s):
+  "Report submitted. Undo?"
+  Undo link (teal, underlined) — tapping within 5s retracts the report and deletes
+  the report row. "Undo" text changes to "Report cancelled."
+  After 5s: toast text updates to "Report received. We review within 24 hours."
   Medium haptic impact feedback on submit tap.
   Sheet dismisses. Returns to previous screen.
 
 ℹ️ Tooltip: "Reports are reviewed by our moderation team within 24 hours. Your identity is kept confidential."
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -2280,7 +2341,9 @@ On submit: toast bar slides up from bottom (full-width, sage-green bg, white tex
 ℹ️ Tooltip: "The reported user will not know who reported them."
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -2305,7 +2368,9 @@ Two buttons:
   "Cancel" (gray outlined)
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible.
 ```
 
@@ -2354,7 +2419,9 @@ Important: "Back to Women Entrepreneurs" floating teal pill (bottom-right, above
   appears when scrolled. Brings user back to cluster context.
 
 [CLIO]
-Not present on this screen.
+Micro-presence: Tiny Clio icon (16px, Resting mood) in bottom-left corner.
+Tooltip on tap: "System stuff — I step back for privacy."
+No speech bubble. No interaction beyond tooltip.
 Bottom Navigation Bar: NOT visible (sub-page — back arrow present).
 ```
 
@@ -2898,6 +2965,43 @@ The following Phase 0 constraints are lifted in Phase 1:
 - Manual admin elevation (auto-elevation via AGGIL engine)
 - Next.js 14 stack (migrated to React 18 + Vite + Node/Fastify + BullMQ)
 
+### Screen 0.2 — Phase 1 "What's New" (Returning Phase 0 Users Only)
+
+```
+[GLOBAL STYLE PREFIX]
+
+Full-screen modal. Shown ONCE to users who have an existing Phase 0 account
+when they first open the Phase 1 app. NOT shown to new users.
+
+Background: deep teal-navy (#164E63) with subtle particle drift (teal dots,
+5px, floating upward slowly — calm, not celebratory).
+
+Top: Clio (80px, Happy, centered).
+  "You have been here since the beginning. Here is what is new."
+
+Beta Pioneer badge (centered, below Clio):
+  Teal pill: "Beta Pioneer" with a small star icon.
+  Subtext: "One of the first people to build this with us." (14px, white, 60% opacity)
+
+What's New list (3 items MAX — never more):
+  Each item: icon (32px, white outline) + title (16px bold, white) + 1-line
+  description (14px, white 80% opacity).
+  1. "Explore clusters beyond one room" — icon: 🔍
+  2. "Clio is everywhere now" — icon: 💬
+  3. "Create your own space" — icon: ✨
+
+CTA: "Continue" teal filled button, full-width, 48px.
+Tapping dismisses modal and lands on Explore (Screen 3.2).
+
+Dismissal: No swipe-to-dismiss. Must tap Continue. Modal never shown again.
+```
+
+> **Design note:** This is NOT an onboarding. These users already know the app.
+> The goal is honor, not instruction. The 3-item limit forces discipline — if there
+> are more than 3 meaningful changes, the launch was too big.
+
+[CLIO_ANCHOR: anchor_phase1_whats_new]
+Bottom Navigation Bar: NOT visible.
 
 ---
 

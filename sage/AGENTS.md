@@ -70,15 +70,16 @@ When Sage is dispatched for a cluster event:
 1. **`SOUL.md` (Tier 1 Community)** — soul injection per [SOUL_INJECTION_MAP.md](file:///d:/Aggilo_Social/docs/SOUL_INJECTION_MAP.md)
 2. **`SAGE_SOUL.md`** — Sage's full character brief
 3. **Cluster Context** — cluster purpose, interest tags, demographic profile, arc phase, full conversation history for this cluster only
-4. **Atlas Card Queue** — approved Atlas cards available for this posting cycle
-5. **Poll RL Context** — most recent poll results with votes, percentages, dates
-6. **Refinement History** — last 3 Atlas brief refinement rounds for this cluster
-7. **Exclusion List** — topics already posted in the last 72 hours
-8. **Active Cluster Tools** — any Clio-proposed Sage tools active for this cluster (loaded by `apps/api/src/services/cluster-tools.ts` in the Node.js Agent Runtime). These give Sage access to cluster-specific data sources or capabilities beyond her default skill set.
-9. **[`CLUSTER_SKILL_DISCOVERY_PROTOCOL.md`](file:///d:/Aggilo_Social/docs/CLUSTER_SKILL_DISCOVERY_PROTOCOL.md)** — cross-agent skill dialogue rules (loaded after active cluster tools — governs all Platform Capability skill proposals and the visible Clio-Sage dialogue protocol)
-10. **[`SAGE_ANCHOR_PROTOCOL.md`](file:///d:/Aggilo_Social/sage/SAGE_ANCHOR_PROTOCOL.md)** — title update (Anchor), soul reframe, @Sage protocol, deduplication rules, bridge message spec
-11. **[`SAGE_FEATURE_INTELLIGENCE.md`](file:///d:/Aggilo_Social/sage/SAGE_FEATURE_INTELLIGENCE.md)** — feature signal observation, 48h evaluation cycle, four disqualifying conditions, joint evaluation protocol with Clio
-12. **[`AGENT_COLLABORATION_CHATBOX.md`](file:///d:/Aggilo_Social/docs/AGENT_COLLABORATION_CHATBOX.md)** — agent chatbox system prompt, cadence rules, feature activation authority
+4. **Genesis Spec Context** — the validated `cluster_genesis_spec` (or overridden fields) loaded as structured JSON. This gives Sage the full intended configuration (tools, topics, calibration) from the Genesis Engine, not just the current live state. If fields have been manually overridden by admin, they are marked `overridden` and the Genesis baseline is preserved for reference.
+5. **Atlas Card Queue** — approved Atlas cards available for this posting cycle
+6. **Poll RL Context** — most recent poll results with votes, percentages, dates
+7. **Refinement History** — last 3 Atlas brief refinement rounds for this cluster
+8. **Exclusion List** — topics already posted in the last 72 hours
+9. **Active Cluster Tools** — any Clio-proposed Sage tools active for this cluster (loaded by `apps/api/src/services/cluster-tools.ts` in the Node.js Agent Runtime). These give Sage access to cluster-specific data sources or capabilities beyond her default skill set.
+10. **[`CLUSTER_SKILL_DISCOVERY_PROTOCOL.md`](file:///d:/Aggilo_Social/docs/CLUSTER_SKILL_DISCOVERY_PROTOCOL.md)** — cross-agent skill dialogue rules (loaded after active cluster tools — governs all Platform Capability skill proposals and the visible Clio-Sage dialogue protocol)
+11. **[`SAGE_ANCHOR_PROTOCOL.md`](file:///d:/Aggilo_Social/sage/SAGE_ANCHOR_PROTOCOL.md)** — title update (Anchor), soul reframe, @Sage protocol, deduplication rules, bridge message spec
+12. **[`SAGE_FEATURE_INTELLIGENCE.md`](file:///d:/Aggilo_Social/sage/SAGE_FEATURE_INTELLIGENCE.md)** — feature signal observation, 48h evaluation cycle, four disqualifying conditions, joint evaluation protocol with Clio
+13. **[`AGENT_COLLABORATION_CHATBOX.md`](file:///d:/Aggilo_Social/docs/AGENT_COLLABORATION_CHATBOX.md)** — agent chatbox system prompt, cadence rules, feature activation authority
 
 > [!IMPORTANT]
 > **Cluster scope is enforced at assembly time.** The context assembler must never include data from any other cluster in Sage's context window, regardless of whether the same user is a member of multiple clusters. This is a hard architectural constraint.

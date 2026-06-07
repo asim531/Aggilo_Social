@@ -1,8 +1,18 @@
 # Aggilo — System Implementation Prompt for AI Coding Agent
 ## Part 1: Architecture, Stack Decisions & Separation of Concerns
 
-> **Role**: You are a senior full-stack engineer. Build the Aggilo social platform per this blueprint.
-> **Read ALL parts (1-5) before writing any code. This document set constitutes MASTER_INSTRUCTIONS_v2.**
+> **Canonical sources:** For architecture and behaviour, treat these as primary:
+> - `ARCHITECTURE.md`
+> - `AGGILO_PLATFORM_REPORT.md`
+> - `AGGILO_PLATFORM_RULES.md`
+> - `architecture/planning/01_DOMAIN_MAP.md` .. `10_AGENT_PROMPT_REFINEMENT.md`
+> - `architecture/planning/agent_prompts/*.md` (per-agent system prompts)
+>
+> This Part 1 file is an implementation helper. If any statement here conflicts with the documents above, the architecture and planning docs **win** and this series is considered secondary.
+>
+> All AI agent implementations must respect the 4-layer inheritance contract and token ceilings defined in the planning docs and agent prompts.
+
+> **Role**: You are a senior full-stack engineer. Build the Aggilo social platform per this blueprint, while treating this document as helper guidance under the canonical sources listed above.
 
 ---
 
@@ -502,13 +512,13 @@ The following operational documents add behavioural and integration detail to th
 | 4 | **Software factories** | Humans (founders, admin team) define what success looks like; agents generate and iterate the implementation. Sage's prompt is DB-backed via `agent_prompt_proposals` — Clio drafts refinements grounded in evidence (logs, feedback, events), admin approves, the new prompt activates. Cluster-specific personas live in `sage_personas` and adapt without code changes. Tool/feature ideation flows from agent dialogue → member polling → admin approval → development. |
 | 5 | **No human middleware** | Every layer that exists only to route information is removed. Welfare flags realtime-push to admin (no polling). Sage→Clio handoff happens autonomously when public silence is right but private follow-up serves the member. Vault gaps Sage notices auto-create curation tasks for the admin. The cluster's daily operation requires the human only at decision points the platform genuinely cannot judge. |
 | 6 | **Three archetypes** | The platform supports builder-operators (admin, managers — directly run their clusters), DRIs (a cluster's named admin owns its outcomes), and AI-led workflows (Sage and Clio operate semi-autonomously under Clio's orchestration, with admin override). No diffused accountability — every cluster has one admin, every welfare flag has one human owner. |
-| 7 | **Token-max** | Spending is bounded but generous: a daily budget cap (`LLM_DAILY_BUDGET_USD`, default $5 for pilot deployments) prevents runaway, but inside the cap the agents are willing to call the LLM for every member message, every cadence exchange, every feature evaluation. Cost is measured per-call (`llm_response_logs.cost_estimate_usd`), surfaced per-operation in the admin LLM tab, and trades headcount (vault curators, moderators, community managers) for AI throughput. |
+| 7 | **Token-max** | Spending is bounded at two levels: (1) a global daily budget cap (`LLM_DAILY_BUDGET_USD`, default $5 for pilot deployments) prevents platform-wide runaway; (2) per-cluster Genesis Engine token budgets (Standard: 52K tokens / 6 calls; Elevated: 104K / 12 calls; Maximum: 156K / 18 calls) prevent single-cluster runaway. Per-cluster budgets are allocations within the global ceiling. When the global budget is exhausted, all Genesis jobs pause regardless of individual cluster caps. Cost is measured per-call (`llm_response_logs.cost_estimate_usd`), surfaced per-operation in the admin LLM tab, and trades headcount (vault curators, moderators, community managers) for AI throughput. |
 
 ### 7.2 What is Immutable Across All Clusters
 
 These do not vary by cluster type, persona, or admin preference:
 
-1. **The Aggilo Soul** — monotheistic foundation; connection as means, good character as the end.
+1. **The Aggilo Soul (prohibitions only)** — the Soul's convictions are invariant: the agent will never manufacture warmth, manipulate belief, treat members as engagement metrics, or disclose its internal mechanics. However, **how the Soul manifests** (register, warmth, scripture usage, silence expectation) is context-variable per cluster via `soul_manifestation_profile`. See `architecture/SOUL_MANIFESTATION_CATALOG.md`.
 2. **Welfare protocol** — regex pre-filter + Sage Step 0 + admin queue. Cannot be disabled.
 3. **Good-character protocol** — Sage Step 0.5. Cannot be disabled.
 4. **No protocol disclosure** — Sage never narrates her decision tree. Admins see neutralised labels in the dashboard, not framework mechanics.
@@ -521,6 +531,8 @@ These do not vary by cluster type, persona, or admin preference:
 
 These are configurable per cluster (see [`premium_cluster_requirements.md`](premium_cluster_requirements.md) for premium specifics):
 
+- **Soul manifestation profile** (`soul_manifestation_profile` in `cluster_specs.spec`) — how the invariant Soul shows up in this cluster: primary register, scripture usage frequency, silence expectation, vulnerability surface, conflict mode, celebration mode. Configured at creation by Genesis Engine; editable by admin. See `architecture/SOUL_MANIFESTATION_CATALOG.md`.
+- **Cluster persona overrides** (`cluster_persona_overrides`) — cluster-level vocabulary/phrases that layer on top of global personas (e.g. recurring phrases, words never used, emoji rules). Admin-approved; cannot contradict Soul prohibitions.
 - Sage's register, formality, and interjection frequency (`sage_personas`)
 - Reference vocabulary (e.g. `dua / ayah / hadith` for a faith cluster, `case / passage / precedent` for a legal cluster, etc.)
 - Vault grading rules

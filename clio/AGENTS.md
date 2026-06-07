@@ -413,6 +413,51 @@ Clio then produces a **Tool Proposal** written to `maintenance/[YYYY-MM]/[cluste
 
 ---
 
+## Pre-Spawn Questionnaire Authority
+
+Clio has explicit authority to orchestrate structured context questionnaires **before cluster creation**. This is a deterministic pre-spawn procedure, not idle chat.
+
+**Rules:**
+- 3-5 questions maximum. More = cognitive overload.
+- Questions are structured: multiple-choice buttons preferred; one free-text field for "anything else?"
+- Responses stored in `cluster_intent_responses`, not ephemeral chat.
+- Clio passes structured output (JSON) to the Intake Interpreter.
+- For scout-created clusters with no users: questionnaire deferred until first 3 joiners arrive individually.
+
+**Questionnaire varies by signal source:**
+| Source | Timing | Example questions |
+|--------|--------|-------------------|
+| Clio / waitlist | Pre-creation | Primary activity, meeting frequency, document uploads, course-specific vs. open |
+| Admin-initiated | Pre-creation | Brief on type-defaults, admin confirms or adjusts |
+| Scout (no users) | Post-join (first 3) | Same questions, individually presented; >60% convergence → adjust config |
+
+---
+
+## Feature Signal Recording Authority
+
+Clio **organically records feature signals** from member conversation. She never solicits features.
+
+**When Clio records a signal (ALL must be true):**
+1. Member mentions a need in natural conversation (not in response to Clio asking).
+2. The need is specific enough to act on.
+3. It is not a feature the cluster already has.
+4. It does not violate platform rules.
+
+**Signal classification:**
+| Scope | Stored? | Route |
+|-------|---------|-------|
+| Individual (personal need) | No | Member support / profile settings |
+| Current-cluster (relevant to this cluster) | Yes | `feature_signals` table |
+| Cross-cluster (would benefit multiple) | Yes | `feature_signals` table |
+
+**Deduplication:** Clio computes `feature_hash` (normalized, stemmed, stopwords removed). Match found → increment `frequency_count`. No match → insert new row.
+
+**Before proposing a new tool:** Clio checks `platform_tools` catalog. Match exists → recommend enabling. No match → record signal, proceed to standard proposal chain.
+
+**Privacy:** Raw signals (with `user_id`) are never surfaced to any human or agent. Only aggregated data reaches CIM or admin dashboard.
+
+---
+
 ## Fallback Logic
 
 When a user's demographic has no approved persona:

@@ -71,8 +71,8 @@ Every job is assigned to one of four lanes at submit time:
 |------|---------|-----|
 | **critical** | Welfare flag write, character concern write, account safety flag | <1s p99 |
 | **high** | Member post evaluation (Sage), Clio chat reply, Atlas brief from Sage | <5s p95 |
-| **medium** | Cadence dialogue, introspection, link unfurl, suggest-dua | <30s p95 |
-| **low** | Atlas pulse refresh, Scout discovery, Observer domain sweeps, calibration | <10min p95 (background) |
+| **medium** | Cadence dialogue, introspection, link unfurl, suggest-dua, **GenesisSpecGenerate**, **GenesisClusterValidate**, **PromptRefinementIntrospection** | <30s p95 |
+| **low** | Atlas pulse refresh, Scout discovery, Observer domain sweeps, calibration, **GenesisGapRemediate**, **GenesisPostLaunchMonitor**, **ClusterTokenBudgetPromote** | <10min p95 (background) |
 
 Lane assignment is per-job and immutable. A job submitted to `medium`
 cannot upgrade itself to `high`; it can only complete or fail.
@@ -90,7 +90,7 @@ The shape:
 
 ```yaml
 agent_runtime:
-  primary_lane: high | medium | low
+  primary_lane: critical | high | medium | low
   llm_quota_share_pct: 0-100   # share of NIM / paid LLM quota
   overflow_provider: groq_llama3 | none
   job_types:
@@ -144,6 +144,7 @@ per-job override allowed).
 | Timeout | Job marked timed-out; partial-result handler invoked if defined; surfaced as Observer Domain 5 finding |
 | LLM provider 5xx | `llmCall()` retries with overflow provider per agent's runtime profile; returns `status: 'error'` after exhaustion |
 | Daily LLM budget exceeded | `llmCall()` returns `status: 'budget_exceeded'`; agent surface degrades gracefully (Sage stays silent; Clio shows a brief platform line; cadence-exchange writes a `budget_exceeded` exchange row) |
+| **Per-cluster Genesis budget exhausted** | Operation stops immediately. Human escalation gate fires: cluster admin (premium) or platform admin (generic) notified. 7-day response window before Observer review. |
 | Cluster missing from registry | Job rejects at dispatch; logs an `unknown_cluster` event; never reaches the worker |
 | Idempotency collision | Job rejects at dispatch; logs an `idempotency_collision` event; the original in-flight job continues |
 

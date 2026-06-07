@@ -388,11 +388,13 @@ Aggilo Observer watches across nine domains simultaneously. Each domain runs on 
 - Clio failure patterns (empty dashboard rates, zero-cluster-match rates, persona coverage gaps)
 - Scout inference-only findings flagged `verify_with_mode_a` (signals Scout may need a new observation tool)
 - Observer's own Domain 7 findings (underserved demographics may indicate Clio needs a new tool)
+- **Newly built cluster tools** (`cluster_tool_enablements` rows without a matching `platform_tools` entry) — scored for global reusability promotion
 
 **What it surfaces:**
 - Signals to admin that a specific agent in the hierarchy needs a tool analysis run
 - For Clio specifically: Observer runs the analysis itself (using Platform Rules + `tool_proposal_analysis` LLM op) and proposes the tool directly
 - For Sage, Scout, Atlas: Observer surfaces the finding to admin, who approves triggering the superior agent's analysis job
+- **Global tool promotion candidates:** Newly built tools scored for reusability (0-100). Score ≥ 80 → auto-promote to `platform_tools` (admin can veto retroactively). Score 50-79 → flag for admin review. Score < 50 → keep cluster-private, re-evaluate in 30 days.
 
 **The tool analysis trigger flow:**
 
@@ -432,6 +434,40 @@ Aggilo Observer watches across nine domains simultaneously. Each domain runs on 
   "confidence": 0.91
 }
 ```
+
+---
+
+### Domain 11 — Feature Signal Review
+
+**Cadence:** Monthly
+
+**What it reads:**
+- `feature_signals` table (aggregated form only — individual rows with `user_id` are never surfaced)
+- Signals where `status = 'captured'` and `observer_reviewed` is pending
+- Cross-cluster pattern detection (same feature mentioned in multiple clusters)
+
+**What it checks:**
+1. **Platform rule compliance** — Does this signal violate any immutable rule (safety, privacy, welfare)?
+2. **Safety assessment** — Does it create welfare, safety, or privacy risks?
+3. **Protocol disclosure risk** — Would implementing it require explaining internal mechanics to members?
+4. **K-anonymity compliance** — Can this signal be safely aggregated without identifying individuals?
+
+**What it does NOT check:**
+- Signal merit (whether the feature is "good" or "useful") — that is CIM Functional Module's job
+- Implementation feasibility — that is the tool proposal chain's job
+- Member-specific attribution — Observer never sees who said what
+
+**Actions:**
+| Check | Pass | Fail |
+|-------|------|------|
+| Rule compliance | Status → `observer_reviewed`, available to CIM | Status stays `captured`, flagged to platform admin with note |
+| Safety | Proceed to CIM queue | Escalate to welfare protocol (human review) |
+| Protocol disclosure | Proceed | Reject with rationale |
+| K-anonymity | Aggregate for CIM | Hold until cluster reaches 8 members |
+
+**Scheduling:** Observer reviews feature signals on its own schedule. It does not rush review because a cluster admin requested it, nor does it skip review for "urgent" signals. Reviewed signals are made available to CIM Functional Module; CIM decides whether to act on them.
+
+---
 
 ## Admin Dashboard Structure
 

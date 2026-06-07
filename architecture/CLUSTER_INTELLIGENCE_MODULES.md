@@ -55,6 +55,12 @@ CIM must never treat lurkers as a problem to solve. The 90-9-1 rule is a feature
 - **Ice-breaker prompts for low-engagement sub-groups** (subtle, background — never public call-outs)
 - **Structural adjustments** (threading, DM opening when organically appropriate)
 - **Cultural setter observation:** Surface which members disproportionately set tone or norms, and what happens if that person leaves — this is structural intelligence, not a recommendation to act.
+- **Sage calibration refinements:** Small deltas to the Genesis Engine baseline (e.g., "Sage should cite more frequently in this cluster"). NOT wholesale rewrites. If a refinement would change cluster type, demographics, or core purpose, it triggers Genesis Engine review instead of direct application.
+- **Prompt calibration mismatch flag:** If the Behavioural Module detects register drift (Sage's tone no longer matches member tone), vocabulary gaps, or format coherence issues, it flags `prompt_quality_decline` for the Observer's Priority Queue Engine. This consumes Pool B (prompt refinement budget), not Pool A (general introspection). See `observer/OBSERVER_INTROSPECTION_ENGINE.md` for scoring and budget rules.
+
+**Genesis threshold:** If a Behavioural Module proposal would modify `cluster_genesis_spec` fields (cluster type, tool enablement, demographic guardrails, core purpose), the proposal is routed to the Genesis Engine for review — not applied directly. The Genesis Engine validates the change against platform rules and cluster member impact before any modification.
+
+**Prompt refinement threshold:** If a proposal only affects Layer 3 prompts (Sage register, Clio context fragment, composer feature flags) without changing cluster structure, it is routed to Observer's Channel 1 (autonomous stewardship) with a 30-minute veto window, NOT to the Genesis Engine.
 
 ### 2.2 Functional Module
 
@@ -66,6 +72,8 @@ CIM must never treat lurkers as a problem to solve. The 90-9-1 rule is a feature
 - Unused skills (skills Sage never calls, features members ignore)
 - Missing capabilities (patterns of need that no tool addresses)
 - UX friction (where members drop off, struggle, or create workarounds)
+- Feature signals (`feature_signals` table, aggregated only) — organic member needs captured by Clio and Sage polling. **K-anonymity enforced:** Only signals with `frequency_count >= 3` OR from clusters with `>= 8 members` are included. Individual signals (with user_id) are never visible to CIM or any agent.
+- Global tool catalog (`platform_tools`) — before proposing a new tool, CIM checks if a matching global tool exists that could be enabled instead.
 - Tool coverage (does every cluster type have appropriate tools?)
 
 **Proposes:**

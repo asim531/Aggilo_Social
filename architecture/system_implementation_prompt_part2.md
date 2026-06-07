@@ -1,6 +1,15 @@
 # Aggilo — System Implementation Prompt
 ## Part 2: Database Schema, ER Diagram & Sequence Diagrams
 
+> **Canonical sources:** Schema and platform behaviour are defined primarily in:
+> - `ARCHITECTURE.md`
+> - `AGGILO_PLATFORM_REPORT.md`
+> - `AGGILO_PLATFORM_RULES.md`
+> - `architecture/planning/01_DOMAIN_MAP.md` .. `10_AGENT_PROMPT_REFINEMENT.md`
+> - `AGENT_RUNTIME.md`, `CLUSTER_GENESIS_ENGINE.md`, `AGENTIC_FEATURE_SIGNALS.md`, `PLATFORM_TOOLS_REGISTRY.md`
+>
+> This Part 2 file is an implementation helper. If any statement here conflicts with the documents above, the architecture and planning docs **win** and this series is considered secondary.
+
 ---
 
 > **Phase 1 architecture additions (read these alongside this Part):**
@@ -426,6 +435,28 @@ erDiagram
         timestamptz reviewed_at
     }
 
+    %% === Soul manifestation audit ===
+    soul_manifestation_audit {
+        uuid id PK
+        uuid cluster_id "FK → clusters.id"
+        jsonb profile "{primary_register, scripture_usage, silence_expectation, vulnerability_surface, conflict_mode, celebration_mode}"
+        string changed_by "genesis_engine | observer | admin | founder | system"
+        text reason
+        timestamptz created_at
+    }
+
+    %% === Cluster persona overrides ===
+    cluster_persona_overrides {
+        uuid id PK
+        uuid cluster_id "FK → clusters.id"
+        string override_type "full_replacement | layered_modifier"
+        jsonb persona_content "{recurring_phrases, words_never_used, emoji_rules, humour_style, greeting_template}"
+        enum status "draft | review | approved | active"
+        uuid approved_by "FK → profiles.id, nullable"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     %% === Observer findings ===
     observer_findings {
         uuid id PK
@@ -587,6 +618,8 @@ erDiagram
     clusters ||--o{ sage_description_proposals : "receives"
     clusters ||--o{ cluster_description_history : "tracks"
     clusters ||--o{ cluster_tools : "has"
+    clusters ||--o{ soul_manifestation_audit : "audits"
+    clusters ||--o{ cluster_persona_overrides : "overrides"
     clusters ||--o{ cluster_polls : "has"
     clusters ||--o{ observer_findings : "generates"
     clusters ||--o{ observer_prompt_updates : "stewarded by"
@@ -1264,6 +1297,389 @@ ALTER TABLE cluster_config
   ADD COLUMN prompt_version INT DEFAULT 0;
   -- Optimistic locking — incremented on every prompt update
 ```
+
+-- ==========================================================================
+-- Genesis Engine Schema (v3.5)
+-- Source: architecture/CLUSTER_GENESIS_ENGINE.md
+-- ==========================================================================
+
+CREATE TABLE cluster_specs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL UNIQUE REFERENCES clusters(id),
+  spec_version VARCHAR(16) NOT NULL DEFAULT '1.0.0',
+  spec JSONB NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft','introspection_failed','introspection_passed','validated','remediation_pending','complete')),
+  introspection_conflicts JSONB DEFAULT '[]',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE cluster_genesis_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  report_type VARCHAR(32) NOT NULL
+    CHECK (report_type IN ('creation_validation','post_launch_monitor','budget_exhaustion')),
+  cycle VARCHAR(8) NOT NULL CHECK (cycle IN ('A','B','post')),
+  findings JSONB NOT NULL,
+  remediation_actions JSONB DEFAULT '[]',
+  admin_approval_required BOOLEAN DEFAULT FALSE,
+  admin_approved_at TIMESTAMPTZ,
+  admin_approved_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE cluster_intent_responses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  user_id UUID REFERENCES profiles(id),  -- NULL for admin/pre-creation
+  source VARCHAR(32) NOT NULL CHECK (source IN ('founder_description','admin_input','scout_inference','member_refinement')),
+  description TEXT NOT NULL,             -- The free-text description (replaces questionnaire)
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE cluster_token_budget_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  tier VARCHAR(16) NOT NULL CHECK (tier IN ('standard','elevated','maximum')),
+  action VARCHAR(16) NOT NULL CHECK (action IN ('promoted','demoted','auto_revoked')),
+  justification TEXT,
+  promoted_by UUID REFERENCES profiles(id),
+  duration_days INT DEFAULT 30,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================================================
+-- Soul Manifestation Schema (v3.5)
+-- Source: architecture/SOUL_MANIFESTATION_CATALOG.md
+-- ==========================================================================
+
+-- cluster_persona_overrides: cluster-level persona modifiers
+CREATE TABLE cluster_persona_overrides (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,
+  override_type VARCHAR(32) NOT NULL
+    CHECK (override_type IN ('full_replacement', 'layered_modifier')),
+  persona_content JSONB NOT NULL
+    DEFAULT '{"recurring_phrases": [], "words_never_used": [], "emoji_rules": null, "humour_style": null, "greeting_template": null}'::jsonb,
+  status VARCHAR(32) NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'review', 'approved', 'active')),
+  approved_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_cluster_persona_overrides_cluster
+  ON cluster_persona_overrides(cluster_id, status);
+
+-- soul_manifestation_audit: immutable log of profile changes
+CREATE TABLE soul_manifestation_audit (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,
+  profile JSONB NOT NULL
+    DEFAULT '{"primary_register": null, "scripture_usage": null, "silence_expectation": null, "vulnerability_surface": null, "conflict_mode": null, "celebration_mode": null}'::jsonb,
+  changed_by VARCHAR(32) NOT NULL,
+  reason TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_soul_manifestation_audit_cluster
+  ON soul_manifestation_audit(cluster_id, created_at DESC);
+
+-- validate_soul_manifestation_profile: enum enforcement function (per-recipient map)
+-- profile JSONB is a map: { "default": {...}, "stakeholder_key": {...}, ... }
+CREATE OR REPLACE FUNCTION validate_soul_manifestation_profile(profile JSONB)
+RETURNS BOOLEAN AS $$
+DECLARE
+  valid_registers TEXT[] := ARRAY[
+    'warmth', 'rigor', 'curiosity', 'playfulness', 'reverence',
+    'inquiry', 'admonition', 'exhortation', 'silence', 'celebration'
+  ];
+  valid_scripture TEXT[] := ARRAY['frequent', 'occasional', 'rare', 'none'];
+  valid_silence TEXT[] := ARRAY['high', 'medium', 'low'];
+  valid_surface TEXT[] := ARRAY['sacred', 'honoured', 'guarded', 'closed'];
+  valid_conflict TEXT[] := ARRAY['reconciliation', 'truth_telling', 'forgiveness', 'accountability'];
+  valid_celebration TEXT[] := ARRAY['earned', 'gratitude', 'milestone', 'quiet'];
+  recipient_profile JSONB;
+BEGIN
+  FOR recipient_profile IN SELECT jsonb_object_values(profile)
+  LOOP
+    IF NOT (
+      (recipient_profile->>'primary_register' IS NULL OR recipient_profile->>'primary_register' = ANY(valid_registers))
+      AND (recipient_profile->>'scripture_usage' IS NULL OR recipient_profile->>'scripture_usage' = ANY(valid_scripture))
+      AND (recipient_profile->>'silence_expectation' IS NULL OR recipient_profile->>'silence_expectation' = ANY(valid_silence))
+      AND (recipient_profile->>'vulnerability_surface' IS NULL OR recipient_profile->>'vulnerability_surface' = ANY(valid_surface))
+      AND (recipient_profile->>'conflict_mode' IS NULL OR recipient_profile->>'conflict_mode' = ANY(valid_conflict))
+      AND (recipient_profile->>'celebration_mode' IS NULL OR recipient_profile->>'celebration_mode' = ANY(valid_celebration))
+    ) THEN
+      RETURN FALSE;
+    END IF;
+  END LOOP;
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- ==========================================================================
+-- Feature Signals Schema (v3.5)
+-- Source: architecture/AGENTIC_FEATURE_SIGNALS.md
+-- ==========================================================================
+
+CREATE TABLE feature_signals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  user_id UUID NOT NULL REFERENCES profiles(id),
+  signal_text TEXT NOT NULL,
+  signal_scope VARCHAR(32) NOT NULL CHECK (signal_scope IN ('current_cluster','cross_cluster')),
+  signal_type VARCHAR(32) NOT NULL CHECK (signal_type IN ('tool_request','feature_idea','workflow_gap','integration_need')),
+  status VARCHAR(32) NOT NULL DEFAULT 'captured'
+    CHECK (status IN ('captured','observer_reviewed','cim_queued','implemented','rejected')),
+  feature_hash VARCHAR(64) NOT NULL,
+  frequency_count INT DEFAULT 1,
+  first_mentioned_at TIMESTAMPTZ DEFAULT NOW(),
+  last_mentioned_at TIMESTAMPTZ DEFAULT NOW(),
+  source VARCHAR(32) NOT NULL CHECK (source IN ('clio_cli','sage_polling','member_vote')),
+  source_post_id UUID REFERENCES posts(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_feature_signals_hash ON feature_signals(cluster_id, feature_hash);
+
+-- ==========================================================================
+-- Platform Tools Registry Schema (v3.5)
+-- Replaces cluster_tools. Source: architecture/PLATFORM_TOOLS_REGISTRY.md
+-- ==========================================================================
+
+CREATE TABLE platform_tools (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tool_name VARCHAR(128) NOT NULL UNIQUE,
+  display_name VARCHAR(128) NOT NULL,
+  description TEXT NOT NULL,
+  tool_kind VARCHAR(32) NOT NULL CHECK (tool_kind IN ('agent_tool','member_feature','platform_capability')),
+  code_module VARCHAR(256) NOT NULL,
+  prompt_template TEXT,
+  config_schema JSONB,
+  min_cluster_type VARCHAR(16) DEFAULT 'generic' CHECK (min_cluster_type IN ('generic','premium')),
+  incompatible_tools UUID[],
+  status VARCHAR(32) NOT NULL DEFAULT 'proposed'
+    CHECK (status IN ('proposed','approved','active','unused','archived')),
+  reusability_score INT,
+  promoted_at TIMESTAMPTZ,
+  promoted_by VARCHAR(32) DEFAULT 'observer_auto' CHECK (promoted_by IN ('observer_auto','admin_manual')),
+  admin_vetoed BOOLEAN DEFAULT FALSE,
+  version VARCHAR(16) NOT NULL DEFAULT '1.0.0',
+  superseded_by UUID REFERENCES platform_tools(id),
+  cost_profile JSONB DEFAULT '{}',
+  total_clusters_enabled INT DEFAULT 0,
+  total_invocations_30d INT DEFAULT 0,
+  last_invoked_at TIMESTAMPTZ,
+  unused_since TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE cluster_tool_enablements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  platform_tool_id UUID NOT NULL REFERENCES platform_tools(id),
+  platform_tool_version VARCHAR(16) DEFAULT '1.0.0',
+  cluster_display_name VARCHAR(128),
+  cluster_description TEXT,
+  cluster_icon VARCHAR(64),
+  cluster_prompt_fragment TEXT,
+  config_overrides JSONB DEFAULT '{}',
+  status VARCHAR(32) NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','removed')),
+  enabled_by VARCHAR(32) NOT NULL CHECK (enabled_by IN ('genesis_engine','admin','clio','member_vote')),
+  enabled_at TIMESTAMPTZ DEFAULT NOW(),
+  invocation_count INT DEFAULT 0,
+  last_invoked_at TIMESTAMPTZ,
+  UNIQUE(cluster_id, platform_tool_id)
+);
+
+-- ==========================================================================
+-- Tool Economy Schema (v3.5 — architecture-only, deferred implementation)
+-- Source: architecture/TOOL_ECONOMY.md
+-- ==========================================================================
+
+CREATE TABLE tool_usage_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  platform_tool_id UUID NOT NULL REFERENCES platform_tools(id),
+  user_id UUID REFERENCES profiles(id),
+  invocation_type VARCHAR(32) NOT NULL CHECK (invocation_type IN ('agent','member','system')),
+  llm_tokens_used INT DEFAULT 0,
+  compute_ms INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================================================
+-- Demand Signals Schema (v3.5 — Phase0 graduation)
+-- Source: phase0/mvp implementation, graduated to main product
+-- ==========================================================================
+
+CREATE TABLE cluster_demand_signals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID REFERENCES clusters(id),
+  -- nullable: signal may not map to an existing cluster (new concept)
+  concept_hash VARCHAR(64) NOT NULL,
+  -- SHA-256 of normalized concept (e.g. "muslim women entrepreneurs hyderabad")
+  concept_label VARCHAR(256) NOT NULL,
+  -- human-readable summary of what the visitor wanted
+  source VARCHAR(32) NOT NULL CHECK (source IN ('public_preview','scout_suggestion','clio_discovery')),
+  visitor_email VARCHAR(256),
+  -- optional waitlist email; hashed in logs
+  visitor_age_range VARCHAR(16),
+  -- e.g. "18-24", "25-34" — self-declared or inferred
+  visitor_gender VARCHAR(16),
+  visitor_city VARCHAR(128),
+  visitor_interests TEXT[],
+  -- array of interest tags the visitor selected or typed
+  signal_count INT DEFAULT 1,
+  -- deduplicated: same concept_hash increments this counter
+  last_signal_at TIMESTAMPTZ DEFAULT NOW(),
+  status VARCHAR(32) NOT NULL DEFAULT 'open'
+    CHECK (status IN ('open','observer_proposed','admin_approved','admin_rejected','cluster_created')),
+  observer_proposal_id UUID REFERENCES observer_findings(id),
+  -- linked when Observer proposes a new cluster from this signal
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_cluster_demand_signals_concept ON cluster_demand_signals(concept_hash);
+CREATE INDEX idx_cluster_demand_signals_status ON cluster_demand_signals(status, last_signal_at DESC);
+
+-- ==========================================================================
+-- Sage Post Feedback Schema (v3.5 — Phase0 graduation)
+-- Source: phase0/mvp implementation, graduated to main product
+-- ==========================================================================
+
+CREATE TABLE sage_post_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  user_id UUID NOT NULL REFERENCES profiles(id),
+  feedback_type VARCHAR(16) NOT NULL CHECK (feedback_type IN ('thumbs_up','thumbs_down','report')),
+  -- thumbs_up / thumbs_down: primary signal for prompt refinement
+  -- report: content concern, routes to moderation + welfare check
+  report_reason VARCHAR(64),
+  -- nullable unless feedback_type = 'report'. Values: "off-topic","incorrect","insensitive","other"
+  report_detail TEXT,
+  -- nullable: free-text explanation when feedback_type = 'report'
+  consumed_by_observer BOOLEAN DEFAULT FALSE,
+  -- set TRUE when Observer ingests this row into its feedback digest
+  consumed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_sage_post_feedback_post ON sage_post_feedback(post_id);
+CREATE INDEX idx_sage_post_feedback_cluster ON sage_post_feedback(cluster_id, consumed_by_observer, created_at DESC);
+
+-- Note: This table is the PRIMARY data source for the Observer's
+-- `sage_positive_feedback_rate` in the User Feedback Digest.
+-- See observer/OBSERVER_INTROSPECTION_ENGINE.md §User Feedback Digest.
+
+-- ==========================================================================
+-- Feature Proposal Schema (v3.6 — Fluid Adaptive Architecture)
+-- Source: architecture/CLUSTER_GENESIS_ENGINE.md §7.4
+-- ==========================================================================
+
+CREATE TABLE cluster_feature_proposals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,
+  feature_id VARCHAR(128) NOT NULL,
+  feature_type VARCHAR(32) NOT NULL CHECK (feature_type IN ('platform_tool', 'generated_tool', 'content_type', 'ui_layout')),
+  proposal_source VARCHAR(32) NOT NULL CHECK (proposal_source IN ('genesis_inference', 'observer_signal', 'admin_request', 'member_poll')),
+  probability DECIMAL(3,2) NOT NULL CHECK (probability BETWEEN 0.0 AND 1.0),
+  confidence DECIMAL(3,2) NOT NULL CHECK (confidence BETWEEN 0.0 AND 1.0),
+  trigger_description TEXT NOT NULL,
+  evidence JSONB DEFAULT '[]',
+  ui_placement VARCHAR(64),
+  status VARCHAR(32) NOT NULL DEFAULT 'proposed'
+    CHECK (status IN ('proposed', 'admin_approved', 'admin_rejected', 'auto_spawned', 'implemented', 'removed')),
+  admin_decision_at TIMESTAMPTZ,
+  admin_decision_by UUID REFERENCES profiles(id),
+  admin_decision_reason TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_cluster_feature_proposals_cluster
+  ON cluster_feature_proposals(cluster_id, status);
+
+-- ==========================================================================
+-- Evolution Governor Schema (v3.6 — Fluid Adaptive Architecture)
+-- Source: architecture/EVOLUTION_GOVERNOR.md
+-- ==========================================================================
+
+CREATE TABLE evolution_proposals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,
+  proposal_type VARCHAR(64) NOT NULL
+    CHECK (proposal_type IN ('tag_recalculation', 'stakeholder_reinference', 'feature_spawn',
+                             'tone_adjustment', 'ui_layout_change', 'cluster_spawn_proposal',
+                             'curriculum_extension', 'content_strategy_shift', 'reversal')),
+  tier VARCHAR(32) NOT NULL CHECK (tier IN ('tier_1_crisis', 'tier_2_strong_demand', 'tier_3_emerging', 'tier_4_background')),
+  cost INT NOT NULL,
+  evidence JSONB NOT NULL,
+  confidence DECIMAL(3,2) NOT NULL,
+  jarringness_score DECIMAL(3,2) NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'proposed'
+    CHECK (status IN ('proposed', 'approved', 'rejected', 'implemented', 'reversed')),
+  admin_approved_at TIMESTAMPTZ,
+  admin_approved_by UUID REFERENCES profiles(id),
+  implemented_at TIMESTAMPTZ,
+  outcome_verdict VARCHAR(32)
+    CHECK (outcome_verdict IN ('helped', 'no_effect', 'worsened', 'inconclusive')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE evolution_budget_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,
+  base_capacity INT NOT NULL DEFAULT 100,
+  tier_multiplier DECIMAL(3,1) NOT NULL,
+  actual_capacity INT NOT NULL,
+  consumed INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================================================
+-- Cluster Spawn Engine Schema (v3.6 — Fluid Adaptive Architecture)
+-- Source: architecture/CLUSTER_SPAWN_ENGINE.md
+-- ==========================================================================
+
+CREATE TABLE cluster_spawn_proposals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_cluster_id UUID NOT NULL REFERENCES clusters(id),
+  proposed_cluster_name VARCHAR(256) NOT NULL,
+  purpose_statement TEXT NOT NULL,
+  link_type VARCHAR(32) NOT NULL CHECK (link_type IN ('sequel', 'spinoff', 'sibling')),
+  inferred_composition JSONB NOT NULL,
+  stakeholders JSONB NOT NULL,
+  soul_manifestation_profile JSONB NOT NULL,
+  feature_spawn_candidates JSONB DEFAULT '[]',
+  demographic_guardrails JSONB NOT NULL,
+  migration_path JSONB NOT NULL,
+  evidence JSONB NOT NULL,
+  confidence DECIMAL(3,2) NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'proposed'
+    CHECK (status IN ('proposed', 'admin_approved', 'admin_rejected', 'implemented', 'archived')),
+  admin_decision_at TIMESTAMPTZ,
+  admin_decision_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE cluster_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_cluster_id UUID NOT NULL REFERENCES clusters(id),
+  child_cluster_id UUID NOT NULL REFERENCES clusters(id),
+  link_type VARCHAR(32) NOT NULL CHECK (link_type IN ('sequel', 'spinoff', 'sibling')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (parent_cluster_id, child_cluster_id)
+);
 
 ### RLS policies (Phase 1)
 

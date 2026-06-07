@@ -357,6 +357,17 @@ Once a cluster has at least one member, the Founder enters the **post-spawn refi
 | **Feature activation authority** | Clio may activate **immediate features** (no development required) on agreement with Sage in the chatbox, subject to: no rule violations, no admin override flag for the cluster. Admin can override any activation from the dashboard. |
 | **Source of truth** | [`docs/AGENT_COLLABORATION_CHATBOX.md`](docs/AGENT_COLLABORATION_CHATBOX.md). |
 
+### Soul Manifestation (All Clusters)
+
+| Rule | Detail |
+|------|--------|
+| **Invariant prohibitions** | The Soul's core convictions are immutable across all clusters: no manufactured warmth, no belief manipulation, no engagement optimisation, no PII exploitation, no silent character judgment, no protocol disclosure. These cannot be overridden by any `soul_manifestation_profile` or `cluster_persona_override`. |
+| **Variable manifestation** | How the Soul shows up (register, scripture usage, silence expectation, vulnerability surface, conflict mode, celebration mode) is context-variable per cluster. See `architecture/SOUL_MANIFESTATION_CATALOG.md`. |
+| **Genesis Engine inference** | The Genesis Engine infers the `soul_manifestation_profile` from cluster purpose, tags, demographic context, and admin questionnaire response. |
+| **Admin override** | Admins may edit the `soul_manifestation_profile` via the Soul Manifestation Panel. Changes are audited in `soul_manifestation_audit`. |
+| **Persona override governance** | Cluster-level persona overrides (`cluster_persona_overrides`) require admin approval and cannot introduce prohibited phrases or contradict Soul invariants. |
+| **Observer monitoring** | The Observer evaluates "Manifestation Alignment" (Dimension 6) and proposes Tier 1 `soul_manifestation_shift` updates if cluster behaviour drifts from configured profile. |
+
 ### AI Matchmaker (Premium Only)
 
 | Rule | Detail |
@@ -523,6 +534,125 @@ Everything in Free, plus:
 | **No follower system** | Connections happen through cluster membership, not followers |
 | **No public profiles** | User profiles visible only within shared cluster context |
 | **Event Brief** | Daily notification with trending topics and new cluster matches |
+
+---
+
+---
+
+## 🪙 TOKEN BUDGET GOVERNANCE RULES (Part 8)
+
+### Genesis Engine Token Caps
+
+| Operation | Max LLM Calls | Max Tokens |
+|-----------|--------------|------------|
+| Pre-spawn questionnaire (Clio) | 1 | 8K |
+| Cycle A: Spec generation | 2 (draft + 1 revision) | 16K |
+| Cycle A: Introspection | 1 | 8K |
+| Cycle B: Creation validation | 1 | 8K |
+| Cycle B: Gap remediation | 1 (auto-only) | 4K |
+| Post-launch monitor (weekly) | 1 | 8K |
+| **Genesis total per cluster** | **6 calls max** | **52K tokens max (Standard)** |
+
+### Budget Tiers
+
+| Tier | Multiplier | Max Tokens | Who Can Set |
+|------|-----------|------------|-------------|
+| **Standard** | 1× | 52K | Default for all new clusters |
+| **Elevated** | 2× | 104K | Platform admin (any); cluster admin (premium only) |
+| **Maximum** | 3× | 156K | Platform admin only |
+
+### Promotion Rules
+
+- Promotion requires **written justification** logged in `cluster_token_budget_log`.
+- Promotion is **time-bounded** (30 days default, renewable).
+- **Auto-revoke** on 14-day cluster inactivity.
+- **Audit trail:** Every promotion, demotion, and justification is logged.
+- **No permanent unlimited budgets.** All promotions expire unless renewed.
+
+### Escalation Gates
+
+- Budget exhaustion routes to: cluster admin (premium clusters) or platform admin (generic clusters).
+- **7-day response window** before Observer review.
+- Admin options: approve manual action, request re-run, or promote budget tier.
+
+### Anti-Loop Rules (Immutable)
+
+1. **No nested introspection.** Genesis Engine never introspects its own output. One revision max.
+2. **No CIM → Genesis feedback loop.** CIM may read `cluster_genesis_spec` but cannot trigger a new Genesis cycle.
+3. **Cooldown periods.** Failed post-launch remediation → 14-day hold before next check.
+4. **No budget borrowing.** A cluster cannot use another cluster's tokens or the global daily pool.
+5. **Token-count enforcement.** Agent Runtime passes `max_tokens` to every Genesis LLM call.
+
+### Prompt Refinement Quota Rules
+
+- Prompt refinement receives a **dedicated budget pool** (Pool B) separate from general introspection (Pool A).
+- Pool B quotas are **per-cluster-monthly**:
+  - Generic clusters: 2 deep + 4 standard per month
+  - Premium clusters: 4 deep + 8 standard per month
+  - Elevated/Maximum token budget clusters: +2 deep bonus
+- **No borrowing across pools.** General introspection cannot consume Pool B quota. Prompt refinement cannot consume Pool A quota.
+- Unused allowance rolls over 1 month, then expires.
+- Cluster admin can request manual review ("Sage feels off"), which consumes 1 deep introspection from Pool B with `prompt_quality_decline = 25` (admin override).
+- **30-day rollback window.** Cluster admin can revert any prompt change within 30 days. Older changes require platform admin.
+
+---
+
+## 🧰 TOOL REGISTRY RULES (Part 9)
+
+### Global Tool Library
+
+- Tools are reusable **libraries**, not custom builds per cluster.
+- One backend, many skins. Same code runs everywhere; cluster-specific UI/UX via `config_overrides`.
+- Global tools live in `platform_tools`. Per-cluster imports live in `cluster_tool_enablements`.
+
+### Auto-Promotion
+
+- Observer scores **reusability** (0-100) on first tool build.
+- **Score ≥ 80:** Auto-promote to global. Available to all clusters immediately.
+- **Score < 80:** Keep cluster-private. Re-evaluate in 30 days.
+- Admin can **veto** any auto-promotion retroactively.
+- No concurrence requirement (waiting for 3 clusters is wasteful).
+
+### Soft Retirement
+
+- **90 days unused:** Status → `unused`. Hidden under toggle. Instant revival.
+- **180 days unused:** Status → `archived`. Hidden from default view. Platform_admin can revive.
+- **No active deletion.** Code stays in repo. Hiding is free.
+
+### Compatibility
+
+- `min_cluster_type` enforces generic/premium gating.
+- `incompatible_tools` array prevents dangerous combinations.
+- Config validated against JSON Schema on enablement.
+- Version pinning protects existing clusters from breaking changes.
+
+### Forking
+
+- Forking allowed but discouraged. Config variations use `config_overrides`.
+- Forked tools scored independently for global promotion.
+- Every fork is logged and auditable.
+
+---
+
+### Member-Facing Framework Change Rule (NEW)
+
+When a cluster's ecosystem type, success model, or progression model changes (a "hard pivot" per `CLUSTER_GENESIS_ENGINE.md` §10):
+
+1. **Explicit communication is mandatory.** Sage/Clio MUST communicate the change using the 6-step protocol:
+   - Acknowledge what the cluster was
+   - State what has been observed (specific evidence, never surveillance language)
+   - State what changes
+   - State what stays the same (history, relationships, vault)
+   - Invite feedback
+   - Provide opt-out (pause or move to linked cluster)
+
+2. **History is preserved.** Member posts, vault items, profiles, badges, and stage advancement history are never deleted. Old success model scores are archived. Old ecosystem specs are versioned in `ecospec_versions`.
+
+3. **Rollback must be available.** Admin can one-click rollback to the prior ecosystem spec within 14 days of deployment. Members are automatically notified.
+
+4. **No silent pivots.** A cluster may never change its fundamental framework without explicit member communication, even if the change is technically "low disruption."
+
+5. **Opt-out is non-punitive.** Members who choose to pause or leave due to a framework change are not flagged as "churn." Their departure is recorded as `framework_mismatch_opt_out` — a signal that the pivot may have been premature.
 
 ---
 

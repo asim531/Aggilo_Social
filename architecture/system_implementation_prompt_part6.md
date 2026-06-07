@@ -1,7 +1,7 @@
 # System Implementation Prompt — Part 6
 ## Multi-cluster prompt architecture, audit consolidation, and inheritance contract
 
-> **Status:** Production architecture, current.
+> **Status:** Production architecture, current. This part must remain consistent with `ARCHITECTURE.md`, `AGGILO_PLATFORM_REPORT.md`, and `architecture/planning/10_AGENT_PROMPT_REFINEMENT.md`. If discrepancies are found, update this file and the planning docs together; do not fork the inheritance contract.
 >
 > **Scope:** This part consolidates V3.7–V3.12 architectural learnings into one place and supersedes any Phase 0 expedients still mentioned by name in parts 1–5. Coding agents implementing platform features should read this part before opening parts 1–5 — it sets the inheritance contract every other part now operates under.
 >
@@ -62,9 +62,10 @@ Routes resolve a `cluster_id` to a cluster module via a single registry. Routes 
 
 The registry's entries map `cluster_id → ClusterModule` where each module exports:
 
-- `identity` — the canonical `ClusterIdentity` (displayName, tagline, description, chips, member noun, authority noun, primary language, seed posts)
+- `identity` — the canonical `ClusterIdentity` (displayName, tagline, description, chips, member noun, authority noun, primary language, seed posts). **Authoritative source:** `cluster_genesis_spec` (from the Genesis Engine). The registry populates Layer 3 fields from the Genesis spec. If a cluster admin manually edits a field, the registry marks it `overridden` and stops syncing that field from Genesis spec.
 - `sagePrompt` — Sage system prompt fragment specific to this cluster
 - `clioClusterContext` — Clio cluster-mode context fragment specific to this cluster
+- `genesisSpec` — the validated `cluster_genesis_spec` JSON (versioned, read-only to agents; modifiable only by Genesis Engine or platform admin with override flag)
 
 Routes ask the registry for the module by `cluster_id`. The prompt builders stitch layers 1–3 into the LLM call.
 
@@ -197,7 +198,9 @@ Agents added without following the contract drift. The audit pattern catches the
 |---|---|---|
 | 1 | Cluster identity hardcodes | §34 (cluster types + registry) |
 | 1 | "MVP single-cluster" framing | §34.4 (no platform default; routes accept `cluster_id` explicitly) |
+| 1 | **Soul manifests uniformly** (prior assumption) | `architecture/SOUL_MANIFESTATION_CATALOG.md` — the Soul's *prohibitions* are invariant; its *manifestation* (register, scripture usage, silence expectation, etc.) is context-variable per cluster via `soul_manifestation_profile` |
 | 2 | Cluster-scoped vault (single-cluster path) | §34 plus §35 (registry resolves per-cluster) |
+| 2 | **Schema: no soul manifestation tables** | §5.1.4 in Part 2 — `cluster_persona_overrides`, `soul_manifestation_audit`, and `validate_soul_manifestation_profile()` function |
 | 4 | Cluster-specific prompt examples inlined | §35 (per-cluster files in `clusters/<id>/`) |
 | 4 | Inline voice rules in agent surfaces | §33 (super-prompt inheritance) |
 | 5 | sessionStorage references in Clio surfaces | Phase 0 detail; production uses Redis (Phase 1 prerequisite captured in `PHASE_0_PILOT.md`) |

@@ -25,16 +25,130 @@ For regular (non-premium) clusters, this terminology does not apply — Sage and
 
 ## 2. What an Admin can customise
 
-### 2.1 Cluster identity
+### 2.1 Cluster Purpose Type
+
+Every premium cluster declares its `purpose_type` at creation. This is **not** a social graph — it is an impartial service to a defined beneficiary. Social interaction is an **optional overlay**, not a foundational requirement.
+
+| Type | Description | Social Layer | Example |
+|------|-------------|------------|---------|
+| `impartial_service` | Agent delivers structured outcome to an individual beneficiary. Social features are **opt-in** (founder-elected). | Optional, disabled by default | "Personal Learning Service" — beneficiary learns; supporter gets dashboard; no Timeline unless founder enables |
+| `social_learning` | Members learn from each other with agent facilitation. Social layer is core. | Core feature | "Quran Circle" — discussion, peer teaching, collective reflection |
+| `peer_support` | Members support each other through shared experience. Social layer is core. | Core feature | "Peer Support Circle" — shared journey, vulnerability, mutual encouragement |
+| `expert_guided` | External expert + agent guide members. Social layer is moderate. | Moderate | "Career Transition" — expert content + member discussion |
+
+**Default for learning clusters:** `impartial_service`. A founder must explicitly request social features (Teaching Circle, peer discussion, supporter Timeline) — they are not assumed.
+
+**Why this matters:** A premium cluster may serve a beneficiary, a patient, a job-seeker, or a student — none of whom need a social network. The social layer is available if the founder believes peer connection improves outcomes, but the default is **service-first**.
+
+### 2.1.1 Cluster Creator Type
+
+Every premium cluster records who created it. This determines the cluster's capabilities, not its quality or intent.
+
+| Type | Created By | Capabilities | Constraints |
+|------|------------|--------------|-------------|
+| `platform_admin` | Aggilo platform team | Full Aggilo scope: subclusters, cluster spawning, cross-cluster links, Evolution Governor, Elevated token budget (104K) | None beyond platform rules |
+| `user` | Regular user (founder) | Standalone cluster only. No subclusters, no spawning, no cross-cluster links, no Evolution Governor. Standard token budget (52K) or Elevated if paid. Max 50 members. | Vault: 100 MB max, 50 items max. Cannot upgrade to `platform_admin` capabilities at any point. |
+
+**Why this matters:** A user-created premium cluster is a single learning or support space — not a seed for a cluster network. The Aggilo platform team retains the exclusive right to create cluster networks, subclusters, and cross-cluster links. This prevents scope creep, governance confusion, and accidental creation of unmoderated cluster trees.
+
+**Important:** The `creator_type` is set at cluster creation and is **immutable**. A user-created cluster never becomes a platform_admin cluster, regardless of tenure, member count, or trust score. The platform team may create a new `platform_admin` cluster that serves a similar purpose, but the original user cluster remains standalone.
+
+### 2.1.2 External-Facing Language Guidelines
+
+The cluster's **internal architecture** (`purpose_type`, `creator_type`, `service_mode`) must never leak into user-facing copy. External language should be plain, honest, and privacy-law compliant.
+
+| Internal Concept | External Display | Why |
+|------------------|------------------|-----|
+| `purpose_type: impartial_service` | "Learning service" or "Coaching program" or "Guided support" | Users don't need to know architecture classifications |
+| `creator_type: user` | Nothing displayed | Internal platform detail; irrelevant to members |
+| "Supporter support" (as primary feature) | "Supporter guidance tools" or "Under supporter guidance" | Supporter is augment, not primary beneficiary. Privacy laws require guardian consent/guidance for beneficiary services |
+| "Max 50 members" | Nothing displayed | Internal abuse-prevention limit, not a user-facing feature |
+| Social layer disabled | "Optional community features" or nothing | Subtle — doesn't emphasize what is absent |
+| `service_mode: individual` | "Personal learning space" or "One-on-one guidance" | Emphasizes individual attention |
+| `service_mode: group` | "Group learning program" or "Cohort-based" | Emphasizes community and peer interaction |
+
+**Rules:**
+1. Never display `purpose_type`, `creator_type`, `service_mode`, or member limits on cluster cards, public pages, or member surfaces
+2. Always frame supporter/guardian presence as "guidance" or "support" — never as the primary value proposition
+3. Use beneficiary-centered language: "Help your beneficiary achieve their goal" not "Connect with other supporters"
+4. Privacy compliance: Beneficiary-facing services must display "Under guardian guidance" or equivalent
+
+### 2.2 Cluster identity
 - Name, description, tagline, icon
 - AGGIL configuration (age range, gender filter, geography, languages, interest tags) — within platform rules; cannot retroactively narrow once members have joined
+- `purpose_type` (see §2.1) — determines whether social features are enabled by default
 - Beta disclosure copy (when serving members from regions where the cluster is in early-access)
 
-### 2.2 Vault (premium-cluster-specific knowledge base)
-- Add, edit, retire vault entries
-- Approve or reject vault entries proposed by Sage (when Sage detects a gap from member activity)
-- Curate `vault_sources` — which external sources Sage may pull verified entries from
-- Tag entries with `thematic_tags` Sage uses for matching
+### 2.2 Cluster Vault (agent-accessible knowledge base)
+
+The cluster vault is a repository of reference materials, examples, and content that cluster **agents** (Sage, Scout, etc.) can reference during member interactions. It is **not** a member-visible file share — regular members do not directly browse or download vault items. Agents surface vault content in context as needed (e.g., "Here's a reference that may help with this topic").
+
+**Access control:**
+
+| Actor | Access |
+|-------|--------|
+| Cluster agents (Sage, Scout) | Read-only reference during conversations |
+| Cluster founder (user-created) | Add, edit, remove entries (with mandatory security check) |
+| Aggilo platform admin | Full access to all vaults across all clusters (audit, review, remove) |
+| Regular cluster members | No direct access — content surfaced by agents only |
+
+**Security check on every add/remove:**
+
+Before any vault item is persisted, the system runs an **automated security check**:
+
+1. **Content safety scan:** Toxicity, NSFW, hate speech, harmful content
+2. **Policy alignment:** Validates against Aggilo platform policies and cluster-specific rules
+3. **Copyright/hash check:** Matches against known restricted content database
+4. **Malware scan:** For any file uploads (hashes, signatures)
+
+The founder must explicitly confirm:
+> "I confirm this content complies with Aggilo policies and does not violate any cluster rules or security standards."
+
+If the check fails, the item is stored with `security_check_status: rejected` and is **not** visible to agents. The founder is notified with the reason. If the founder does not check the confirmation box, the operation is blocked.
+
+**Vault limits by creator type:**
+
+| Limit | `platform_admin` | `user` |
+|-------|------------------|--------|
+| Max storage | 500 MB | 100 MB |
+| Max items | 500 | 50 |
+| Max file size | 25 MB | 5 MB |
+| Allowed types | Reference, example, worksheet, image, document, link, code snippet | Same (but text-only practical for 100 MB limit) |
+| Default at creation | Pre-seeded with cluster-relevant content (based on Genesis spec) | Empty |
+
+**Vault item types:**
+- `reference` — Reference material (theory, definitions, rules, facts)
+- `example` — Worked examples, sample problems, case illustrations
+- `worksheet` — Practice exercises, templates, guided activities
+- `image` — Diagrams, charts, visual aids, screenshots
+- `document` — PDFs, guides, manuals, structured content
+- `link` — External verified links, resources
+- `code_snippet` — Code examples, scripts, configurations (for technical clusters)
+
+**Vault alignment check:**
+
+Before any vault item is approved for agent use, it undergoes a **two-stage alignment check** against the cluster's Genesis-inferred purpose, ecosystem, and success model:
+
+**Stage 1: Rule-based screening (fast, deterministic)**
+- Curriculum/progression level mismatch (item covers topics 2+ stages beyond cluster scope)
+- Stakeholder mismatch (item complexity vs. primary beneficiary)
+- Subject/domain mismatch (item topic vs. inferred composition)
+- Purpose fit (item intent vs. purpose_type)
+- Ecosystem fit (item type vs. ecosystem_type tool requirements)
+
+Stage 1 failures → `alignment_check_status: rejected`, founder notified with specific mismatch reason. No questions asked.
+
+**Stage 2: LLM edge-case questions (nuanced, only when Stage 1 passes)**
+- LLM evaluates alignment score (0.0–1.0) against cluster Genesis spec
+- Score ≥ 0.80 → auto-approve
+- Score 0.50–0.80 → ask founder 1-2 targeted questions (e.g., "This uses a different methodology than inferred — is this intentional?")
+- Score < 0.50 → reject (catch-all for edge cases)
+
+Founder answers → LLM re-evaluates → approved or rejected.
+
+**Schema:** `cluster_vault_items.alignment_check_status` (pending | approved | rejected | questions_pending), `alignment_score`, `alignment_questions`, `alignment_reason`
+
+**Vault gap detection:** Sage can detect when a member question references a topic not covered in the vault and propose a new vault entry. The founder approves or rejects the proposal (with the same security and alignment checks).
 
 ### 2.3 Sage configuration
 - Sage's **decision framework** (Step 0–5) is the same across all premium clusters and is **not customisable** — it carries the welfare-first, character-second invariant.
@@ -90,6 +204,14 @@ A premium cluster Admin **cannot** override these. Any attempt to bypass them vi
 | Feature approval | Aggilo platform team approves | Cluster Admin approves; platform team retains override for safety |
 | Member removal | Not allowed (regular cluster) | Allowed, logged |
 | Post deletion | Author-only | Admin / Manager can delete; logged |
+| Genesis Engine validation | To platform admin | To cluster Admin (faster, domain-aware) |
+| Token Budget promotion | Platform admin only | Cluster admin can promote own cluster |
+| Prompt History panel | Not available | Cluster admin can review all prompt changes, rollback within 30 days |
+| Cluster vibe adjustment | Platform admin only | Cluster admin can request vibe adjustment → triggers Genesis Engine re-validation |
+| Per-recipient UI | Not available | Cluster admin can configure distinct surfaces for different stakeholders (e.g., supporter vs. beneficiary feeds) |
+| Feature pre-spawn | Not available | Genesis Engine auto-instantiates high-probability features at cluster creation |
+| Composition visualization | Not available | Cluster admin can view inferred tag weights, stakeholder map, and evolution history |
+| Platform Tools Registry | Read-only | Admin can enable/disable tools, configure overrides |
 
 ---
 
@@ -97,11 +219,12 @@ A premium cluster Admin **cannot** override these. Any attempt to bypass them vi
 
 | What | Where |
 |------|-------|
-| Cluster identity, AGGIL settings | `clusters` table |
+| Cluster identity, AGGIL settings | `clusters` table (includes `creator_type`, `purpose_type`) |
 | Sage register & formality per cluster | `sage_personas` |
-| Vault entries | `dua_vault` (cluster-scoped through `cluster_id` — every cluster receives its own vault) |
+| Cluster vault items | `cluster_vault_items` (cluster-scoped, security-checked, agent-readable) |
 | Vault sources | `vault_sources` |
 | Vault gaps | `vault_gap_requests` |
+| Vault security audit | `cluster_vault_items.security_check_status`, `cluster_admin_actions` |
 | Manager appointments | `cluster_members.is_manager` (planned — current pilot deployments use `profiles.role`; see `docs/PHASE_0_PILOT.md`) |
 | Admin actions audit | `cluster_admin_actions` |
 | Welfare queue | `welfare_notifications` |
@@ -112,6 +235,10 @@ A premium cluster Admin **cannot** override these. Any attempt to bypass them vi
 | Behavioural events | `behavioural_events` |
 | Agent feedback | `agent_feedback` |
 | Prompt proposals | `agent_prompt_proposals` |
+| Feature spawn proposals | `cluster_feature_proposals` |
+| Evolution proposals & budget | `evolution_proposals`, `evolution_budget_log` |
+| Cluster spawn proposals | `cluster_spawn_proposals` |
+| Linked clusters | `cluster_links` |
 
 ---
 
@@ -121,6 +248,7 @@ Every premium cluster, when created, fills in this profile. The platform team ve
 
 | Field | Description | Examples |
 |-------|-------------|----------|
+| `creator_type` | Who created the cluster (immutable) | `platform_admin` / `user` |
 | Domain | The cluster's subject matter | Faith / medical practice / legal aid / scholarly tradition / industry mentorship |
 | Sage register | Voice register for the cluster's anchor | `academic` / `casual` / `professional` / `community` / `neutral` |
 | Reference vocabulary | What the cluster's "vault" contains and what its entries are called | duas / case studies / precedents / passages / primary sources |
@@ -131,6 +259,12 @@ Every premium cluster, when created, fills in this profile. The platform team ve
 | Manager profile | Who Managers are appointed from | Domain-specific (e.g. practitioners, scholars, certified specialists) |
 | Demographic restrictions | Surfaced as chips on the cluster header | Age range, gender, language, etc. |
 | Primary language | ISO 639-1 code | `en`, `ur`, `bn`, etc. |
+| Inferred composition | LLM-inferred weighted tag map | `{ "domain_1": 0.85, "domain_2": 0.78, ... }` |
+| Stakeholders | Inferred roles with needs/pain points | `{ "supporter_1": {...}, "beneficiary_1": {...} }` |
+| Feature spawn candidates | High-probability features at creation | `[ { "feature_id": "...", "probability": 0.88, "auto_spawn": true } ]` |
+| Vibe characterization | Emotional texture, energy, formality | `{ "primary_mood": "earnest", "energy_level": "moderate", ... }` |
+| Agent maturity | Initial confidence expression | `{ "initial_confidence": "learning", "expression_style": "calibrated_uncertainty" }` |
+| Cluster spawn risk | Probability of sub-community forming | `{ "probability_of_spawn": 0.35, "potential_sub_clusters": [...] }` |
 
 The cluster's identity file (`src/lib/prompts/clusters/<id>/identity.ts`) carries these as structured fields; the cluster's per-agent prompt fragments (`sage.ts`, `clio.ts`) inherit them.
 
@@ -515,3 +649,102 @@ These examples are illustrative only — they show the tone and length. The actu
 ---
 
 *§12 added v1.2 — premium cluster trust signals: Founded badge and Clio's humanised signature statement.*
+
+---
+
+## 13. Genesis Engine Integration (added 2026-06-05)
+
+Every premium cluster receives **full Genesis Engine validation** — both Cycle A (Spec Generation) and Cycle B (Creation Validation). The cluster admin sees Genesis findings in their dashboard, not the platform admin.
+
+### 13.1 Pre-spawn questionnaire
+
+When a premium cluster is created, the founder completes a 5–7 question intake via Clio. The questionnaire captures:
+- Primary activity (academic, professional, faith-study, social)
+- Discussion format (text-heavy, mixed media, event-driven)
+- Expected member profile
+- Content expectations (determines `cluster_vibe`)
+
+Responses are stored in `cluster_intent_responses` and fed into the Genesis Engine.
+
+### 13.2 Spec validation
+
+The Genesis Engine generates a `cluster_genesis_spec` including:
+- Enabled tools (from `platform_tools` catalog)
+- Seed topics
+- Sage calibration (voice, depth, citation mode, intervention style)
+- Demographic guardrails
+- `cluster_vibe` (determines composer capabilities)
+
+The spec is versioned. The cluster admin can review and approve before the cluster goes live.
+
+### 13.3 Post-launch monitoring
+
+After launch, the Genesis Engine monitors the cluster weekly:
+- Tool usage vs. spec
+- Topic drift
+- Format coherence (does member content match `cluster_vibe`?)
+- Demographic guardrail integrity
+
+If drift would change who the cluster is for, the engine proposes a **new cluster** instead of modifying the existing one. Members choose: stay or migrate.
+
+---
+
+## 14. Token Budget (added 2026-06-05)
+
+Premium clusters have **configurable token budgets** for Genesis Engine operations and agent inference.
+
+### 14.1 Budget tiers
+
+| Tier | Tokens | LLM Calls | Who Can Set |
+|------|--------|-----------|-------------|
+| **Standard** | 52K | 6 | Default for all clusters |
+| **Elevated** | 104K | 12 | Cluster admin (premium only) or platform admin |
+| **Maximum** | 156K | 18 | Platform admin only |
+
+### 14.2 Promotion rules
+
+- Cluster admin can promote their own premium cluster to Elevated
+- Requires justification text (logged in `cluster_token_budget_log`)
+- Time-bounded (default 30 days, renewable)
+- Auto-revoke on 14-day cluster inactivity
+- Audit trail: every promotion, demotion, and justification logged
+
+### 14.3 Budget exhaustion
+
+If a cluster hits its token cap:
+1. Dashboard alert: "This cluster has used its full automated validation budget"
+2. Admin options: approve manual action / request re-run / promote budget tier
+3. No action in 7 days → flag for Observer review
+
+---
+
+## 15. Prompt History Panel (added 2026-06-05)
+
+Premium cluster admins have access to a **Prompt History** sub-tab in the admin dashboard. This panel shows every prompt calibration change made to the cluster's AI agents.
+
+### 15.1 What is shown
+
+For each prompt change:
+- **Agent:** Sage or Clio
+- **Aspect:** register, formality, interjection frequency, citation mode, composer controls
+- **Direction:** increased, decreased, shifted, added, removed
+- **Trigger:** Genesis Engine, CIM behavioural, CIM functional, member feedback, admin request, Observer auto
+- **Impact:** Measured 7 days post-commit (thread depth, reply rate, engagement delta)
+
+### 15.2 Admin controls
+
+- **Rollback:** Revert any prompt change within 30 days. Older changes require platform admin.
+- **Request Review:** If Sage or Clio "feels off," admin can trigger immediate Observer introspection. Consumes 1 deep introspection from Pool B allowance.
+- **Veto:** Within 30 minutes of an auto-applied change, admin can veto with a reason.
+
+### 15.3 Quota display
+
+- Pool B allowance shown: "X deep / Y standard remaining this month"
+- Generic clusters: 2 deep + 4 standard per month
+- Premium clusters: 4 deep + 8 standard per month
+- Elevated/Maximum token budget clusters: +2 deep bonus
+- Unused quota rolls over 1 month, then expires
+
+---
+
+*§13–§15 added 2026-06-05 — Genesis Engine, Token Budget, and Prompt History for premium cluster admin capabilities.*

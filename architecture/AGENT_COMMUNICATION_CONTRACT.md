@@ -15,6 +15,9 @@
 > added. New section "The Cluster Intake Pipeline" added. Hierarchy
 > diagram and key relationships table updated to reflect the intake
 > layer. See §Pattern 7 and §Cluster Intake Pipeline.
+>
+> **2026-06-05 addition:** Patterns 8 (Genesis Engine orchestration) and
+> 9 (Feature signal flow) added. See §Pattern 8 and §Pattern 9.
 
 ---
 
@@ -128,12 +131,17 @@ MEMBER-FACING AGENT HIERARCHY
 | Sage → Member | Cluster-facing speech | Decision-tag-bounded LLM output | 7-step framework + super-prompt |
 | Atlas → Sage | Content card batch | `cluster_content_card[]` | Quality gates + synthesis-mode flagging |
 | Scout → Clio | Intelligence reports (demand detection + niche discovery) | Structured rows in `scout_intelligence_reports` | PII rules + 20-post rule — triggers `ClioProposalGenerationJob` when `recommended_action` = cluster creation |
+| **Genesis Engine → cluster_spec** | **Spec generation + validation** | **`cluster_specs` JSONB + `cluster_genesis_reports`** | **Pattern 8 — two-cycle validation with token budget** |
+| **Genesis Engine → Observer** | **Drift / format coherence findings** | **`observer_findings` rows (Domain 3)** | **Pattern 8 output — triggers prompt refinement** |
+| **Clio / Sage → feature_signals** | **Organic member need capture** | **`feature_signals` rows (k-anonymity)** | **Pattern 9 — Observer review → CIM intake** |
+| **Observer → Evolution Governor** | **Composition inference / signal classification** | **`evolution_proposals` rows** | **Pattern 10 — urgency-based change proposals with dynamic capacity budget** |
+| **Observer → Spawn Engine** | **Sub-community detection / linked cluster proposal** | **`cluster_spawn_proposals` rows** | **Pattern 11 — member-choice migration, never auto-enroll** |
 
 ---
 
-## The five communication patterns
+## The eleven communication patterns
 
-Every inter-agent communication on the platform is one of these five
+Every inter-agent communication on the platform is one of these eleven
 patterns. New communication paths must be classified before they ship.
 
 ### Pattern 1 — Brief-and-iterate
@@ -352,6 +360,78 @@ same: did we get it right?
 
 **Full specification:** `docs/CLUSTER_INTAKE_PIPELINE.md`
 (to be created — this pattern entry is the authoritative summary).
+
+---
+
+### Pattern 8 — Genesis Engine orchestration (added 2026-06-05)
+
+**Used by:** Genesis Engine ↔ cluster lifecycle (pre-creation, creation, post-launch)
+
+**Shape:**
+- **Cycle A (Spec Generation):** Intake questionnaire responses (`cluster_intent_responses`) + cluster draft → Genesis Engine generates `cluster_genesis_spec` (JSONB) → introspection validates against platform rules → stored in `cluster_specs`
+- **Cycle B (Creation Validation):** Live cluster state diffed against spec → low-risk gaps auto-remediated → medium/high-risk gaps surfaced to admin
+- **Post-launch monitor:** Weekly drift detection → if drift changes demographics, proposes NEW cluster instead of modifying existing
+
+**Token budget enforcement:**
+- Every Genesis operation has a hard token cap (Standard: 52K tokens / 6 calls; Elevated: 104K / 12; Maximum: 156K / 18)
+- Budget exhaustion → admin escalation with 7-day response window
+- No nested introspection, no budget borrowing across clusters
+
+**Why this pattern:** Cluster creation is the highest-stakes configuration moment. A poorly configured cluster degrades member experience for everyone inside it. The Genesis Engine automates the expertise that would otherwise require a senior platform admin to review every new cluster. The two-cycle design (generate → validate) catches spec errors before members arrive.
+
+**Full specification:** `architecture/CLUSTER_GENESIS_ENGINE.md`
+
+---
+
+### Pattern 9 — Feature signal flow (added 2026-06-05)
+
+**Used by:** Clio / Sage → `feature_signals` → Observer → CIM
+
+**Shape:**
+- **Capture:** Clio records organic member needs during natural conversation (never solicits). Sage infers needs from cluster-wide patterns. Both write to `feature_signals` with `signal_type`, `scope`, `feature_hash` for deduplication.
+- **Privacy gate:** Individual signals (with user_id) are never shown to humans or agents. Only aggregated signals (frequency ≥ 3 OR cluster ≥ 8 members) are surfaced.
+- **Observer review:** Dimension 9 (Ecosystem Spec Mismatch Detection) — Observer reviews signals monthly for platform rule compliance. Checks: no rule violation, safe to aggregate, no protocol disclosure.
+- **CIM intake:** Approved signals feed into Cluster Intelligence Modules for evaluation. CIM decides whether to propose tools, workflow changes, or cluster configuration adjustments.
+
+**Why this pattern:** Feature requests from members are the most valuable product input, but they are also the most privacy-sensitive. This pattern captures them organically, protects individual privacy via k-anonymity, and routes them through governance (Observer) before they influence cluster behavior.
+
+**Full specification:** `architecture/AGENTIC_FEATURE_SIGNALS.md`
+
+---
+
+### Pattern 10 — Evolution proposal (added 2026-06-06, updated 2026-06-07)
+
+**Used by:** Observer → [Genesis Re-Eval Gate] → Evolution Governor → Admin → Agents
+
+**Shape:**
+- **Detect:** Observer continuously monitors cluster signals (engagement, feedback, content themes) and classifies each into urgency tiers (Tier 1–4).
+- **Spec-mismatch check:** Observer Dimension 9 (Ecosystem Spec Mismatch Detection) evaluates whether signals indicate a **framework-level** problem (e.g., `learning_management` cluster has become `emotional_support` in practice). If confidence ≥ 0.70, the finding is escalated to Genesis Re-Eval instead of standard Evolution routing.
+- **Genesis Re-Eval (interception):** Genesis evaluates whether the ecosystem type itself is still valid. Outputs: `no_change`, `soft_pivot`, `hard_pivot`, or `spawn_recommended`. Hard pivots require admin approval; high-disruption hard pivots require member poll.
+- **Standard classify:** Non-spec-mismatch signals are evaluated for evidence strength, confidence, and jarring-ness (how disruptive to members).
+- **Propose:** Evolution Governor generates an `evolution_proposal` with cost, tier, and evidence. Low-cost, high-confidence proposals may auto-execute (Tier 1/2). Others queue for admin approval.
+- **Communicate:** Agent tells members what changed and why, inviting feedback. Hard pivots use the 6-step autism-safe communication protocol (acknowledge → state → change → preserve → invite → opt-out).
+- **Monitor:** Outcome is tracked for 7 days. If worsened, reversal is proposed.
+
+**Why this pattern:** Clusters are living systems. Static configuration degrades member experience over time. This pattern allows clusters to adapt — fast when evidence is strong (crisis), gently when evidence is weak (background drift) — while keeping members informed and preserving admin oversight. The Genesis Re-Eval gate ensures the platform does not optimize within a broken framework.
+
+**Full specification:** `architecture/EVOLUTION_GOVERNOR.md` and `architecture/CLUSTER_GENESIS_ENGINE.md` §10
+
+---
+
+### Pattern 11 — Cluster spawn proposal (added 2026-06-06)
+
+**Used by:** Observer → Spawn Engine → Admin → Members (choice)
+
+**Shape:**
+- **Detect:** Observer Dimension 7 (Composition Inference) monitors for sub-community signals: recurring sub-topics, stakeholder divergence, tone friction.
+- **Evaluate:** Spawn Engine evaluates whether the sub-group's needs are meaningfully different from the parent cluster.
+- **Propose:** If distinct, a `cluster_spawn_proposal` is generated with link type (sequel/spinoff/sibling), inferred composition, and migration path.
+- **Approve:** Admin reviews and approves/rejects.
+- **Notify:** Relevant members receive invitation via Clio DM. They choose: stay, join new, or both. Never auto-enrolled.
+
+**Why this pattern:** A cluster that tries to serve too many distinct needs degrades for everyone. Spawning allows sub-communities to flourish in their own space while preserving the parent cluster's integrity. Member choice is absolute.
+
+**Full specification:** `architecture/CLUSTER_SPAWN_ENGINE.md`
 
 ---
 
@@ -778,7 +858,7 @@ When a new agent is proposed:
    `agent` value? Which `operation_key`?
 
 Five answers, one paragraph each. If the agent cannot be cleanly
-classified into one of the six communication patterns, the agent's
+classified into one of the eleven communication patterns, the agent's
 spec is not ready.
 
 ---

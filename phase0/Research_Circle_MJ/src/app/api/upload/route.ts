@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { CLUSTER_ID } from "@/lib/cluster";
-import { resolvePublicUrl } from "@/lib/path";
+import { runAnalysis } from "@/lib/analysis-worker";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const ALLOWED_TYPES = [
@@ -162,13 +162,11 @@ export async function POST(request: Request) {
     }
 
     // Trigger background analysis (CIM classification + white paper tools)
-    // Fire-and-forget — user does not wait for this
+    // Direct call — no HTTP hop, eliminates Vercel server-to-server failure mode.
     if (attachment) {
-      void fetch(resolvePublicUrl(request, "/api/upload/analyze"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ attachment_id: attachment.id }),
-      }).catch(() => {});
+      void runAnalysis(attachment.id).catch((err) => {
+        console.error("[upload] direct analysis failed:", err);
+      });
     }
 
     return NextResponse.json({

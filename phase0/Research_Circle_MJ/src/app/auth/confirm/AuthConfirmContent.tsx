@@ -38,11 +38,19 @@ export function AuthConfirmContent() {
 
     async function run() {
       const supabase = createAuthClient();
+
+      // Clear any stale session / verifier from a previous login attempt.
+      // This prevents PKCE verifier mismatch on magic-link click.
+      await supabase.auth.signOut({ scope: "local" });
+
       const { error: exchangeError, data } = await supabase.auth.exchangeCodeForSession(code!);
 
       if (exchangeError) {
         console.error("[auth/confirm] exchange error:", exchangeError.message);
-        setErrorMsg(exchangeError.message);
+        const msg = exchangeError.message.includes("code verifier") || exchangeError.message.includes("PKCE")
+          ? "Login session expired. Please request a new magic link."
+          : exchangeError.message;
+        setErrorMsg(msg);
         return;
       }
 

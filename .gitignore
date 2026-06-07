@@ -10,10 +10,15 @@ out/
 # production
 build/
 
-# env files (NEVER commit these)
+# env files (NEVER commit secrets)
 .env
 .env.local
 .env.*.local
+.env.vercel
+.env.vercel.prod
+
+# env example is OK to commit (no secrets)
+!.env.example
 
 # debug
 npm-debug.log*

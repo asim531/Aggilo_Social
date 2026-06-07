@@ -1,6 +1,14 @@
 # Aggilo — System Implementation Prompt
 ## Part 5: Sage Agent — Cluster Intelligence & Clio's Cluster Assistant
 
+> **Canonical sources:** Sage behaviour and cluster anchor rules are defined primarily in:
+> - `AGGILO_PLATFORM_REPORT.md`
+> - `AGGILO_PLATFORM_RULES.md`
+> - `architecture/planning/10_AGENT_PROMPT_REFINEMENT.md`
+> - `architecture/planning/agent_prompts/SAGE_SYSTEM_PROMPT.md`
+>
+> This Part 5 file is an implementation helper. If any statement here conflicts with the documents above, the architecture and planning docs **win** and this series is considered secondary.
+
 > **v2.1 cross-references:** For Platform Capability skills and the Sage-Clio skill dialogue protocol, see [`CLUSTER_SKILL_DISCOVERY_PROTOCOL.md`](../docs/CLUSTER_SKILL_DISCOVERY_PROTOCOL.md). For Clio's cluster anchor behaviour specification (message budgets, compose bar, first-post acknowledgement), see [`CLIO_CLUSTER_HOST_CONTEXT.md`](../clio/CLIO_CLUSTER_HOST_CONTEXT.md). For Sage's @-mention protocol, deduplication, and bridge-message rules, see [`SAGE_ANCHOR_PROTOCOL.md`](./SAGE_ANCHOR_PROTOCOL.md).
 
 ---

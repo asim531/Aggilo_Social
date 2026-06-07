@@ -1,12 +1,25 @@
 # Aggilo — System Implementation Prompt
 ## Part 3: API Design, State Management & Implementation Phasing
 
+> **Canonical sources:** API surface and orchestration rules are defined primarily in:
+> - `ARCHITECTURE.md`
+> - `AGGILO_PLATFORM_REPORT.md`
+> - `AGGILO_PLATFORM_RULES.md`
+> - `architecture/planning/04_CAPABILITY_MAP.md`, `05_DEPENDENCY_GRAPH.md`, `08_IMPLEMENTATION_ROADMAP.md`
+> - `AGENT_RUNTIME.md`, `REALTIME_ENGAGEMENT_LAYER.md`, `PLATFORM_AGENCY.md`
+>
+> This Part 3 file is an implementation helper. If any statement here conflicts with the documents above, the architecture and planning docs **win** and this series is considered secondary.
+
 ---
 
 > **Phase 1 architecture additions (read these alongside this Part):**
 > - [`architecture/PLATFORM_AGENCY.md`](PLATFORM_AGENCY.md) — three-layer platform agency model
 > - [`observer/OBSERVER_STEWARDSHIP.md`](../observer/OBSERVER_STEWARDSHIP.md) — Observer's autonomous stewardship mechanics
 > - [`observer/OBSERVER_INTROSPECTION_ENGINE.md`](../observer/OBSERVER_INTROSPECTION_ENGINE.md) — introspection prompt + priority queue
+> - [`architecture/CLUSTER_GENESIS_ENGINE.md`](CLUSTER_GENESIS_ENGINE.md) — cluster spec generation, validation, token budgets
+> - [`architecture/AGENTIC_FEATURE_SIGNALS.md`](AGENTIC_FEATURE_SIGNALS.md) — feature signal capture, k-anonymity, CIM integration
+> - [`architecture/PLATFORM_TOOLS_REGISTRY.md`](PLATFORM_TOOLS_REGISTRY.md) — global tool catalog, auto-promotion, versioning
+> - [`architecture/TOOL_ECONOMY.md`](TOOL_ECONOMY.md) — cost model, affinity gating, pricing tiers
 >
 > Phase 1 endpoints live in §7.14a (Observer Stewardship). Phase 1
 > implementation steps live in Phase 9.5 (Observer Autonomous
@@ -58,6 +71,8 @@ All endpoints require `Authorization: Bearer {JWT}` except where noted. Admin en
 | `GET` | `/api/clusters/:id/members` | Member list | JWT |
 | `POST` | `/api/clusters/check-duplicate` | Check similar existing clusters | JWT |
 | `GET` | `/api/clusters/score` | Calculate cluster quality score | JWT |
+| `GET` | `/api/clusters/:id/soul-manifestation` | Get cluster's soul manifestation profile (member-visible summary) | JWT |
+| `GET` | `/api/clusters/:id/persona-override` | Get active cluster persona override | JWT |
 
 ### 7.3 Posts & Comments
 
@@ -171,6 +186,14 @@ All endpoints require `Authorization: Bearer {JWT}` except where noted. Admin en
 | `PUT` | `/api/admin/llm/routing` | Update routing rules | Admin |
 | `POST` | `/api/admin/llm/ab-test` | Start A/B test | Admin |
 | `GET` | `/api/admin/llm/costs` | Cost breakdown | Admin |
+| `GET` | `/api/admin/clusters/:id/soul-manifestation` | View full soul manifestation profile (admin detail) | Admin |
+| `PUT` | `/api/admin/clusters/:id/soul-manifestation` | Edit soul manifestation profile | Admin |
+| `POST` | `/api/admin/clusters/:id/soul-manifestation/regenerate` | Trigger Genesis Engine to regenerate profile | Admin |
+| `GET` | `/api/admin/clusters/:id/soul-manifestation/audit` | Audit trail of profile changes | Admin |
+| `POST` | `/api/admin/clusters/:id/persona-override` | Create cluster persona override | Admin |
+| `PUT` | `/api/admin/clusters/:id/persona-override/:overrideId/approve` | Approve persona override | Admin |
+| `PUT` | `/api/admin/clusters/:id/persona-override/:overrideId/reject` | Reject persona override with reason | Admin |
+| `GET` | `/api/admin/clusters/:id/persona-override/preview` | Preview merged persona before approval | Admin |
 
 ### 7.11 Notifications
 
@@ -504,11 +527,11 @@ export const supabase = createClient<Database>(
 6. Connect Atlas output → Sage curation pipeline (replacing Phase 6 stubs with real Atlas data)
 7. Implement Scout service: segment crawling, topic scoring, auto-creation (≥90%)
 8. Create Scout cron worker
-9. Implement Observer service: 10 canonical observation domains per `observer/AGGILO_OBSERVER_AGENTS.md` (NOT Part 4 §16.2 — that section is superseded)
+9. Implement Observer service: 11 canonical observation domains per `observer/AGGILO_OBSERVER_AGENTS.md` (NOT Part 4 §16.2 — that section is superseded)
 10. Create `ObserverCycle` worker (every 6h, `events-medium` lane)
 11. Build admin Observer dashboard: findings list, domain filters, severity badges, action buttons
 
-**Verify**: Join a cluster → 60s later, Atlas-sourced Sage post appears in Timeline under `system_sage`. After 72h silence, reengagement check runs. Scout worker completes a cycle — check `scout_discoveries` table. Observer cycle completes — check `observer_findings` table for domain 1-10 entries. `sage_posts_today` resets at midnight.
+**Verify**: Join a cluster → 60s later, Atlas-sourced Sage post appears in Timeline under `system_sage`. After 72h silence, reengagement check runs. Scout worker completes a cycle — check `scout_discoveries` table. Observer cycle completes — check `observer_findings` table for domain 1-11 entries. `sage_posts_today` resets at midnight.
 
 ---
 
@@ -602,6 +625,86 @@ export const supabase = createClient<Database>(
 11. Build React premium upgrade flow, matchmaker chat, founder admin panel
 
 **Verify**: Complete Razorpay test payment → `premium_status` updates to `active`. Access matchmaker chat → works. Access without premium → 403. Submit "Make Your Crowd" form → appears in admin review queue. Approved founder can remove member, delete post.
+
+---
+
+### Phase 12 — Genesis Engine (added 2026-06-05)
+
+**Goal**: Automated cluster spec generation, validation, and post-launch monitoring with token budget enforcement.
+
+**Prerequisites**: Phase 6 (Sage) and Phase 9 (Observer) done-criteria met.
+
+1. Implement `cluster_intent_responses` ingestion (free-text founder description)
+2. Implement Genesis Engine Cycle A — deep LLM inference from free-text description: `inferred_composition`, `stakeholders`, `feature_spawn_candidates`, `vibe_characterization`, `cluster_spawn_risk`, `agent_maturity`
+3. Implement introspection validation against platform rules
+4. Implement `cluster_genesis_spec` storage in `cluster_specs` JSONB (includes per-recipient `soul_manifestation_profile` map)
+5. Implement Cycle B — live cluster state diff vs. spec, auto-remediate low-risk gaps
+6. Implement feature pre-spawn: auto-instantiate features with `probability >= 0.70` and `auto_spawn: true`
+7. Implement post-launch monitoring: continuous signal detection with urgency tiers (Tier 1–4), composition inference, format coherence check
+8. Implement token budget enforcement: Standard (52K/6), Elevated (104K/12), Maximum (156K/18)
+9. Implement `cluster_token_budget_log` with promotion/demotion audit trail
+10. Implement admin dashboard "Cluster Spec" view + approval flow + composition visualization
+11. Implement `vibe_characterization` extraction and composer capability mapping (per-recipient)
+
+**Verify**: Founder writes description → Genesis Engine infers full spec → admin reviews → approves → cluster created with pre-spawned features and per-recipient UI. Budget exhaustion triggers dashboard alert.
+
+---
+
+### Phase 13 — Feature Signals (added 2026-06-05)
+
+**Goal**: Organic member need capture with k-anonymity privacy protection and Observer governance.
+
+**Prerequisites**: Phase 7 (Clio) and Phase 9 (Observer) done-criteria met.
+
+1. Implement `feature_signals` table with `signal_type`, `scope`, `feature_hash`
+2. Implement Clio organic capture: records needs during natural conversation (never solicits)
+3. Implement Sage inference capture: cluster-wide pattern detection
+4. Implement k-anonymity aggregation gate: individual signals invisible; only aggregated (freq ≥ 3 OR cluster ≥ 8 members) surfaced
+5. Implement Observer Domain 11 monthly review: compliance check, no rule violation, no protocol disclosure
+6. Implement CIM intake: approved signals feed into Cluster Intelligence Modules
+7. Implement admin dashboard "Feature Signals" panel with aggregation view
+8. Implement deduplication via `feature_hash` + 30-day rolling window
+
+**Verify**: Member asks Clio for a feature in chat → signal captured → aggregated after threshold → appears in admin panel → Observer approves → CIM evaluates.
+
+---
+
+### Phase 14 — Platform Tools Registry (added 2026-06-05)
+
+**Goal**: Global tool library with cluster-scoped enablement, auto-promotion, and soft retirement.
+
+**Prerequisites**: Phase 9 (Observer) done-criteria met.
+
+1. Implement `platform_tools` catalog table: name, description, category, cost_tier, promotion_threshold, deprecation_date
+2. Implement `cluster_tool_enablements` junction table
+3. Implement Observer auto-promotion: when ≥ N clusters independently enable a tool, Observer proposes global promotion
+4. Implement admin veto on auto-promotion (48-hour window)
+5. Implement tool versioning: major/minor version, breaking-change flag
+6. Implement soft retirement: 90-day deprecation notice → disable by default → hard remove
+7. Implement admin dashboard "Tools" panel: enable/disable per cluster, override global defaults
+8. Implement cost tracking per tool per cluster
+
+**Verify**: New tool added to catalog → 3 clusters enable it → Observer proposes global promotion → admin approves → tool promoted to default-enabled.
+
+---
+
+### Phase 15 — Admin Dashboard Help & Prompt Refinement (added 2026-06-05)
+
+**Goal**: Source-of-truth for all admin-facing UI copy, tooltips, and help text. Plus prompt refinement priority/quota tracking.
+
+**Prerequisites**: Phase 10 (Moderation) done-criteria met.
+
+1. Implement `docs/ADMIN_DASHBOARD_HELP.md` as the canonical copy source
+2. Implement Help Panel component: renders markdown from help document per dashboard section
+3. Implement Tooltip system: all dashboard tooltips pull from `ADMIN_DASHBOARD_HELP.md`
+4. Implement `cluster_prompt_audit` table: human-readable summaries, impact tracking, rollback
+5. Implement Prompt History sub-tab: agent, aspect, direction, trigger, 7-day impact
+6. Implement Pool B quota display: "X deep / Y standard remaining"
+7. Implement rollback within 30 days (cluster admin) or any time (platform admin)
+8. Implement Request Review button: triggers immediate Observer introspection (consumes 1 deep)
+9. Implement veto window: 30-minute auto-rollback on Tier 1 changes
+
+**Verify**: Dashboard tooltip renders from help doc → admin triggers review → Observer introspection runs → result appears in history → admin rolls back → prompt restored.
 
 ---
 

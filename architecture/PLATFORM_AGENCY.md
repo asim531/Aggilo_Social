@@ -13,7 +13,11 @@
 > **Companion documents:**
 > - `observer/OBSERVER_STEWARDSHIP.md` — Observer's autonomous
 >   stewardship mechanics (three-tier autonomy, introspection engine,
->   veto windows, prompt update architecture)
+>   veto windows, prompt update architecture, evolution + spawn tiers)
+> - `architecture/EVOLUTION_GOVERNOR.md` — Dynamic capacity budget,
+>   urgency-based signal classification, decision loop, reversal mechanism
+> - `architecture/CLUSTER_SPAWN_ENGINE.md` — Spawn proposals, migration
+>   paths, linked clusters, sub-community detection
 > - `architecture/AGENT_COMMUNICATION_CONTRACT.md` — inter-agent
 >   communication patterns including the autonomous stewardship pattern
 > - `observer/AGGILO_OBSERVER_AGENTS.md` — Observer's 10 observation
@@ -46,11 +50,16 @@ will, law, and self-awareness.
 │  This is the platform's law.                                │
 ├─────────────────────────────────────────────────────────────┤
 │  LAYER C — EXECUTION                                        │
-│  Observer (platform/OBSERVER_STEWARDSHIP.md)                │
-│  The platform watching itself and acting on what it sees.   │
-│  Observer's principal is the platform's own rules and the   │
+│  Observer + Evolution Governor + Cluster Spawn Engine       │
+│  The platform watching itself and acting on what it sees. │
+│  Observer's principal is the platform's own rules and the │
 │  human admin team — not any other agent.                    │
-│  This is the platform's eyes and hands.                     │
+│                                                             │
+│  Observer (10 domains) → detects signals                    │
+│  Evolution Governor → evaluates, budgets, proposes changes  │
+│  Cluster Spawn Engine → proposes linked clusters            │
+│                                                             │
+│  This is the platform's eyes, hands, and adaptive memory.   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -192,6 +201,16 @@ PLATFORM RULES + INHERITANCE CONTRACT (Layer 2)
     │        → Admin approves → job triggers
     │
     └── Welfare signals → Admin always (Channel 2, no autonomy)
+
+### Layer C — Genesis Engine (sub-component)
+
+The **Cluster Genesis Engine** is not a fourth layer. It is a **sub-component of Layer C (Execution)** under Observer's stewardship:
+
+- Observer **initiates** Genesis cycles (spec generation, validation, post-launch monitoring).
+- Observer **reviews** Genesis outputs for rule compliance and platform health.
+- Genesis Engine **does not have independent agency**. It cannot modify platform rules, agent hierarchies, or welfare routing.
+- Genesis Engine jobs run in the `medium` and `low` BullMQ lanes (background, non-blocking).
+- All Genesis outputs (specs, reports, drift findings) flow through Observer's standard finding-and-approve channel (Channel 2).
 
 AGENT HIERARCHY (member-facing)
     Clio (orchestrator + member voice)

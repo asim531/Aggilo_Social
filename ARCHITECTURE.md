@@ -43,7 +43,7 @@ architecture/
 ├── PLATFORM_AGENCY.md          ← THREE-LAYER PLATFORM AGENCY MODEL (read before Observer)
 │                                  Soul / Platform Rules / Observer as platform steward
 │
-├── AGENT_COMMUNICATION_CONTRACT.md  ← Six inter-agent communication patterns
+├── AGENT_COMMUNICATION_CONTRACT.md  ← Nine inter-agent communication patterns
 │                                       Corrected Observer hierarchy
 │
 ├── AGENT_RUNTIME.md            ← BullMQ lanes, idempotency, failure modes,
@@ -52,8 +52,28 @@ architecture/
 ├── REALTIME_ENGAGEMENT_LAYER.md ← Four real-time signals, fallback contract,
 │                                   privacy ceiling
 │
-└── premium_cluster_requirements.md ← Premium cluster spec, agent involvement
-                                       slider, public listing controls
+├── premium_cluster_requirements.md ← Premium cluster spec, agent involvement
+│                                      slider, public listing controls
+│
+├── CLUSTER_GENESIS_ENGINE.md    ← Two-cycle validation, token budgets,
+│                                     free-text LLM inference, feature pre-spawn,
+│                                     post-launch monitoring & evolution
+├── SOUL_MANIFESTATION_CATALOG.md ← Six cluster archetypes, six manifestation dimensions,
+│                                     per-recipient manifestation maps, cross-archetype invariants
+│
+├── PLATFORM_TOOLS_REGISTRY.md   ← Global tool library: reusable tools,
+│                                     auto-promotion, versioning, soft retirement
+│
+├── EVOLUTION_GOVERNOR.md        ← Dynamic capacity budget, urgency-based signal
+│                                     classification, decision loop, reversal mechanism
+│
+├── CLUSTER_SPAWN_ENGINE.md      ← Spawn proposals, migration paths, linked clusters,
+│                                     sub-community detection
+│
+├── AGENTIC_FEATURE_SIGNALS.md   ← Feature signal capture, privacy (k-anonymity),
+│                                     CIM integration, deduplication
+│
+└── TOOL_ECONOMY.md              ← Cost model, affinity gating, pricing tiers
 ```
 
 ---
@@ -66,14 +86,16 @@ Read these instead, in order:
 
 ```
 observer/
-├── AGGILO_OBSERVER_AGENTS.md        ← 10 canonical domains, finding lifecycle,
+├── AGGILO_OBSERVER_AGENTS.md        ← 11 canonical domains, finding lifecycle,
 │                                       job schedule, DB schema, tool proposal authority
 ├── OBSERVER_STEWARDSHIP.md          ← Autonomous stewardship: three-tier autonomy,
 │                                       veto windows, prompt update architecture,
 │                                       Platform Rules validation layer, DB schema
-└── OBSERVER_INTROSPECTION_ENGINE.md ← Priority queue engine, five-dimension
-                                        cluster evaluation prompt, minimality test,
-                                        user feedback digest, cold-start mode
+└── OBSERVER_INTROSPECTION_ENGINE.md ← Priority queue engine, seven-dimension
+                                        cluster evaluation prompt (incl. Manifestation
+                                        Alignment and Composition Inference), minimality
+                                        test, user feedback digest, cold-start mode,
+                                        signal classification tiers
 ```
 
 ---
@@ -108,7 +130,8 @@ Every LLM call assembles context in this order:
 ```
 Layer 1 — Platform super-prompt     (immutable, every agent, every cluster)
 Layer 2 — Agent character           (Sage, Clio, Atlas, Scout, Observer — generic)
-Layer 3 — Cluster identity          (per-cluster vocabulary + identity)
+Layer 3 — Cluster identity          (per-cluster vocabulary + identity +
+                                     soul_manifestation_profile as per-recipient map)
 Layer 4 — Per-call signals          (welfare, character, @mention, vault, recent posts,
                                      Observer signals)
 ```
@@ -163,6 +186,17 @@ These are designed and documented but not yet built:
 - `observer_prompt_updates`, `clio_observer_signals`,
   `observer_cluster_context`, `observer_learnings`,
   `clio_cluster_intelligence` tables
+- Genesis Engine tables: `cluster_specs`, `cluster_genesis_reports`,
+  `cluster_intent_responses`, `cluster_token_budget_log`
+- Feature Signals table: `feature_signals`
+- Platform Tools Registry tables: `platform_tools`, `cluster_tool_enablements`
+- Prompt Audit table: `cluster_prompt_audit`
+- Cluster Demand Signals table: `cluster_demand_signals`
+- Sage Feedback table: `sage_post_feedback`
+- Email Templates table: `email_templates`
+- Architecture docs (read before implementation):
+  `CLUSTER_GENESIS_ENGINE.md`, `PLATFORM_TOOLS_REGISTRY.md`,
+  `AGENTIC_FEATURE_SIGNALS.md`, `TOOL_ECONOMY.md`
 
 ---
 

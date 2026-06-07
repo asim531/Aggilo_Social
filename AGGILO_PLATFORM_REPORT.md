@@ -51,13 +51,18 @@ The platform is built on a deeply held conviction: the universe was not an accid
 | **Sage** | The cluster anchor — posts content, guides discussions, visible in Timeline as `system_sage` |
 | **Atlas** | Content intelligence — discovers relevant articles, videos, trends for clusters |
 | **Scout** | Macro-discovery — crawls the internet for emerging community opportunities |
-| **Observer** | Platform steward — monitors 10 domains of platform health autonomously |
+| **Observer** | Platform steward — monitors 11 domains of platform health autonomously |
 | **Arc Phase** | Cluster maturity state machine: A (empty) → B (first post) → C (72h silence) → D (active) → E (thriving) |
 | **CIM** | Cluster Intelligence Modules — periodic multi-dimensional analysis (behavioural, functional, vibe, purpose, growth) that synthesizes agent outputs into admin-private intelligence reports |
 | **Premium cluster** | Human-administered cluster with an Admin + up to 3 Managers. Agents serve human authority; vault is cluster-specific |
 | **Agent Involvement Slider** | Min / Medium / High ceiling for agent presence in a cluster. Immutable safety floor always runs |
 | **Room Workshop** | Clio + Sage working dialogue + feature/tool pipeline. Members can propose, upvote, and comment on features |
 | **Vault** | Premium-cluster-specific knowledge base. Admin-curated entries that Sage may surface as verified references |
+| **Genesis Engine** | Automated cluster configuration validation: pre-spawn questionnaires, spec generation, creation validation, post-launch monitoring |
+| **Feature Signals** | Organic member needs captured by Clio from natural conversation, reviewed by Observer Domain 11, fed into CIM |
+| **Token Budget** | Per-cluster hard caps on Genesis Engine LLM usage (52K/104K/156K tokens), admin-promotable, time-bounded, audited |
+| **Platform Tools Registry** | Global, versioned catalog of reusable tools. Clusters import and skin. One backend, many presentations |
+| **Tool Economy** | Deferred cost model for global tools. Architecture specified, implementation pending paid tiers |
 
 ---
 
@@ -69,9 +74,9 @@ The platform is built on a deeply held conviction: the universe was not an accid
 
 | Location | What It Is |
 |----------|-----------|
-| `architecture/` | 6-part system implementation spec + agency/runtime/engagement docs |
+| `architecture/` | 6-part system implementation spec + agency/runtime/engagement docs + Genesis Engine + Platform Tools Registry + Feature Signals + Tool Economy |
 | `PRD/` | 12 Product Requirement Documents |
-| `docs/` | 50+ operational specs (onboarding, chatbox, skill discovery, soul injection, etc.) |
+| `docs/` | 50+ operational specs + ADMIN_DASHBOARD_HELP.md (master UI copy source) |
 | `clio/`, `sage/`, `scout/`, `atlas/`, `observer/` | Agent configuration files (SOUL.md, AGENTS.md, skills, prompts) |
 | `launch/` | Static HTML landing pages (marketing site with Clio interaction card) |
 | `yantra/` | **Deprecated** — legacy Python runtime spec. Only `routing_table.json` is still valid |
@@ -257,31 +262,48 @@ PLATFORM RULES + INHERITANCE CONTRACT (Layer 2)
     Observer  ←── Platform Steward
     │    │
     │    ├── Channel 1: Autonomous stewardship (Phase 1)
+    │    │   Tier 1/2: prompt layer updates + veto window
+    │    │
     │    └── Channel 2: Finding-and-approve (Tier 3)
+    │        → observer_findings → Admin Dashboard → job triggers
     │
     └── Welfare signals → Admin always
+
+GENESIS ENGINE (Observer sub-component, no independent agency)
+    ├── Initiated by Observer
+    ├── Pre-spawn questionnaire → Spec generation → Introspection
+    ├── Creation validation → Gap remediation
+    ├── Post-launch monitor (weekly)
+    └── All outputs flow through Observer Channel 2
 
 CLUSTER INTELLIGENCE LAYER (above agents, admin-private)
     CIM (Cluster Intelligence Modules)
         ├── Consumes: Sage Feature Intelligence signal log
         ├── Consumes: Observer findings (scoped)
         ├── Consumes: Clio FAB aggregated signals (anonymized)
+        ├── Consumes: Aggregated feature_signals (k-anonymity compliant)
         └── Outputs: Intelligence reports → admin dashboard (auto-approve or review)
 
 MEMBER-FACING AGENT HIERARCHY
-    Clio (orchestrator + member voice)
-        ├── Sage (cluster anchor) → Atlas (content layer)
+    Clio (orchestrator + member voice) → **platform-wide consistent voice**
+        ├── Sage (cluster anchor) → **cluster-specific voice** (informed by `cluster_vibe`)
+        │   └── Atlas (content layer)
         └── Scout (community intelligence)
 ```
 
+**Voice boundaries:**
+- **Clio's voice is platform-wide and immutable.** Her register, tone, and decision framework are identical across all clusters. She is the orchestrator.
+- **Sage's voice is cluster-specific.** Her register, formality, and intervention style adapt to the cluster's `vibe` (derived from the Genesis Engine intake questionnaire). She is the cluster anchor.
+- **Chatbox:** Clio (platform voice) initiates; Sage (cluster voice) responds. The first exchange is triggered by cluster creation, not a hardcoded seed.
+
 | Agent | Visibility | Role | Lane | Key Output |
 |-------|-----------|------|------|------------|
-| **Clio** | Personal FAB overlay | Orchestrator + member voice | `clio-high` | Chat replies, cluster creation, discovery, premium matchmaker |
-| **Sage** | Cluster Timeline | Cluster anchor / assistant | `events-medium` | Timeline posts (`system_sage`), description refinement, `@Sage` replies |
-| **Atlas** | Invisible | Content intelligence | `events-medium` | Content cards → Sage curates and posts |
-| **Scout** | Invisible | Macro-discovery / trend crawling | `scout-low` | Topic reports, auto-clusters, suggestion cards |
-| **Observer** | Invisible | Platform steward / passive monitoring | `events-medium` | 10-domain findings, autonomous stewardship (Phase 1) |
-| **CIM** | Invisible (admin-only) | Cluster intelligence synthesis | `events-medium` / `clio-high` | Admin-private reports with auto-approved or reviewed recommendations |
+| **Clio** | Personal FAB overlay | Orchestrator + member voice | `high` | Chat replies, cluster creation, discovery, premium matchmaker |
+| **Sage** | Cluster Timeline | Cluster anchor / assistant | `medium` | Timeline posts (`system_sage`), description refinement, `@Sage` replies |
+| **Atlas** | Invisible | Content intelligence | `medium` | Content cards → Sage curates and posts |
+| **Scout** | Invisible | Macro-discovery / trend crawling | `low` | Topic reports, auto-clusters, suggestion cards |
+| **Observer** | Invisible | Platform steward / passive monitoring | `medium` | 11-domain findings, autonomous stewardship (Phase 1) |
+| **CIM** | Invisible (admin-only) | Cluster intelligence synthesis | `medium` / `high` | Admin-private reports with auto-approved or reviewed recommendations |
 
 **Sage is Clio's subordinate, not a peer.** Clio delegates cluster-level intelligence to Sage, who operates semi-autonomously. Clio retains override authority at all times. Sage owns all cluster-level posting.
 
@@ -328,15 +350,44 @@ MEMBER-FACING AGENT HIERARCHY
 | `atlas_discoveries` | Scored content cards: headline, source, relevance_score, demographic_confidence, conversation_hook, arc_variant |
 | `scout_discoveries` | Internet trend findings: segment_key, topic, relevance_score, status |
 
+### Genesis Engine Tables *(NEW)*
+
+| Table | Purpose |
+|-------|---------|
+| `cluster_specs` | Versioned cluster genesis spec: tools, topics, Sage calibration, `cluster_vibe` (determines composer capabilities). Authoritative source for Layer 3 cluster identity |
+| `cluster_genesis_reports` | Creation validation, post-launch monitor, budget exhaustion reports with findings and remediation actions |
+| `cluster_intent_responses` | Pre-spawn questionnaire responses: structured answers from founder/admin/Scout before cluster creation |
+| `cluster_token_budget_log` | Per-cluster budget tier history: promotions, demotions, auto-revokes with justification and audit trail |
+
+### Feature Signals Tables *(NEW)*
+
+| Table | Purpose |
+|-------|---------|
+| `feature_signals` | Organic member needs captured by Clio: signal_text, scope, type, status, feature_hash for deduplication. K-anonymity enforced |
+
+### Platform Tools Registry Tables *(NEW — replaces cluster_tools)*
+
+| Table | Purpose |
+|-------|---------|
+| `platform_tools` | Global, versioned catalog: tool_name, code_module, config_schema, reusability_score, status (proposed→approved→active→unused→archived) |
+| `cluster_tool_enablements` | Per-cluster imports of global tools: config_overrides, cluster-specific skinning, status, enabled_by |
+
+### Tool Economy Tables *(NEW — architecture-only, deferred)*
+
+| Table | Purpose |
+|-------|---------|
+| `tool_usage_log` | Per-cluster tool invocation telemetry: tokens_used, compute_ms, invocation_type (agent/member/system) |
+
 ### Observer Tables (Phase 1)
 
 | Table | Purpose |
 |-------|---------|
-| `observer_findings` | 10-domain findings with severity, signature hash, occurrence_count |
+| `observer_findings` | 11-domain findings with severity, signature hash, occurrence_count |
 | `observer_prompt_updates` | Autonomous stewardship: target_agent, target_layer, proposed_value, autonomy_tier, veto_deadline |
 | `clio_observer_signals` | TTL-bounded signals injected into Layer 4 |
 | `observer_cluster_context` | Rolling memory per cluster |
 | `cluster_prompt_versions` | Prompt version history |
+| `cluster_prompt_audit` | *(NEW)* Human-readable prompt change history per cluster (cluster-admin-facing). No raw prompt text |
 
 ### Cluster Intelligence Tables (CIM)
 
@@ -348,6 +399,12 @@ MEMBER-FACING AGENT HIERARCHY
 | `intelligence_questions` | 1:N with reports: stakeholder questions with who_should_answer and urgency |
 | `intelligence_llm_comparisons` | Admin A/B testing: canonical_report_id, compared_llms, admin_selected_llm |
 | `intelligence_introspection` | Self-critique layer: alternative_perspectives, blind_spots, confidence_adjustment, findings_revised |
+
+### Prompt Audit Tables *(NEW — cluster-admin-facing)*
+
+| Table | Purpose |
+|-------|---------|
+| `cluster_prompt_audit` | Human-readable prompt change history per cluster: what changed, why, impact after 7 days, rollback controls. No raw prompt text (protocol disclosure). |
 
 ### Premium Cluster & Workshop Tables
 
@@ -480,6 +537,76 @@ All endpoints require `Authorization: Bearer {JWT}` unless noted. Admin endpoint
 | `PUT`  | `/api/admin/llm/routing` | Admin |
 | `GET`  | `/api/admin/sage/overview` | Admin |
 
+### Genesis Engine *(NEW)*
+
+| Method | Path | Auth |
+|--------|------|------|
+| `GET`  | `/api/admin/genesis/reports/:clusterId` | Admin |
+| `POST` | `/api/admin/genesis/re-run/:clusterId` | Admin |
+| `GET`  | `/api/admin/genesis/spec/:clusterId` | Admin |
+
+### Token Budget *(NEW)*
+
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/api/admin/token-budget/promote` | Admin |
+| `GET`  | `/api/admin/token-budget/:clusterId` | Admin |
+| `POST` | `/api/admin/token-budget/demote` | Admin |
+
+### Feature Signals *(NEW)*
+
+| Method | Path | Auth |
+|--------|------|------|
+| `GET`  | `/api/admin/feature-signals` | Admin |
+| `POST` | `/api/admin/feature-signals/:id/send-to-cim` | Admin |
+| `POST` | `/api/admin/feature-signals/:id/dismiss` | Admin |
+
+### Demand Signals *(NEW — Phase0 graduation)*
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `POST` | `/api/demand-signals` | None | Anonymous visitor submits intent + demographics |
+| `GET`  | `/api/admin/demand-signals` | Admin | List all signals, filter by status/concept |
+| `GET`  | `/api/admin/demand-signals/:id` | Admin | Single signal with deduplication history |
+| `POST` | `/api/admin/demand-signals/:id/approve` | Admin | Approve → triggers Genesis pre-spawn questionnaire |
+| `POST` | `/api/admin/demand-signals/:id/reject` | Admin | Reject → status = 'admin_rejected', 30-day cooldown |
+| `POST` | `/api/admin/demand-signals/:id/modify` | Admin | Modify concept label before approval |
+
+> **Behaviour:** Anonymous visitors who don't match AGGIL on a public cluster preview see a Clio prompt: "What were you looking for?" Responses are stored with `concept_hash` deduplication. When `signal_count` ≥ 20 within 30 days for the same concept, Observer proposes a new cluster. Approved signals trigger the Genesis pre-spawn questionnaire sent to all `visitor_email` addresses that submitted for that concept.
+
+### Sage Feedback *(NEW — Phase0 graduation)*
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `POST` | `/api/posts/:id/feedback` | JWT | Member thumbs up / down / report on a Sage post |
+| `GET`  | `/api/admin/sage-feedback` | Admin | Aggregated feedback per cluster, 7/30/90-day windows |
+| `GET`  | `/api/admin/sage-feedback/:postId` | Admin | Individual post feedback breakdown |
+
+> **Behaviour:** Members rate Sage posts with thumbs up/down. Ratings feed into the Observer's User Feedback Digest (`sage_positive_feedback_rate`). Reports (`feedback_type = 'report'`) route to moderation + welfare check. The Observer consumes unprocessed feedback rows (`consumed_by_observer = FALSE`) every 6h cycle. See `observer/OBSERVER_INTROSPECTION_ENGINE.md` §User Feedback Digest.
+
+### Platform Tools Registry *(NEW)*
+
+| Method | Path | Auth |
+|--------|------|------|
+| `GET`  | `/api/admin/tools/catalog` | Admin |
+| `POST` | `/api/admin/tools/enable/:clusterId` | Admin |
+| `POST` | `/api/admin/tools/promote/:toolId` | Platform Admin |
+| `POST` | `/api/admin/tools/veto/:toolId` | Platform Admin |
+
+### Cluster Intake *(NEW)*
+
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/api/admin/intake/questionnaire` | Admin |
+| `GET`  | `/api/admin/intake/responses/:clusterId` | Admin |
+
+### Clio Questionnaire *(NEW)*
+
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/api/clio/questionnaire` | JWT |
+| `GET`  | `/api/clio/questionnaire/:clusterId` | JWT |
+
 ---
 
 ## 8. BullMQ Agent Runtime
@@ -491,33 +618,41 @@ Formerly called "Yantra" — now "Agent Runtime" (BullMQ + Redis).
 | Lane | Used By | SLA |
 |------|---------|-----|
 | **`critical`** | Welfare flags, character concerns, account safety | <1s p99 |
-| **`clio-high`** | Clio chat replies, `@Sage` responses, ephemeral chat | <5s p95 |
-| **`events-medium`** | Sage posting, Atlas briefs, Observer cycles, arc evaluation, agent chatbox | <30s p95 |
-| **`scout-low`** | Scout crawls, Atlas crawls, calibration jobs | <10min p95 |
+| **`high`** | Clio chat replies, `@Sage` responses, ephemeral chat, CIM on-demand | <5s p95 |
+| **`medium`** | Sage posting, Atlas briefs, Observer cycles, arc evaluation, agent chatbox, Genesis spec/validation, prompt refinement introspection | <30s p95 |
+| **`low`** | Scout crawls, Atlas crawls, calibration jobs, Genesis post-launch monitor, gap remediation, token budget promote, tool promotion, CIM auto-implement | <10min p95 |
 
 ### Key Job Types
 
 | Job | Lane | Trigger | Concurrency |
 |-----|------|---------|-------------|
-| `ClioChatJob` | `clio-high` | On-demand | 10 |
-| `SagePostFromAtlas` | `events-medium` | Atlas content ready | 3 |
-| `SageFirstPostAck` | `events-medium` | First organic post (0→1) | 5 |
-| `SageMilestoneMessage` | `events-medium` | Member count hits 10 | 5 |
-| `SageAtMentionResponse` | `clio-high` | `@Sage` mention | 5 |
-| `AtlasBriefOnJoin` | `events-medium` | 60s delay after join | 5 |
-| `AtlasReengagementCheck` | `events-medium` | Every 6h | 3 |
-| `ObserverCycle` | `events-medium` | Every 6h (10 domains) | 2 |
-| `ClusterArcEvaluate` | `events-medium` | Every 6h | 3 |
-| `ScoutCrawlJob` | `scout-low` | 6h/12h/24h by segment | 2 |
-| `AgentChatboxExchange` | `events-medium` | Scheduled cadence | 3 |
-| `SageFeatureEvaluation` | `events-medium` | Every 48h per cluster | 3 |
-| `SagePostsDailyReset` | `events-medium` | Midnight | 1 |
-| `ChatboxCadenceScheduler` | `events-medium` | Every 30 min | 1 |
-| `ClusterIntelligenceWeekly` | `events-medium` | Weekly cron per cluster | 1 | Runs selected modules based on cluster state |
-| `ClusterIntelligenceBootstrap` | `events-medium` | 24h after cluster creation | 1 | Runs all modules in inference mode |
-| `ClusterIntelligenceOnDemand` | `clio-high` | Admin dashboard action | 1 | Runs selected modules with specified LLM |
-| `ClusterIntelligenceCrossAgentReview` | `events-medium` | Confidence ≥ 0.75 finding | 1 | Sage ↔ Clio chatbox exchange |
-| `ClusterIntelligenceAutoImplement` | `scout-low` | Low-risk auto-approved | 1 | Queues implementation of approved changes |
+| `ClioChatJob` | `high` | On-demand | 10 |
+| `SagePostFromAtlas` | `medium` | Atlas content ready | 3 |
+| `SageFirstPostAck` | `medium` | First organic post (0→1) | 5 |
+| `SageMilestoneMessage` | `medium` | Member count hits 10 | 5 |
+| `SageAtMentionResponse` | `high` | `@Sage` mention | 5 |
+| `AtlasBriefOnJoin` | `medium` | 60s delay after join | 5 |
+| `AtlasReengagementCheck` | `medium` | Every 6h | 3 |
+| `ObserverCycle` | `medium` | Every 6h (11 domains) | 2 |
+| `PromptRefinementIntrospection` | `medium` | Priority queue trigger (prompt_quality_decline > 0) | 3 | Dedicated Pool B quota |
+| `ClusterArcEvaluate` | `medium` | Every 6h | 3 |
+| `ScoutCrawlJob` | `low` | 6h/12h/24h by segment | 2 |
+| `AgentChatboxExchange` | `medium` | Scheduled cadence | 3 |
+| `SageFeatureEvaluation` | `medium` | Every 48h per cluster | 3 |
+| `SagePostsDailyReset` | `medium` | Midnight | 1 |
+| `ChatboxCadenceScheduler` | `medium` | Every 30 min | 1 |
+| `ClusterIntelligenceWeekly` | `medium` | Weekly cron per cluster | 1 | Runs selected modules based on cluster state |
+| `ClusterIntelligenceBootstrap` | `medium` | 24h after cluster creation | 1 | Runs all modules in inference mode |
+| `ClusterIntelligenceOnDemand` | `high` | Admin dashboard action | 1 | Runs selected modules with specified LLM |
+| `ClusterIntelligenceCrossAgentReview` | `medium` | Confidence ≥ 0.75 finding | 1 | Sage ↔ Clio chatbox exchange |
+| `ClusterIntelligenceAutoImplement` | `low` | Low-risk auto-approved | 1 | Queues implementation of approved changes |
+| `GenesisSpecGenerate` | `medium` | Cluster creation approval | 1 | Max 3 LLM calls, 24K tokens |
+| `GenesisClusterValidate` | `medium` | 24h after cluster published | 1 | Max 2 LLM calls, 12K tokens |
+| `GenesisGapRemediate` | `low` | Validation finding | 1 | Auto-only, max 1 LLM call, 4K tokens |
+| `GenesisPostLaunchMonitor` | `low` | Weekly, 7 days after creation | 1 | Max 1 LLM call/week, 8K tokens |
+| `ClusterTokenBudgetPromote` | `low` | Admin dashboard action | 1 | Audit trail write |
+| `FeatureSignalObserverReview` | `low` | Monthly cron | 1 | Observer Domain 11 review |
+| `PlatformToolPromotion` | `low` | Event-driven (Domain 10) | 1 | Reusability scoring + auto-promote |
 
 ### Idempotency
 
@@ -533,6 +668,8 @@ The runtime refuses to dispatch a job whose idempotency key has already been pro
 | Timeout | Marked timed-out; partial-result handler invoked if defined |
 | LLM provider 5xx | Retry once → call fallback LLM → return `status: 'error'` |
 | Daily LLM budget exceeded | Return `status: 'budget_exceeded'`; agent degrades gracefully |
+| **Per-cluster Genesis budget exhausted** | Operation stops immediately. Human escalation gate fires: cluster admin (premium) or platform admin (generic) notified. 7-day response window before Observer review |
+| **Prompt refinement Pool B exhausted** | Request queued with 24h max delay. Cluster admin notified of queue position |
 | Idempotency collision | Rejected at dispatch; original in-flight job continues |
 
 ---
@@ -550,9 +687,10 @@ Layer 2 — Agent character         (≤800 tokens, NEVER trimmed)
   Sage/Clio/Atlas/Scout/Observer register + decision framework
 
 Layer 3 — Cluster identity        (≤400 tokens, compress if needed)
+  **Authoritative source: `cluster_genesis_spec` from Genesis Engine.**
   Display name, tagline, description, vocabulary, arc phase, member count,
   demographic chips, anchor seed, member noun, authority terminology,
-  primary language
+  primary language. Admin overrides marked `overridden`; Genesis baseline preserved.
 
 Layer 4 — Per-call signals        (variable; trim oldest turns first)
   Memory, welfare flags, @mentions, vault context, recent posts,
@@ -582,6 +720,7 @@ src/lib/prompts/
 ├── registry.ts        # cluster_id → cluster module resolver
 ├── sage-builder.ts
 ├── clio-builder.ts
+├── genesis-builder.ts
 └── share-builder.ts
 ```
 
@@ -602,6 +741,10 @@ Clusters progress through 5 arc phases. The backend evaluates transitions every 
 **Regressions:** D→C on 72h silence. E→C on 72h silence.
 
 **Sage daily limit:** `sage_posts_today < 2` per cluster. Reset at midnight.
+
+**Genesis Engine integration:** After cluster creation, Genesis Engine Cycle B validates the live cluster against its spec (async, background). Post-launch monitor begins 7 days after creation, running weekly. 14-day cooldown after failed remediation.
+
+**Composer capabilities evolve with vibe:** The Genesis Engine sets an initial `cluster_vibe` from the intake questionnaire, which determines composer feature flags (image upload, polls, formatting). As the cluster matures, Observer monitors for "format drift" (Domain 3 — format coherence sub-dimension). If members consistently use features outside the vibe's expected range, Observer proposes prompt refinement to adjust composer controls or Sage guidance. Cluster admin reviews changes in the Prompt History panel.
 
 ---
 
@@ -676,7 +819,7 @@ Four real-time signals flow through Supabase Realtime:
 
 ## 13. Observer — Platform Steward
 
-Observer monitors 10 domains every 6 hours as a background BullMQ worker.
+Observer monitors 11 domains every 6 hours as a background BullMQ worker.
 
 | Domain | Label | Severity | What It Detects |
 |--------|-------|----------|-----------------|
@@ -690,6 +833,11 @@ Observer monitors 10 domains every 6 hours as a background BullMQ worker.
 | 8 | `toxic_signals` | critical | Coded language, dogwhistles, escalating hostility |
 | 9 | `tool_effectiveness` | info | Which Atlas/Sage content gets engagement |
 | 10 | `growth_anomalies` | warning | Sudden spike (≥10 joins in 1h) or bot wave |
+| 11 | `feature_signal_review` | info | Monthly review of `feature_signals` for platform rule compliance, safety, protocol disclosure risk, k-anonymity |
+
+**Domain 10 update:** `tool_effectiveness` now also scores newly built cluster tools for global reusability promotion (0-100). Score ≥ 80 → auto-promote to `platform_tools`. Admin can veto retroactively.
+
+**Genesis Engine sub-component:** The Cluster Genesis Engine is NOT an independent agent. It is a sub-component of Observer Layer C. Observer initiates Genesis cycles and reviews outputs. Genesis has no independent agency — it cannot modify platform rules, agent hierarchies, or welfare routing. All Genesis outputs flow through Observer's standard finding-and-approve channel (Channel 2).
 
 ### Two Output Channels
 
@@ -712,6 +860,7 @@ Observer monitors 10 domains every 6 hours as a background BullMQ worker.
 - Modify the cosmological substrate
 - Act on welfare signals autonomously
 - Direct other agents in real-time conversation
+- Modify cluster demographics post-creation (AGGIL post-spawn protection enforced by Genesis Engine)
 
 ---
 
@@ -757,7 +906,7 @@ IF admin_on_demand:  Run modules specified by admin
 
 **Five-step analysis pipeline:**
 
-1. **Data Assembly** — Query Supabase, read Sage FI signal log (Redis), read Observer findings, aggregate and anonymize
+1. **Data Assembly** — Query Supabase, read Sage FI signal log (Redis), read Observer findings, read aggregated `feature_signals` (k-anonymity compliant: frequency ≥ 3 or cluster ≥ 8 members), aggregate and anonymize
 2. **LLM Inference & Analysis** — Module-specific prompt with cluster context, arc phase, **demographic lens** (age, gender, geography, interests, languages shape interpretation), and premium cluster context (vault, Workshop, Admin guidance)
 3. **Structured Extraction** — Parse raw analysis into typed report schema, compute confidence, tag risk
 4. **Introspection** (optional) — Second-pass self-critique: "What perspectives did I miss? How would a different demography re-read this data?" Adjusts confidence based on blind spots found
@@ -791,6 +940,9 @@ Every module produces an `IntelligenceReport` with:
 - **Introspection detail:** Self-critique, blind spots, alternative perspectives by life-stage/gender/cultural/language/purpose lens
 - **Deep vs. Fast toggle:** Admin chooses "Deep introspection" (~30-40% more tokens) or "Fast inference"
 - **Cost guardrail:** LLM comparison quota (default 1/month/cluster, admin-adjustable 0-3)
+- **Genesis Reports sub-tab:** Spec generation status, validation diffs, auto-remediated gaps, pending approvals, post-launch drift detection
+- **Token Budget sub-tab:** Current tier (Standard/Elevated/Maximum), usage meter, promotion controls (justification + duration + auto-revoke), budget history with audit trail
+- **Prompt History sub-tab:** *(NEW)* Human-readable prompt change log per cluster. What changed (agent, aspect, direction), why (trigger source + description), impact after 7 days (delta + assessment). One-click rollback within 30 days. "Request review" button to trigger Observer introspection with priority boost.
 
 ### Privacy & Security
 
@@ -804,10 +956,12 @@ Every module produces an `IntelligenceReport` with:
 
 ## 15. Cluster Intake Pipeline
 
-New clusters don't get created directly. Raw signals go through a two-pass agentic interpretation:
+New clusters don't get created directly. Raw signals go through a two-pass agentic interpretation, followed by the Genesis Engine:
 
 ```
 Raw signal (waitlist form / Scout internet signal / Clio member inference)
+    ↓
+Pre-Spawn Questionnaire (Clio orchestrates 3-5 structured questions)
     ↓
 Intake Interpreter → Draft v1 (full AGGIL config, name, description, Sage persona, seed questions)
     ↓
@@ -817,12 +971,33 @@ Draft v2 + structured diff surfaced in Admin Dashboard
     ↓
 Admin reviews, may edit Draft v2, approves or rejects
     ↓
-Approval → ClusterCreationJob fires → cluster live → founder invite link
+Approval → ClusterCreationJob fires
+    ↓
+Genesis Engine Cycle A: Spec Generation & Introspection
+    → Generates versioned cluster_genesis_spec (tools, topics, Sage calibration)
+    → Validates against platform rules
+    → Max 3 LLM calls, 24K tokens
+    ↓
+Cluster PUBLISHED → live → founder invite link
+    ↓
+Genesis Engine Cycle B: Creation Validation & Remediation (async)
+    → Diff live cluster against spec
+    → Auto-remediate low-risk gaps
+    → Surface medium/high-risk gaps to admin
+    → Max 2 LLM calls, 12K tokens
+    ↓
+Post-Launch Monitor (weekly, starting 7 days after creation)
+    → Detect drift from spec
+    → Propose new cluster if demographic changes detected
+    → 14-day cooldown after failed remediation
+    → Max 1 LLM call/week, 8K tokens
     ↓
 Rejection → archived with reason. No cluster created.
 ```
 
-Every cluster created on the platform has a versioned intake record (v1 + v2 + diff).
+**Token budget:** 52K tokens max per cluster (Standard tier). Admin can promote to Elevated (104K) or Maximum (156K) via dashboard. Promotion is time-bounded, justified, and audited.
+
+Every cluster created on the platform has a versioned intake record (v1 + v2 + diff) + Genesis spec + validation report.
 
 ---
 
@@ -839,6 +1014,8 @@ Every inter-agent communication is one of 7 patterns:
 | **5. Tool proposal** | Observer → Clio; Clio → Sage; etc. | Markdown proposal doc → `tool_proposals` row → admin approves → activated. |
 | **6. Autonomous stewardship** | Observer → prompt layers | Introspection → minimal prompt update → validation → apply → veto window. |
 | **7. Cluster intake** | Intake Interpreter → Adversarial Reviewer → Admin | Raw signal → Draft v1 → critique → Draft v2 → admin approves → cluster live. |
+| **8. Genesis Engine orchestration** | Observer → Genesis Engine → Admin Dashboard | Spec generation → validation → human approves/rejects → cluster config updated |
+| **9. Feature signal flow** | Clio → Observer (Domain 11) → CIM Functional Module | Organic capture → rule compliance review → CIM evaluates → tool proposal chain or global tool enablement |
 
 ---
 
@@ -878,6 +1055,9 @@ The UI always shows "Admin" inside a premium cluster — never "Founder".
 | Feature approval | Aggilo platform team | Cluster Admin approves; platform team retains override |
 | Member removal | Not allowed | Allowed, logged |
 | Post deletion | Author-only | Admin/Manager can delete; logged |
+| Genesis Engine validation | To platform admin | To cluster Admin (faster, domain-aware) |
+| Token Budget promotion | Platform admin only | Cluster admin can promote own cluster (if premium). Platform admin can promote any. |
+| Cluster vibe adjustment | Platform admin only | Cluster admin can request vibe adjustment → triggers Genesis Engine re-validation |
 
 ### Agent Involvement Slider
 
@@ -954,6 +1134,11 @@ Member posts, replies, welfare flags, vault entries, and Workshop dialogue are *
 10. **Sycophancy ban in agent-to-agent dialogue.** ~40% of exchanges should involve pushback or skepticism. "Good point", "absolutely", "great idea" are banned.
 11. **Repetition guard.** Server-side Jaccard similarity check (threshold 0.55) on Sage's last 15 posts. Fires → suppress + log `step_matched = 'silent'`.
 12. **Welfare/character precedence over @mention.** Safety floor always wins.
+13. **Genesis Engine anti-loop rules.** No nested introspection. No CIM → Genesis feedback loop. 14-day cooldown after failed remediation. No budget borrowing.
+14. **Token budgets are inviolable.** No Genesis operation may exceed its tier cap. Budget promotion is time-bounded and audited.
+15. **Tools are reusable libraries.** One backend, cluster-specific skins. No custom builds per cluster. Observer scores reusability on first build.
+16. **Feature signal privacy.** Raw signals (with user_id) never surfaced to any human or agent. Only aggregated, k-anonymity-compliant data.
+17. **Genesis demographic protection.** The Genesis Engine cannot retroactively narrow cluster demographics. Demographic changes trigger new cluster proposal, not modification.
 
 ---
 
@@ -964,10 +1149,14 @@ Member posts, replies, welfare flags, vault entries, and Workshop dialogue are *
 | **Phase 1-5** | Auth, profiles, clusters, posts, comments, likes, DMs, onboarding, dashboard, settings |
 | **Phase 6** | Sage cluster intelligence: persona resolution, content curation, daily limit, first-post ack, milestone message, description refinement |
 | **Phase 7** | Clio basic chat + LLM Router + BullMQ setup + response logging + Sage introduction beat |
-| **Phase 9** | Atlas full pipeline + Scout crawl cycle + Observer 10 domains + arc state machine |
+| **Phase 9** | Atlas full pipeline + Scout crawl cycle + Observer 11 domains + arc state machine |
 | **Phase 10** | Moderation engine (AI severity) + welfare escalation + passive safety sampling |
 | **Phase 11** | Premium matchmaker + preference learning + questionnaire dispatch |
 | **Phase A-H** | Agent chatbox, `@Sage`, feature intelligence, bridge messages, two-lens Clio, soft handoff, cluster intake pipeline |
+| **Genesis Engine** | Pre-spawn questionnaires, spec generation, introspection, creation validation, post-launch monitoring, token budget enforcement |
+| **Feature Signals** | Clio organic capture, Observer Domain 11 review, CIM integration, admin dashboard UI |
+| **Platform Tools Registry** | Global catalog, cluster enablement, auto-promotion by Observer, admin veto, soft retirement |
+| **Admin Dashboard Help** | Source-of-truth document for all UI copy, tooltips, and help text |
 
 ---
 
@@ -977,6 +1166,7 @@ Member posts, replies, welfare flags, vault entries, and Workshop dialogue are *
 - **Laravel / PHP / Artisan** — Do not exist in this project.
 - **"Yantra"** — Retired term. The runtime is now BullMQ workers + Node services.
 - **Direct web scraping** — Architecturally prohibited. No exception path.
+- **Phase 0 boundaries** — Phase 0 references Genesis Engine, Feature Signals, and Platform Tools Registry docs for test clusters but does NOT implement them. These are main-product features. Token budgets are not enforced in Phase 0. Feature signals are not captured.
 
 ---
 
@@ -995,9 +1185,13 @@ Member posts, replies, welfare flags, vault entries, and Workshop dialogue are *
 | `architecture/PLATFORM_AGENCY.md` | Three-layer platform agency model (Soul / Rules / Observer) |
 | `architecture/AGENT_RUNTIME.md` | BullMQ lanes, idempotency, failure modes, runtime_events schema |
 | `architecture/REALTIME_ENGAGEMENT_LAYER.md` | Four real-time signals, fallback contract, privacy ceiling |
-| `architecture/AGENT_COMMUNICATION_CONTRACT.md` | 7 inter-agent communication patterns, hierarchy, intake pipeline |
-| `architecture/CLUSTER_INTELLIGENCE_MODULES.md` | CIM system: 5 modules, execution model, admin dashboard, structured report schema, LLM comparison |
+| `architecture/AGENT_COMMUNICATION_CONTRACT.md` | 9 inter-agent communication patterns, hierarchy, intake pipeline, Genesis orchestration, feature signal flow |
+| `architecture/CLUSTER_INTELLIGENCE_MODULES.md` | CIM system: 5 modules, execution model, admin dashboard, structured report schema, LLM comparison, feature signals input |
 | `architecture/premium_cluster_requirements.md` | Premium cluster roles, immutables, Agent Involvement Slider, Room Workshop, public listing, trust signals |
+| `architecture/CLUSTER_GENESIS_ENGINE.md` | Genesis Engine: two-cycle validation, token budgets, pre-spawn questionnaires, post-launch monitoring |
+| `architecture/PLATFORM_TOOLS_REGISTRY.md` | Global tool library: reusable tools, auto-promotion, versioning, soft retirement |
+| `architecture/AGENTIC_FEATURE_SIGNALS.md` | Feature signal capture, privacy boundaries (k-anonymity), CIM integration, deduplication |
+| `architecture/TOOL_ECONOMY.md` | Cost model, affinity gating, pricing tiers (architecture-only, deferred to paid tiers) |
 
 ### Agent Configuration
 
@@ -1007,7 +1201,7 @@ Member posts, replies, welfare flags, vault entries, and Workshop dialogue are *
 | `sage/` | SOUL.md, AGENTS.md, SAGE_ANCHOR_PROTOCOL.md, SAGE_FEATURE_INTELLIGENCE.md, SAGE_SKILLS.md, skills/ |
 | `scout/` | SOUL.md, AGENTS.md |
 | `atlas/` | SOUL.md, AGENTS.md, skills/ |
-| `observer/` | AGGILO_OBSERVER_AGENTS.md, OBSERVER_STEWARDSHIP.md, OBSERVER_INTROSPECTION_ENGINE.md |
+| `observer/` | AGGILO_OBSERVER_AGENTS.md (11 domains), OBSERVER_STEWARDSHIP.md, OBSERVER_INTROSPECTION_ENGINE.md |
 
 ### Operational Documents
 
@@ -1019,6 +1213,7 @@ Member posts, replies, welfare flags, vault entries, and Workshop dialogue are *
 | `docs/CLUSTER_SKILL_DISCOVERY_PROTOCOL.md` | Cross-agent skill dialogue protocol |
 | `docs/CLIO_SAGE_HANDOFF.md` | Handoff protocol (Anchor terminology, chatbox triggering) |
 | `docs/SOUL_INJECTION_MAP.md` | Soul tier injection per agent |
+| `docs/ADMIN_DASHBOARD_HELP.md` | Master reference for all admin-facing help text, tooltips, and UI copy |
 | `docs/AGGILO_ONBOARDING_PLAYBOOK_V2.md` | Onboarding flow specification |
 
 ### PRDs (read for product intent only — stack references superseded)

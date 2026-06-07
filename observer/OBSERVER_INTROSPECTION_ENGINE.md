@@ -23,7 +23,7 @@ The introspection engine has three components:
 
 2. Cluster Introspection Prompt
    The reasoning framework Observer uses to evaluate a single cluster
-   holistically across five dimensions.
+   holistically across nine dimensions.
 
 3. Proposal Validation & Minimality Test
    Ensures Observer only proposes changes that are genuinely warranted,
@@ -49,6 +49,9 @@ interface ClusterPriorityScore {
     current_health: number;             // 0–20 (absolute state)
     creation_recency: number;           // 0–10 (new clusters)
     time_since_last_introspection: number; // 0–5 (fairness)
+    prompt_quality_decline: number;   // 0–25 (prompt calibration mismatch)
+    manifestation_drift: number;      // 0–20 (NEW — soul manifestation misalignment)
+    ecosystem_health_decline: number; // 0–20 (NEW — ecosystem success model underperformance or purpose drift)
   };
   priority_band: 'urgent' | 'elevated' | 'normal' | 'low' | 'paused';
   introspection_depth: 'deep' | 'standard' | 'light';
@@ -75,6 +78,34 @@ function scoreAdminOverride(cluster: Cluster): number {
   }
 }
 ```
+
+**Prompt quality decline (0–25 points)** *(NEW)*
+
+Prompt calibration issues are user-facing and must be treated as first-class priority signals. A cluster where Sage's register no longer matches member tone degrades member experience immediately.
+
+```typescript
+function scorePromptQualityDecline(cluster: Cluster): number {
+  let score = 0;
+  if (cluster.genesis_reports?.some(r => r.findings?.prompt_mismatch)) score += 20;
+  if (cluster.cim_reports?.some(r => r.findings?.register_mismatch)) score += 15;
+  if (cluster.cim_reports?.some(r => r.findings?.prompt_gap)) score += 12;
+  if (cluster.feature_signals?.some(s => s.signal_type === 'persona_feedback')) score += 18;
+  if (cluster.config?.prompt_review_requested) score += 25;
+  if (cluster.observer_context?.last_introspection?.prompt_mismatch_flag) score += 10;
+  return Math.min(score, 25);
+}
+```
+
+| Trigger | Points | Source |
+|---------|--------|--------|
+| Genesis Engine detects Sage calibration mismatch | 20 | `cluster_genesis_reports.findings` |
+| CIM Behavioural Module flags register mismatch | 15 | `cluster_intelligence_reports` |
+| CIM Functional Module flags prompt gap | 12 | `cluster_intelligence_reports` |
+| Member explicitly reports "Sage feels off" | 18 | `feature_signals` with `signal_type = 'persona_feedback'` |
+| Admin manually flags prompt review needed | 25 | `cluster_config.prompt_review_requested = true` |
+| Observer detected register mismatch in prior introspection | 10 | `observer_cluster_context` |
+
+**Result:** A cluster with prompt quality issues can score 65+ (urgent band) even with normal engagement, guaranteeing deep introspection within 6 hours.
 
 **Performance trajectory (0–25 points)**
 
@@ -150,23 +181,91 @@ function scoreTimeSinceLastIntrospection(cluster: Cluster): number {
 | < 5 or paused | paused | none | Skipped |
 
 **Introspection depth:**
-- **Deep**: Full context snapshot + all 5 dimensions + extended thinking. Up to 3 LLM calls. Urgent/elevated clusters.
-- **Standard**: Abbreviated snapshot + 3 dimensions. 1–2 LLM calls. Normal clusters.
+- **Deep**: Full context snapshot + all 6 dimensions + extended thinking. Up to 3 LLM calls. Urgent/elevated clusters.
+- **Standard**: Abbreviated snapshot + 4 dimensions (drop 1 least relevant). 1–2 LLM calls. Normal clusters.
 - **Light**: Engagement signals only + quick drift check. 1 LLM call. Low-priority clusters.
 
-### Daily budget
+### Daily budget — two pools
+
+Prompt refinement is user-facing and receives a **dedicated budget pool** separate from general platform health introspection.
 
 ```typescript
 const INTROSPECTION_DAILY_BUDGET = {
-  deep:     5,   // Max 5 deep introspections per day
-  standard: 15,
-  light:    30,
+  // Pool A: General platform health (existing)
+  general: {
+    deep:     5,
+    standard: 15,
+    light:    30,
+  },
+  // Pool B: Prompt refinement only (NEW)
+  prompt_refinement: {
+    deep:     8,   // More than general — prompt quality is primary user-facing AI experience
+    standard: 20,
+    light:    40,
+  },
 };
 ```
+
+**Pool B rules:**
+- Pool B is ONLY for introspections where `prompt_quality_decline > 0`.
+- Pool B quotas are **per-cluster-monthly**, not platform-daily:
+  - Generic clusters: 2 deep + 4 standard per month
+  - Premium clusters: 4 deep + 8 standard per month
+  - Elevated/Maximum token budget clusters: +2 deep bonus
+- Unused allowance rolls over 1 month, then expires.
+- If Pool B is exhausted for a cluster, prompt refinement requests queue with 24h max delay.
+- Prompt refinement is computationally cheaper than welfare review (no member-content analysis).
 
 Clusters exceeding the budget are deferred. Their
 `time_since_last_introspection` score increases, so they naturally
 rise in priority next cycle.
+
+### Signal Classification (Urgency Tiers)
+
+Observer continuously monitors cluster signals and classifies each into one of four urgency tiers. This classification determines response speed, not just priority score.
+
+```typescript
+interface SignalEvaluation {
+  signal_type: string;           // e.g., "feature_request", "frustration_spike"
+  frequency: number;             // occurrences in window
+  uniqueness: number;              // % of active members expressing this
+  urgency_language: number;        // NLP score (0.0–1.0)
+  sentiment_trend: string;         // "negative" | "mixed" | "neutral"
+  existing_workaround: boolean;    // are members solving this another way?
+  confidence: number;              // overall confidence this matters
+  tier: 'tier_1_crisis' | 'tier_2_strong_demand' | 'tier_3_emerging' | 'tier_4_background';
+}
+```
+
+**Tier 1 — Crisis (Act within 24h, bypass all rate limits):**
+- Mass frustration spike (5+ negative posts in 24h)
+- Child safety concern
+- Feature critical failure
+- Content harm detected
+
+**Tier 2 — Strong Demand (Act within 3–7 days, 2× budget):**
+- Repeated feature requests (8+ in 7 days, ≥40% unique members)
+- Engagement pattern shift (80% of interactions change modality)
+- Skill stagnation detected (60% stuck on same level for 14 days)
+- Tone mismatch complaints
+
+**Tier 3 — Emerging Trend (Act within 2–4 weeks, 1× budget):**
+- Gradual composition shift (weight rising 5% per week for 3+ weeks)
+- New topic emergence
+- Feature adoption curve rising
+- Subtle tone calibration need
+
+**Tier 4 — Background Drift (Quarterly review, 0.3× budget):**
+- Slow demographic shift
+- Seasonal patterns
+- Long-term composition evolution
+
+**Decision loop:**
+```
+DETECT → CLASSIFY (tier) → EVALUATE (evidence) → ASSESS (impact/jarring-ness)
+  → DECIDE (act now / queue / escalate) → COMMUNICATE (explain change to members)
+  → MONITOR (did it help?) → LEARN (adjust future inference)
+```
 
 ---
 
@@ -194,7 +293,9 @@ That is a valid and often correct verdict.
 [LAYER 3: Cluster identity]
 Cluster: {cluster.display_name}
 Purpose: {cluster.purpose}
-AGGIL: {cluster.aggil_summary}
+AGGIL: {cluster.aggil_summary}  // coarse, aggregate only; no real names or direct identifiers
+Interest profile: {cluster.interest_profile_summary}  // primary, secondary, and "not_for" interests from genesis spec
+Declared vibe: {cluster.vibe_summary}  // content mix + host tone from genesis spec
 Arc phase: {cluster.arc_phase} (day {days_in_phase} of expected {expected_days})
 Member count: {cluster.member_count}
 Days since creation: {cluster.days_since_creation}
@@ -217,7 +318,27 @@ Last introspection: {days_since_last} days ago
 Previous Observer actions: {previous_actions_summary}
 ```
 
-### The five evaluation dimensions
+### Decision priorities (topic-first, demography-optional)
+
+When you introspect a cluster, your reasoning priorities are:
+
+1. **Topic and behaviour first**
+   - Primary signals: what members actually talk about (themes, questions, @Sage mentions), how often they participate, and how the space feels (tone, response quality).
+   - Use `engagement_snapshot`, `user_feedback_digest`, and content themes as your main evidence.
+
+2. **Interest profile and vibe second**
+   - Compare lived behaviour against the **declared** `interest_profile_summary` and `vibe_summary` from the Genesis spec.
+   - Ask: "Does the space we see match what this cluster said it wanted to be?" (content, tone, format).
+
+3. **Coarse AGGIL demography as an optional prior**
+   - Use AGGIL only when:
+     - The genesis spec or platform rules explicitly make it salient (for example, teen-only clusters, locality-based clusters, or language-specific clusters), **and**
+     - The topic or safety context actually depends on age/language/geography.
+   - Many clusters are effectively demography-agnostic (for example, "Functional programming study" or "Beginner drawing"). In those clusters, you typically treat demography as noise and do **not** propose any demography-related changes.
+
+You are always evaluating the **space**, not judging whether specific individuals "belong". All reasoning is aggregate and PII-free.
+
+### The eight evaluation dimensions
 
 **Dimension 1 — Purpose Alignment**
 
@@ -241,13 +362,17 @@ narrow/broad), purpose clarity for Sage's editorial judgment.
 }
 ```
 
-**Dimension 2 — Demographic Fit**
+**Dimension 2 — Demographic & Interest Fit**
 
-Are the right people here, and is the cluster serving them well?
+Are the people who are actually here reasonably aligned with the **intended interest profile and coarse AGGIL frame**, and is the cluster serving them well?
 
-Infer from aggregate signals only (post language distribution, topic
-patterns, @Sage content, member feedback). Never reference individual
-member profiles.
+- Start from topic and behaviour: recurring themes, questions, and engagement patterns.
+- Use coarse AGGIL only if it is explicitly part of the cluster's spec or safety posture (for example, teen-only support, city-specific mutual aid, language-specific learning).
+- Infer from aggregate signals only (post language distribution, topic
+  patterns, @Sage content, member feedback). Never reference individual
+  member profiles. Never suggest excluding or reshaping specific
+  individuals. You are evaluating whether the **space** matches the
+  declared intent, not whether members "belong".
 
 ```json
 {
@@ -262,13 +387,22 @@ member profiles.
 }
 ```
 
-**Dimension 3 — Prompt Quality**
+**Dimension 3 — Prompt Quality (including Format & Vibe Coherence)**
 
-Are the current Layer 3 prompts still appropriate for this cluster?
+Are the current Layer 3 prompts (for Sage, Clio, and Observer signals) still appropriate for this cluster's **declared vibe and interest profile**?
 
 Look for: register mismatch, missing context, stale context,
 vocabulary gap. You are evaluating Layer 3 only. You cannot modify
 Layer 1 or Layer 2. You cannot modify welfare or character detection.
+
+**Format & vibe coherence sub-dimension (NEW):**
+Does member content format and tone match the cluster's declared vibe and interest profile?
+- Heavy image use in a text-discussion cluster → format drift
+- Text-only posts in a mixed-media cluster → format underutilization
+- Polls in a cluster with no decision-making vibe → format mismatch
+- Composer feature flags should align with what members actually produce
+
+Format coherence is a prompt quality signal because it indicates whether the composer controls (derived from `cluster_vibe`) are correctly calibrated. If members consistently bypass or ignore vibe-aligned controls, the vibe may need refinement.
 
 ```json
 {
@@ -278,7 +412,13 @@ Layer 1 or Layer 2. You cannot modify welfare or character detection.
   "missing_context": null,
   "stale_context": null,
   "vocabulary_gap": null,
-  "proposed_action": "none | update_sage_fragment | update_clio_fragment | add_observer_signal",
+  "format_coherence": {
+    "drift_detected": false,
+    "drift_description": null,
+    "feature_underutilized": [],
+    "feature_overutilized": []
+  },
+  "proposed_action": "none | update_sage_fragment | update_clio_fragment | add_observer_signal | adjust_composer_flags",
   "proposed_change": null,
   "proposed_signal": null,
   "rationale": "one sentence"
@@ -339,6 +479,193 @@ The standard is strict:
   "no_action_reason": null
 }
 ```
+
+**Dimension 6 — Manifestation Alignment**
+
+Does the cluster's lived agent behaviour match its configured `soul_manifestation_profile`?
+
+Evaluate whether Clio, Sage, and Atlas are manifesting the Soul in the way the profile declares. This is distinct from prompt quality (Dimension 3) — a prompt can be technically correct while the agent's output contradicts the manifestation configuration.
+
+**Drift signals to monitor:**
+- `silence_expectation` vs actual agent post frequency (high silence + 5 posts/day = drift)
+- `primary_register` vs agent statement types (inquiry register but agent uses declarative lectures)
+- `scripture_usage` vs actual citations (none but agent cites Quran = drift)
+- `celebration_mode` vs praise patterns (earned but agent celebrates participation only)
+- Member feedback: "Sage feels too preachy", "Clio is too quiet", "This doesn't feel like a learning space"
+
+**This dimension never modifies Soul prohibitions (Layer 1).** It only adjusts how the Soul manifests (Layer 3) — register, scripture frequency, silence expectation, celebration style.
+
+```json
+{
+  "dimension": "manifestation_alignment",
+  "alignment_score": 0.0,
+  "drift_detected": false,
+  "drift_dimensions": [],
+  "proposed_action": "none | soul_manifestation_shift | persona_override_activation | flag_for_admin_review",
+  "proposed_change": null,
+  "autonomy_tier": 1,
+  "confidence": 0.0,
+  "rationale": "one sentence"
+}
+```
+
+**Dimension 7 — Composition Inference**
+
+Does the cluster's actual behavior match its inferred composition? Are members' needs being met by the current configuration?
+
+Evaluate whether:
+- `inferred_composition` weights still reflect actual post themes, @Sage mentions, and tool usage
+- `stakeholders` accurately describe who is participating and what they need
+- `feature_spawn_candidates` that were not auto-spawned should now be proposed (new evidence)
+- Members are expressing needs that the current configuration does not address
+- The cluster is evolving toward a state that warrants a linked cluster spawn
+
+**Drift signals to monitor:**
+- Tag weight divergence: `education` weight 0.85 but actual posts are 60% parenting venting
+- Stakeholder mismatch: inferred `parent_as_facilitator` but actual members are `teacher_as_expert`
+- Unmet need detection: members repeatedly ask for something the cluster doesn't have
+- Spawn signals: sub-topic recurring with distinct stakeholder needs
+
+**Proposed actions:**
+- `composition_recalculation` — re-run inference on recent behavior, update weights
+- `feature_proposal` — propose a tool/feature that addresses detected unmet need
+- `stakeholder_reinference` — update stakeholder map based on new behavior patterns
+- `cluster_spawn_proposal` — propose linked cluster when sub-community is distinct
+- `manifestation_per_recipient_adjustment` — shift tone for specific stakeholder
+
+```json
+{
+  "dimension": "composition_inference",
+  "alignment_score": 0.0,
+  "drift_detected": false,
+  "drift_signals": {
+    "tag_weight_divergence": false,
+    "stakeholder_mismatch": false,
+    "unmet_need_detected": false,
+    "spawn_signal_detected": false
+  },
+  "proposed_action": "none | composition_recalculation | feature_proposal | stakeholder_reinference | cluster_spawn_proposal | manifestation_per_recipient_adjustment",
+  "proposed_change": null,
+  "evidence": "specific member behavior supporting this inference",
+  "autonomy_tier": 1,
+  "confidence": 0.0,
+  "rationale": "one sentence"
+}
+```
+
+**Dimension 8 — Ecosystem Health (NEW)**
+
+Does the cluster's ecosystem produce its declared purpose? Are success dimensions achieving their intended outcomes?
+
+- Compare each `active` dimension's `performance` score against its `alert_threshold`.
+- Flag dimensions that have been underperforming for longer than the threshold duration.
+- Detect latent needs: are members showing needs not captured in current dimensions?
+- Detect founder-intent drift: has a founder-intent dimension dropped below its `floor_weight`?
+- Detect dimension conflict: are two dimensions inversely correlated (pulling cluster in different directions)?
+- Phase-gated behavior: Seed = flag only; Sprout = propose changes; Canopy = question whether model is still right.
+
+**Key output:**
+
+```json
+{
+  "dimension": "ecosystem_health",
+  "health_score": 0.0,
+  "dimensions_evaluated": [
+    {
+      "dimension_id": "conceptual_understanding",
+      "performance": 0.25,
+      "threshold": 0.40,
+      "status": "underperforming",
+      "duration_days": 14
+    }
+  ],
+  "anomalies": [
+    {
+      "type": "dimension_underperformance | founder_intent_drift | dimension_conflict | latent_need_signal",
+      "severity": "low | medium | high | urgent",
+      "description": "one sentence",
+      "affected_dimensions": ["dimension_id"],
+      "recommended_action": "none | admin_review | ecosystem_edit | spawn_proposal"
+    }
+  ],
+  "latent_needs": [
+    {
+      "need": "what members seem to need but is not in the model",
+      "confidence": 0.0,
+      "evidence": "specific behavior supporting this inference"
+    }
+  ],
+  "proposed_action": "none | ecosystem_adaptation | admin_review | spawn_proposal",
+  "proposed_change": null,
+  "autonomy_tier": 1,  // Seed=1 (flag only), Sprout=2 (propose), Canopy=3 (self-question)
+  "confidence": 0.0,
+  "rationale": "one sentence"
+}
+```
+
+**Important:** Observer does not have authority to change the ecosystem. It flags, proposes, and questions. Only admin (Seed/Sprout) or member deliberation (Canopy) can change the model.
+
+**Dimension 9 — Ecosystem Spec Mismatch Detection (NEW)** *(Formerly proposed as Domain 11; renumbered to maintain sequential order)*
+
+Does the cluster's actual behavior match its declared ecosystem type? Is the framework itself misfit, or are only the parameters within the framework failing?
+
+This dimension is distinct from Dimension 8 (Ecosystem Health). Dimension 8 asks: "Are the success dimensions achieving their targets?" Dimension 9 asks: "Are we measuring the right things at all?"
+
+**Signals to monitor:**
+
+1. **Persistent operational failure despite parameter tuning.**
+   - ≥3 consecutive Evolution changes reversed within 30 days
+   - ≥3 ecosystem dimensions simultaneously off-track (Dimension 8) despite parameter adjustments
+   - This suggests the model is wrong, not just the settings
+
+2. **Member language shift.**
+   - Members explicitly describe the cluster as something other than its `ecosystem_type`
+   - ≥5 members (or ≥10% of active members) signal "this feels more like X than Y"
+   - Clio's `session_themes` drift away from `ecosystem_type` vocabulary
+
+3. **Purpose drift persistence.**
+   - `founder_intent` dimension below `floor_weight` for ≥2 consecutive cycles
+   - Not a single-cycle anomaly — a sustained departure from founding purpose
+
+4. **Stakeholder role inversion.**
+   - Inferred `primary_beneficiary` has shifted (e.g., from `beneficiary_learner` to `supporter_peer`)
+   - `support_role` members are now the primary engagers; intended beneficiaries are passive
+
+5. **Progression model abandonment.**
+   - Stage advancement rate near zero despite high engagement
+   - Members engage but not with the progression content
+   - Suggests the progression model is irrelevant to actual member needs
+
+**Escalation rule:** When Dimension 9 detects a spec mismatch with confidence ≥ 0.70, Observer does NOT propose an ecosystem change directly. It escalates to **Genesis Re-Eval** (`CLUSTER_GENESIS_ENGINE.md` §10). Genesis evaluates whether the ecosystem type itself should change, not just the parameters within it.
+
+**Key output:**
+
+```json
+{
+  "dimension": "ecosystem_spec_mismatch",
+  "mismatch_detected": true,
+  "confidence": 0.0,
+  "current_ecosystem_type": "learning_management",
+  "suggested_ecosystem_type": "emotional_support",
+  "signals": [
+    {
+      "type": "operational_failure | member_language_shift | purpose_drift | stakeholder_inversion | progression_abandonment",
+      "severity": "low | medium | high | urgent",
+      "description": "one sentence",
+      "cycles_persisted": 0,
+      "evidence": "specific observed behavior"
+    }
+  ],
+  "recommended_action": "none | genesis_re_eval_escalation | admin_review",
+  "escalation_to": "genesis_re_eval",
+  "confidence": 0.0,
+  "rationale": "one sentence"
+}
+```
+
+**Autonomy:** Dimension 9 findings are always Tier 3 (finding-and-approve). Observer never auto-triggers Genesis Re-Eval. The finding is surfaced to admin with a "Request Genesis Re-Eval" button. Admin can approve the escalation, request more evidence, or dismiss.
+
+**Why this matters for neurodivergent members:** A cluster that silently shifts from `learning_management` to `emotional_support` while keeping the same success metrics creates a broken social contract. Autistic members optimize for the explicit rules while the implicit reality changes. Dimension 9 makes the framework itself visible and accountable.
 
 ### Overall recommendation
 
@@ -463,6 +790,67 @@ CREATE TABLE clio_cluster_intelligence (
 );
 ```
 
+### `sage_post_feedback` table *(Phase0 graduation)*
+
+Members rate Sage posts with thumbs up/down or report. This table is
+the **primary data source** for `getAgentFeedback()` in the User
+Feedback Digest.
+
+```sql
+CREATE TABLE sage_post_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  cluster_id UUID NOT NULL REFERENCES clusters(id),
+  user_id UUID NOT NULL REFERENCES profiles(id),
+  feedback_type VARCHAR(16) NOT NULL
+    CHECK (feedback_type IN ('thumbs_up','thumbs_down','report')),
+  report_reason VARCHAR(64),   -- "off-topic","incorrect","insensitive","other"
+  report_detail TEXT,
+  consumed_by_observer BOOLEAN DEFAULT FALSE,
+  consumed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**`getAgentFeedback` implementation:**
+
+```typescript
+async function getAgentFeedback(clusterId: string, opts: { days: number }): Promise<AgentFeedback> {
+  const rows = await db
+    .from('sage_post_feedback')
+    .select('feedback_type')
+    .eq('cluster_id', clusterId)
+    .gte('created_at', daysAgo(opts.days))
+    .order('created_at', { ascending: false });
+
+  const total = rows.length;
+  const positive = rows.filter(r => r.feedback_type === 'thumbs_up').length;
+  const negative = rows.filter(r => r.feedback_type === 'thumbs_down').length;
+  const reports = rows.filter(r => r.feedback_type === 'report').length;
+
+  // Mark consumed so they are not re-counted in the next cycle
+  await db
+    .from('sage_post_feedback')
+    .update({ consumed_by_observer: true, consumed_at: new Date().toISOString() })
+    .eq('cluster_id', clusterId)
+    .eq('consumed_by_observer', false)
+    .gte('created_at', daysAgo(opts.days));
+
+  return {
+    sage_positive_pct: total > 0 ? positive / total : null,
+    sage_negative_pct: total > 0 ? negative / total : null,
+    sage_report_count: reports,
+    total_feedback_count: total,
+    trend: computeTrend(rows),  // 7-day vs 30-day comparison
+  };
+}
+```
+
+**Impact on Priority Queue Engine:**
+- `sage_positive_pct < 0.4` → +15 priority score (CIM Behavioural Module flag)
+- `reports >= 3` in 7 days → +25 priority score (immediate admin review)
+- `trend = 'declining'` → +10 priority score
+
 ### Prompt injection defence
 
 Member content enters the introspection prompt as extracted themes.
@@ -486,16 +874,23 @@ function looksLikeInstruction(theme: string): boolean {
 ## Cold-Start Introspection Mode
 
 New clusters (< 7 days old, < 5 posts) cannot run the standard
-five-dimension evaluation — there is no engagement data. A separate
+seven-dimension evaluation — there is no engagement data. A separate
 cold-start mode runs instead, focused on configuration quality:
 
 - **Configuration validation**: Is the AGGIL configuration internally
   consistent? Does the purpose statement clearly describe who the
   cluster is for?
+- **Composition inference validation**: Are the inferred tag weights,
+  stakeholders, and feature_spawn_candidates plausible given the founder
+  description? Are confidence scores appropriately calibrated (not
+  inflated)?
 - **Prompt readiness**: Are the Sage and Clio cluster fragments
-  appropriate for the stated purpose and demographic?
+  appropriate for the stated purpose, inferred stakeholders, and
+  per-recipient manifestation map?
 - **Seed quality**: Are seed posts appropriate and likely to generate
   genuine discussion?
+- **Feature pre-spawn review**: Were high-probability features correctly
+  auto-spawned? Is the UI pre-configuration appropriate?
 
 This produces configuration recommendations, not engagement
 improvements. It is a separate LLM call with a separate prompt.
