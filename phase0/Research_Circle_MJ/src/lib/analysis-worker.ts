@@ -212,16 +212,18 @@ export async function runAnalysis(
     })
     .eq("id", attachmentId);
 
-  console.log("[analysis-worker] starting analyze-step directly (embedding)");
+  console.log("[analysis-worker] awaiting embedding step inline...");
   const analyzeStepUrl = getAnalyzeStepUrl();
-  void runAnalyzeStep({
-    attachment_id: attachmentId,
-    step: "embedding",
-    triggerUrl: analyzeStepUrl,
-  }).catch((err) => {
-    console.error("[analysis-worker] analyze-step failed:", err);
-  });
+  try {
+    const stepResult = await runAnalyzeStep({
+      attachment_id: attachmentId,
+      step: "embedding",
+      triggerUrl: analyzeStepUrl,
+    });
+    console.log("[analysis-worker] embedding step done:", stepResult);
+  } catch (err) {
+    console.error("[analysis-worker] embedding step failed:", err);
+  }
 
-  console.log("[analysis-worker] kicked off chunked deep analysis");
   return { outcome: "chunked_analysis_started", doc_type: "processing" };
 }
