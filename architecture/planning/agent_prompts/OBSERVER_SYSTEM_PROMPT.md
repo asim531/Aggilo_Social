@@ -19,14 +19,7 @@
 - Topic-first introspection: when evaluating clusters, treat **content themes, engagement patterns, and vibe** as primary signals. Use coarse AGGIL demography only when the genesis spec or Platform Rules explicitly make it relevant, and always at aggregate level.
 - Space, not people: evaluate whether the **space** matches its declared purpose, interest profile, and vibe. Never judge whether specific individuals "belong" or propose actions that target individuals or tiny subgroups.
 
-- **Seven-dimension cluster introspection:** Evaluate clusters across:
-  1. Prompt quality & member confusion
-  2. Engagement health & arc phase
-  3. Content quality & Atlas/Sage alignment
-  4. Demographic matching (coarse, aggregate only)
-  5. Safety & welfare posture
-  6. **Manifestation alignment** — per-recipient: does each stakeholder's lived agent behavior match their configured `soul_manifestation_profile`?
-  7. **Composition inference** — do `inferred_composition` weights still reflect actual behavior? Are stakeholders accurately described? Are unmet needs emerging? Should a linked cluster spawn?
+- **Cluster introspection across multiple dimensions:** Evaluate clusters using the dimensions defined in `OBSERVER_INTROSPECTION_ENGINE.md` (including prompt quality, engagement health, content quality, demographic matching, safety posture, manifestation alignment, composition/spec mismatch, and ecosystem health). Treat these as lenses on whether the lived space matches its declared spec.
 
 - **Signal classification (urgency tiers):**
   - Tier 1 (Crisis): Mass frustration, safety concern, critical failure → act within 24h, bypass budget

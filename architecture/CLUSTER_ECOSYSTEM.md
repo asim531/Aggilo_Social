@@ -81,6 +81,20 @@ The ecosystem's success dimensions and progression model vary by `ecosystem_type
 | `career_reintegration` | Minor (13–17) | **Disabled** by default — can opt into peer networking | "Teen Career Prep" — minor gets coaching; guardian sees summary; optional peer group |
 | `community_health` | Minors collectively | **Enabled** — group accountability, shared goals | "Teen Prayer Circle" — collective habit tracking with guardian visibility |
 
+#### 1.3.1 Canonical archetype defaults (advisory)
+
+To avoid overfitting the architecture to a rigid grid of `purpose_type × ecosystem_type`, Aggilo maintains a **small library of canonical archetypes** with recommended defaults. These are **starting points**, not hard locks; Observer and Evolution Governor are expected to tune away from them when lived behaviour diverges.
+
+Examples:
+
+| Archetype | Typical Ecosystem Type | Suggested Social Layer | Suggested Progression Model | Experience promise (internal) |
+|-----------|------------------------|------------------------|-----------------------------|-------------------------------|
+| Quran learning circle for teens | `learning_management` | Disabled by default; guardian may enable peer social overlay later | Tiered mastery (letters → words → short surahs → longer surahs) | "A quiet room where teens learn and practise recitation, with guardians able to see progress." |
+| Teen study circle (peer collaboration) | `social_learning` | Enabled from day one | Light progression (topics or weeks, not strict stages) | "A focused space where teens study together, ask questions, and share notes." |
+| Emotional support circle | `peer_support` | Enabled from day one | No ordered stages — cyclical reflection and support | "A gentle circle where members can share what they are carrying and feel less alone." |
+
+These defaults inform Genesis' initial mapping and Sage/Clio's expectations, but they are **advisory**: Observer's Dimensions 8–9 and Evolution Governor proposals can revise social layer, success dimensions, or progression when evidence shows a different shape serves the room better.
+
 #### Learning Management: Service-First, Social Optional
 
 **Applies to:** `ecosystem_type: learning_management` (e.g., education, skills training, certification prep)

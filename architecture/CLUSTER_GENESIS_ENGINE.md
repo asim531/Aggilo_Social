@@ -21,6 +21,36 @@ The Genesis Engine ensures every cluster is created with the right tools, topics
 
 Before the Genesis Engine runs, **the guardian provides a single free-text description** of what the cluster should be. No structured questionnaire. No multiple-choice buttons. The LLM does the inferential work.
 
+### 2.0 ClusterRequirement contract (NEW)
+
+Regardless of where a cluster idea originates, Genesis treats the incoming signal as a conceptual `ClusterRequirement` — a typed bundle of "what this room is for" before it is turned into a full `cluster_genesis_spec`.
+
+```typescript
+type ClusterRequirementSource =
+  | 'clio_generic'         // member-initiated generic cluster intent
+  | 'premium_application'  // structured Premium / Make Your Crowd application
+  | 'scout_signal'         // external demand detection
+  | 'observer_spawn'       // Observer-proposed linked cluster
+  | 'admin_seed';          // admin-created cluster for operational reasons
+
+interface ClusterRequirement {
+  source: ClusterRequirementSource;
+  who: string;                  // human-language summary of who the room is for
+  size_hint: 'solo' | 'small_group' | 'medium_community' | 'large_network';
+  frequency_hint: 'ad_hoc' | 'weekly' | 'daily' | 'continuous';
+  pain_points: string[];        // 1–3 concrete situations in the member's own words
+  desired_outcome_type: 'learn' | 'process' | 'coordinate' | 'broadcast' | 'mixed';
+  constraints: {
+    geography?: string;
+    language?: string;
+    vulnerable_context?: boolean;
+    has_minor_members?: boolean;
+  };
+}
+```
+
+The `ClusterRequirement` type is a **conceptual envelope**, not a new table. Each intake pathway (waitlist form, Premium application, Scout signal, Observer spawn recommendation, admin seeding) is normalised into this shape before the LLM inference in §2.2. This keeps Genesis' prompt stable even as UI forms and sources evolve. See `AGENT_COMMUNICATION_CONTRACT.md` Pattern 7 for how raw signals map into requirements.
+
 ### 2.1 Intake Flow
 
 | Source | Pre-Genesis Action |
@@ -1009,7 +1039,7 @@ Genesis Re-Eval is the **meta-layer** between Observer and the cluster. Observer
 |-----------|-----------|-----------|
 | Persistent purpose drift signal | Detected across ≥3 consecutive Observer cycles (18h–72h span) | Single-cycle drift can be noise; 3-cycle persistence indicates structural shift |
 | Multi-dimensional mismatch | ≥3 ecosystem dimensions simultaneously off-track | If success_model, progression_model, AND tool_requirements are all failing, the spec itself is suspect |
-| Founder intent floor breach | Any `founder_intent` dimension drops below `floor_weight` | Existing hard guardrail in Governor; this escalates it to Genesis-level review |
+| Guardian intent floor breach | Any `guardian_intent` dimension drops below `floor_weight` | Existing hard guardrail in Governor; this escalates it to Genesis-level review |
 | Member explicit retyping requests | ≥5 members (or ≥10% of active members, whichever is larger) explicitly signal "this feels more like X than Y" | Direct human signal that the framework is misfit |
 | Post-change reversal cascade | ≥3 consecutive Evolution changes reversed within 30 days | If incremental fixes keep failing, the foundation may be wrong |
 

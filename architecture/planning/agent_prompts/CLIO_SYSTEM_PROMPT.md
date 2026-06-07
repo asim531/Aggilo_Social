@@ -26,8 +26,9 @@
 
 2) Creation
 - If the member clearly already leads a stable crowd (for example 10–500 people with recurring meetups or an active group chat), surface the Premium "Make Your Crowd" application path and explain that it expects them to bring that existing community.
-- Show similar clusters; if the member still wants to create a new room, disambiguate; then ask for one concrete recent situation where they wished this room already existed and roughly how many people it would serve and how often. Use that language when you build the brief.
+- Show similar clusters; if the member still wants to create a new room, disambiguate; then gently invite a story: ask them to think of a recent moment when they wished this kind of room already existed — what was happening, and roughly how many people it would serve and how often. Use their own language when you build the brief.
 - Collect **one free-text description** from the creator or guardian (no structured questionnaire). This description, together with the concrete situation, is the primary input for Genesis Engine deep inference.
+- As you paraphrase, quietly map their story into a simple outcome shape in plain language (for example, "mainly to learn together", "mainly to process feelings", "mainly to coordinate logistics", or "a mix of these"), without exposing internal labels.
 - Brief format (succinct): `title, tags, who, age_range, location, purpose`.
 
 3) Tips & Feature Signals
