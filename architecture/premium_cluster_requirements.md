@@ -3,7 +3,9 @@
 > **Status:** Active spec for premium clusters on Aggilo.
 > **Authority:** This spec is subordinate to [`AGGILO_SOUL.md`](../AGGILO_SOUL.md), [`AGGILO_PLATFORM_RULES.md`](../AGGILO_PLATFORM_RULES.md), and the welfare protocol. Where a premium cluster wishes to deviate from Aggilo's foundation, it cannot — every customisation below is bounded by what is **immutable** in §6.
 
-A premium cluster is a cluster where a real human (the **Admin**) and up to three appointed **Managers** hold guidance authority alongside the Aggilo agents. Premium clusters serve communities where domain expertise lives outside the AI — fiqh, medical practice, legal counsel, scholarly traditions, industry mentorship — and the platform's role is to support the human authority rather than replace it.
+A premium cluster is a cluster where a real human (the **Guardian Admin**) and up to three appointed **Managers** hold guidance authority alongside the Aggilo agents. Premium clusters are built for **minors (13–17)** and their guardians — the platform's role is to support the guardian's stewardship of the minor's learning and wellbeing, not to replace it.
+
+> **Why minor+guardian only:** The stakeholder model is purpose-built for this pairing. Non-minor use cases (adult mentorship, career coaching, medical support) are not in scope — they are fabricated market extrapolations without validated product-market fit.
 
 This document captures what an Admin can configure, what is permanent, and how the Aggilo agents interact differently in a premium cluster than in a regular one.
 
@@ -31,14 +33,14 @@ Every premium cluster declares its `purpose_type` at creation. This is **not** a
 
 | Type | Description | Social Layer | Example |
 |------|-------------|------------|---------|
-| `impartial_service` | Agent delivers structured outcome to an individual beneficiary. Social features are **opt-in** (founder-elected). | Optional, disabled by default | "Personal Learning Service" — beneficiary learns; supporter gets dashboard; no Timeline unless founder enables |
-| `social_learning` | Members learn from each other with agent facilitation. Social layer is core. | Core feature | "Quran Circle" — discussion, peer teaching, collective reflection |
-| `peer_support` | Members support each other through shared experience. Social layer is core. | Core feature | "Peer Support Circle" — shared journey, vulnerability, mutual encouragement |
-| `expert_guided` | External expert + agent guide members. Social layer is moderate. | Moderate | "Career Transition" — expert content + member discussion |
+| `impartial_service` | Guardian-guided learning service for a minor. Social features are **opt-in** (guardian-elected). | Optional, disabled by default | "Quran Learning for Teens" — minor learns; guardian gets progress dashboard; no Timeline unless guardian enables |
+| `social_learning` | Minors learn from each other with guardian oversight and agent facilitation. Social layer is core. | Core feature | "Teen Study Circle" — peer discussion, shared notes, collective review |
+| `peer_support` | Minors support each other through shared experience with guardian-moderated safety. Social layer is core. | Core feature | "New Muslim Teens Circle" — shared journey, vulnerability, mutual encouragement |
+| `expert_guided` | External expert + agent guide minors with guardian visibility. Social layer is moderate. | Moderate | "Teen Career Prep" — expert content + minor discussion, guardian sees summary |
 
-**Default for learning clusters:** `impartial_service`. A founder must explicitly request social features (Teaching Circle, peer discussion, supporter Timeline) — they are not assumed.
+**Default for learning clusters:** `impartial_service`. A guardian must explicitly request social features (Teaching Circle, peer discussion, guardian Timeline) — they are not assumed.
 
-**Why this matters:** A premium cluster may serve a beneficiary, a patient, a job-seeker, or a student — none of whom need a social network. The social layer is available if the founder believes peer connection improves outcomes, but the default is **service-first**.
+**Why this matters:** A premium cluster serves a **minor (13–17)**. The minor is the primary beneficiary. The guardian is the steward. Social features may help the minor learn from peers, but they must earn their place through evidence. The default is **service-first, guardian-visible**.
 
 ### 2.1.1 Cluster Creator Type
 
@@ -55,13 +57,13 @@ Every premium cluster records who created it. This determines the cluster's capa
 
 ### 2.1.2 External-Facing Language Guidelines
 
-The cluster's **internal architecture** (`purpose_type`, `creator_type`, `service_mode`) must never leak into user-facing copy. External language should be plain, honest, and privacy-law compliant.
+The cluster's **internal architecture** (`purpose_type`, `creator_type`, `service_mode`) must never leak into user-facing copy. External language should be plain, honest, and minor-safe.
 
 | Internal Concept | External Display | Why |
 |------------------|------------------|-----|
-| `purpose_type: impartial_service` | "Learning service" or "Coaching program" or "Guided support" | Users don't need to know architecture classifications |
+| `purpose_type: impartial_service` | "Guardian-guided learning space" or "Family learning program" | Users don't need to know architecture classifications |
 | `creator_type: user` | Nothing displayed | Internal platform detail; irrelevant to members |
-| "Supporter support" (as primary feature) | "Supporter guidance tools" or "Under supporter guidance" | Supporter is augment, not primary beneficiary. Privacy laws require guardian consent/guidance for beneficiary services |
+| "Guardian oversight" (as primary feature) | "Guardian guidance tools" or "Under guardian supervision" | Guardian is steward, not primary beneficiary. Minor safety requires guardian visibility |
 | "Max 50 members" | Nothing displayed | Internal abuse-prevention limit, not a user-facing feature |
 | Social layer disabled | "Optional community features" or nothing | Subtle — doesn't emphasize what is absent |
 | `service_mode: individual` | "Personal learning space" or "One-on-one guidance" | Emphasizes individual attention |
@@ -69,9 +71,31 @@ The cluster's **internal architecture** (`purpose_type`, `creator_type`, `servic
 
 **Rules:**
 1. Never display `purpose_type`, `creator_type`, `service_mode`, or member limits on cluster cards, public pages, or member surfaces
-2. Always frame supporter/guardian presence as "guidance" or "support" — never as the primary value proposition
-3. Use beneficiary-centered language: "Help your beneficiary achieve their goal" not "Connect with other supporters"
-4. Privacy compliance: Beneficiary-facing services must display "Under guardian guidance" or equivalent
+2. Always frame guardian presence as "guidance" or "supervision" — never as the primary value proposition
+3. Use minor-centered language: "Help your minor learn and grow" not "Connect with other guardians"
+4. Minor-facing services must display "Under guardian supervision" or equivalent
+5. Never use surveillance language: "We monitor your minor" → "Your guardian can see your progress"
+
+### 2.1.3 Minor–Guardian Stakeholder Model (NEW)
+
+Every premium cluster is built around a **minor (13–17)** and their **guardian**. This is not a generic stakeholder model — it is a purpose-built, safety-first architecture.
+
+**Roles:**
+
+| Role | Who | Authority | UI Surface |
+|------|-----|-----------|------------|
+| **Guardian** | Parent, legal guardian, or authorized caregiver | Full cluster Admin. Vault ownership. Manager appointment. Member removal. Content moderation. Welfare alert routing. | Guardian Surface (admin dashboard, progress view, welfare alerts, vault management) |
+| **Minor** | The beneficiary (13–17) | Standard member. Cannot join without linked guardian profile. Cannot create clusters. Cannot message non-guardian adults directly. | Minor Surface (learning cards, discussion threads, achievements, Clio chat) |
+| **Authorized Adult** | Teacher, coach, counsellor appointed by guardian | Manager. Guidance authority. Welfare resolution. Cannot modify vault. Cannot remove members. | Manager view (limited admin dashboard, no vault ownership) |
+
+**Guardian linkage rules:**
+- A minor profile **must** have a `guardian_id` linked before joining any premium cluster.
+- The guardian creating the cluster is automatically the cluster Admin.
+- Guardians can appoint up to 3 Managers. At least 1 Manager must be in place before active member count exceeds 25.
+- Formal identity verification (document upload) is a Phase 2 enhancement. Phase 1 uses self-declared guardian linkage with phone/email confirmation.
+- A minor cannot create a premium cluster. Only a guardian (or platform admin acting on behalf of a guardian) can create one.
+
+**Why this matters:** The guardian is the legal and moral steward of the minor. The platform does not replace the guardian — it supports them with visibility, tools, and safety controls. Every design decision in a premium cluster flows from this relationship.
 
 ### 2.2 Cluster identity
 - Name, description, tagline, icon
@@ -208,7 +232,7 @@ A premium cluster Admin **cannot** override these. Any attempt to bypass them vi
 | Token Budget promotion | Platform admin only | Cluster admin can promote own cluster |
 | Prompt History panel | Not available | Cluster admin can review all prompt changes, rollback within 30 days |
 | Cluster vibe adjustment | Platform admin only | Cluster admin can request vibe adjustment → triggers Genesis Engine re-validation |
-| Per-recipient UI | Not available | Cluster admin can configure distinct surfaces for different stakeholders (e.g., supporter vs. beneficiary feeds) |
+| Per-recipient UI | Not available | Cluster admin can configure distinct surfaces for guardian vs. minor (guardian dashboard vs. minor learning surface) |
 | Feature pre-spawn | Not available | Genesis Engine auto-instantiates high-probability features at cluster creation |
 | Composition visualization | Not available | Cluster admin can view inferred tag weights, stakeholder map, and evolution history |
 | Platform Tools Registry | Read-only | Admin can enable/disable tools, configure overrides |
@@ -260,7 +284,7 @@ Every premium cluster, when created, fills in this profile. The platform team ve
 | Demographic restrictions | Surfaced as chips on the cluster header | Age range, gender, language, etc. |
 | Primary language | ISO 639-1 code | `en`, `ur`, `bn`, etc. |
 | Inferred composition | LLM-inferred weighted tag map | `{ "domain_1": 0.85, "domain_2": 0.78, ... }` |
-| Stakeholders | Inferred roles with needs/pain points | `{ "supporter_1": {...}, "beneficiary_1": {...} }` |
+| Stakeholders | Inferred roles with needs/pain points | `{ "guardian_1": {...}, "minor_1": {...}, "authorized_adult_1": {...} }` |
 | Feature spawn candidates | High-probability features at creation | `[ { "feature_id": "...", "probability": 0.88, "auto_spawn": true } ]` |
 | Vibe characterization | Emotional texture, energy, formality | `{ "primary_mood": "earnest", "energy_level": "moderate", ... }` |
 | Agent maturity | Initial confidence expression | `{ "initial_confidence": "learning", "expression_style": "calibrated_uncertainty" }` |

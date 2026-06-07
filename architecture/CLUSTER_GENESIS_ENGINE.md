@@ -10,7 +10,7 @@
 The Genesis Engine ensures every cluster is created with the right tools, topics, and calibration for its declared purpose — with clarity, detail, and simplicity, without cognitive overload. It runs automatically at cluster creation and continues monitoring weekly post-launch.
 
 **Two sub-cycles:**
-1. **Cycle A — Spec Generation & Introspection:** Transform founder intent into a detailed, versioned configuration spec.
+1. **Cycle A — Spec Generation & Introspection:** Transform guardian intent into a detailed, versioned configuration spec.
 2. **Cycle B — Creation Validation & Remediation:** Diff the live cluster against its spec. Auto-fix low-risk gaps. Surface medium/high-risk gaps to admins.
 
 **Post-launch:** Weekly monitoring detects drift. If drift would change cluster demographics, propose a new cluster instead of modifying the existing one.
@@ -19,13 +19,13 @@ The Genesis Engine ensures every cluster is created with the right tools, topics
 
 ## 2. Pre-Spawn Context Gathering
 
-Before the Genesis Engine runs, **the founder provides a single free-text description** of what the cluster should be. No structured questionnaire. No multiple-choice buttons. The LLM does the inferential work.
+Before the Genesis Engine runs, **the guardian provides a single free-text description** of what the cluster should be. No structured questionnaire. No multiple-choice buttons. The LLM does the inferential work.
 
 ### 2.1 Intake Flow
 
 | Source | Pre-Genesis Action |
 |--------|-------------------|
-| **Clio / waitlist** | Founder writes description in free text. Stored in `cluster_intent_responses` with `source = 'founder_description'`. |
+| **Clio / waitlist** | Guardian writes description in free text. Stored in `cluster_intent_responses` with `source = 'guardian_description'`. |
 | **Admin-initiated** | Admin writes description. Same storage. |
 | **Scout signal, no users** | Cluster created with type-defaults. Genesis runs immediately using Scout's topic inference as the description. First 3 joiners can refine via free-text feedback. |
 
@@ -35,7 +35,7 @@ CREATE TABLE cluster_intent_responses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cluster_id UUID NOT NULL REFERENCES clusters(id),
   user_id UUID REFERENCES profiles(id),  -- NULL for admin/pre-creation
-  source VARCHAR(32) NOT NULL CHECK (source IN ('founder_description', 'admin_input', 'scout_inference', 'member_refinement')),
+  source VARCHAR(32) NOT NULL CHECK (source IN ('guardian_description', 'admin_input', 'scout_inference', 'member_refinement')),
   description TEXT NOT NULL,             -- The free-text description
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -43,32 +43,32 @@ CREATE TABLE cluster_intent_responses (
 
 ### 2.2 LLM Inference Prompt
 
-The Genesis Engine sends the founder's description (plus coarse founder AGGIL profile) to an LLM with a comprehensive inference prompt. The LLM returns a deeply characterized initial spec — not just tags and tools, but weighted composition, inferred stakeholders, vibe, and feature spawn candidates.
+The Genesis Engine sends the guardian's description (plus coarse guardian AGGIL profile) to an LLM with a comprehensive inference prompt. The LLM returns a deeply characterized initial spec — not just tags and tools, but weighted composition, inferred stakeholders, vibe, and feature spawn candidates.
 
 **Input:**
-- `founder_description`: free text
-- `founder_profile`: { age_bracket, gender, geography, language, interests } (AGGIL-coded, no real names)
+- `guardian_description`: free text
+- `guardian_profile`: { age_bracket, gender, geography, language, interests } (AGGIL-coded, no real names)
 - `platform_context`: existing similar clusters, popular tools, tag taxonomy
 
 **Output sections:** See §3.3 `cluster_genesis_spec` for the full JSON structure.
 
 **Additional inference required (NEW):**
-- `purpose_type`: Infer whether this is an `impartial_service` to an individual beneficiary or a `social_learning` / `peer_support` / `expert_guided` community. Ask: "Is the primary value the individual's outcome, or the collective's interaction?"
-- `service_mode`: `individual` | `group` | `hybrid` — inferred from founder description. `individual`: single beneficiary + supporters (social layer disabled by default). `group`: multiple beneficiaries (social layer enabled by default). `hybrid`: starts individual, founder can invite others later. Probe: "Is this for one person, or do you want a group to join?"
-- `social_layer_default`: `enabled` | `disabled` — based on `service_mode` and `purpose_type`. `individual` clusters default to disabled; `group` clusters default to enabled. Founder can override.
-- `primary_beneficiary`: Who is the cluster actually for? (e.g., `beneficiary_1`, `job_seeker`, `patient`, `member_collective`)
-- `support_role`: Who supports the primary beneficiary? (e.g., `supporter_1`, `career_coach`, `peer_group`) — optional for impartial_service clusters
+- `purpose_type`: Infer whether this is an `impartial_service` to an individual minor or a `social_learning` / `peer_support` / `expert_guided` community. Ask: "Is the primary value the minor's individual outcome, or the collective's interaction?"
+- `service_mode`: `individual` | `group` | `hybrid` — inferred from guardian description. `individual`: single minor + guardian (social layer disabled by default). `group`: multiple minors (social layer enabled by default). `hybrid`: starts individual, guardian can invite others later. Probe: "Is this for your minor only, or do you want others to join?"
+- `social_layer_default`: `enabled` | `disabled` — based on `service_mode` and `purpose_type`. `individual` clusters default to disabled; `group` clusters default to enabled. Guardian can override.
+- `primary_beneficiary`: Who is the cluster actually for? (e.g., `minor_1`, `teen_collective`)
+- `support_role`: Who supports the primary beneficiary? (e.g., `guardian_1`, `authorized_adult_1`, `peer_group`) — optional for impartial_service clusters
 - **Stakeholder relationship dynamics (NEW):** For each stakeholder, infer:
-  - `intended_goals`: What this stakeholder wants from the cluster (e.g., supporter wants beneficiary to succeed; beneficiary wants to feel capable)
-  - `relationship_dynamic`: Current power balance, communication pattern, conflict potential (e.g., supporter over-helps, beneficiary avoids challenge)
-  - `transition_expectations`: How this relationship should evolve over time (e.g., supporter anxiety → confidence; beneficiary resistance → engagement)
-  - `interaction_patterns`: Behavioral signals to watch for (e.g., supporter asks leading questions, beneficiary gives up after one mistake)
+  - `intended_goals`: What this stakeholder wants from the cluster (e.g., guardian wants minor to succeed; minor wants to feel capable)
+  - `relationship_dynamic`: Current power balance, communication pattern, conflict potential (e.g., guardian over-helps, minor avoids challenge)
+  - `transition_expectations`: How this relationship should evolve over time (e.g., guardian anxiety → confidence; minor resistance → engagement)
+  - `interaction_patterns`: Behavioral signals to watch for (e.g., guardian asks leading questions, minor gives up after one mistake)
 
-**Why this matters:** The LLM must distinguish "I want my beneficiary to master this outcome" (impartial_service — beneficiary is primary) from "I want to connect with other supporters" (social_learning — supporters are the primary beneficiaries collectively). The same founder description can yield either depending on emphasis. Genesis must make this explicit.
+**Why this matters:** The LLM must distinguish "I want my minor to master this outcome" (impartial_service — minor is primary) from "I want to connect with other guardians" (social_learning — guardians are the primary beneficiaries collectively). The same guardian description can yield either depending on emphasis. Genesis must make this explicit.
 
 **Why free text over questionnaires:**
-- Founders describe clusters in natural, nuanced ways that structured questions flatten.
-- The LLM extracts implicit themes a questionnaire would miss (e.g., "my beneficiary gets frustrated" → emotional_support need).
+- Guardians describe clusters in natural, nuanced ways that structured questions flatten.
+- The LLM extracts implicit themes a questionnaire would miss (e.g., "my minor gets frustrated" → emotional_support need).
 - No cognitive overload — one paragraph instead of 5 forms.
 - The inference is richer: weights, confidence scores, stakeholder roles, not just binary answers.
 
@@ -97,54 +97,54 @@ For premium clusters, a single free-text pass is often insufficient to reach the
 **The loop:**
 
 ```
-Pass 1: Founder free-text → Initial spec + confidence scores
+Pass 1: Guardian free-text → Initial spec + confidence scores
          ↓
     For each dimension below threshold:
       Generate 1 targeted question
          ↓
-    Founder answers (can answer over multiple messages)
+    Guardian answers (can answer over multiple messages)
          ↓
     Pass N: Re-infer with accumulated answers
          ↓
     Repeat until:
       - All dimensions ≥ threshold (success)
       - Max probe rounds reached (default 5) → partial success, flag for admin
-      - Founder opts out → partial success, proceed with available confidence
+      - Guardian opts out → partial success, proceed with available confidence
 ```
 
 **Question generation rules:**
 - Questions are specific, not generic templates
 - Each question targets ONE low-confidence dimension
 - Max 3 questions per round
-- Questions reference founder's previous answers (not disconnected)
-- Founder can answer "I don't know" or "Skip this" — confidence remains unchanged for that dimension
+- Questions reference guardian's previous answers (not disconnected)
+- Guardian can answer "I don't know" or "Skip this" — confidence remains unchanged for that dimension
 
 **Example probe flow** (illustration — actual dimensions vary by domain):
 
 > For a concrete, domain-specific example of this probe flow, see `architecture/examples/cluster-spec-parents-teaching-fractions.md` §6 Genesis Probe Conversation.
 
 ```
-Founder: "[Free-text description of cluster intent, beneficiary needs,
+Guardian: "[Free-text description of cluster intent, minor needs,
           and desired outcomes. May include emotional signals like
           'struggling', 'frustrated', or 'I want them to feel confident'.]"
 
 Pass 1 inference:
   - purpose_type: [inferred value] (0.82) ← BELOW threshold
-  - beneficiary_age: [inferred] (0.95) ✓
+  - minor_age: [inferred] (0.95) ✓
   - geography: unknown (0.40) ← BELOW threshold
   - domain_profile.scope: unknown (0.35) ← BELOW threshold
   - ecosystem_type: [inferred] (0.78) ← BELOW threshold
 
 Genesis generates probes:
-  Q1: "Is the main goal for the beneficiary to achieve this outcome,
-       or for supporters to connect with each other?"
+  Q1: "Is the main goal for the minor to achieve this outcome,
+       or for guardians to connect with each other?"
        → Targets: purpose_type, ecosystem_type
 
-  Q2: "Which region or framework does the beneficiary follow?"
+  Q2: "Which region or framework does the minor follow?"
        → Targets: geography, domain_profile.scope
 
-Founder answers:
-  A1: "[Clarifies beneficiary-centered intent.]"
+Guardian answers:
+  A1: "[Clarifies minor-centered intent.]"
   A2: "[Specifies region and framework.]"
 
 Pass 2 inference:
@@ -1030,7 +1030,11 @@ interface GenesisReEvalInput {
   cim_reports: CIMReport[];             // last 30 days
   member_signals: MemberSignal[];        // explicit retyping requests, sentiment anomalies
   evolution_history: EvolutionProposal[]; // last 90 days, including reversals
-  founder_intent_drift: number;         // min floor_weight across intent dimensions
+  guardian_intent_drift: number;         // min floor_weight across intent dimensions
+  guardian_satisfaction_score: number;   // 0.0–1.0 from guardian feedback digest
+  minor_engagement_delta: number;        // % change in minor active participation
+  has_minor_members: boolean;            // true if cluster serves minors (13–17)
+  guardian_admin_id: string;             // UUID of linked guardian admin
 }
 ```
 
@@ -1160,4 +1164,39 @@ CREATE INDEX idx_genesis_re_eval_cluster
   ON genesis_re_eval_log(cluster_id, created_at DESC);
 CREATE INDEX idx_genesis_re_eval_pending
   ON genesis_re_eval_log(cluster_id, admin_approved) WHERE admin_approved IS NULL;
+```
+
+### Minor–Guardian Schema Additions (NEW)
+
+```sql
+-- Link minor to guardian
+ALTER TABLE profiles ADD COLUMN guardian_id UUID REFERENCES profiles(id);
+ALTER TABLE profiles ADD COLUMN is_minor BOOLEAN DEFAULT FALSE;
+ALTER TABLE profiles ADD COLUMN minor_verified BOOLEAN DEFAULT FALSE;
+
+-- Cluster-level minor flag
+ALTER TABLE clusters ADD COLUMN has_minor_members BOOLEAN DEFAULT FALSE;
+ALTER TABLE clusters ADD COLUMN guardian_admin_id UUID REFERENCES profiles(id);
+
+-- Evolution proposal guardian veto tracking
+ALTER TABLE evolution_proposals ADD COLUMN guardian_veto_reason TEXT;
+ALTER TABLE evolution_proposals ADD COLUMN guardian_consent_required BOOLEAN DEFAULT FALSE;
+ALTER TABLE evolution_proposals ADD COLUMN guardian_consent_given BOOLEAN;
+ALTER TABLE evolution_proposals ADD COLUMN guardian_consent_at TIMESTAMPTZ;
+
+-- Guardian feedback digest
+CREATE TABLE guardian_feedback_digest (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cluster_id UUID NOT NULL REFERENCES clusters(id) ON DELETE CASCADE,
+  guardian_id UUID NOT NULL REFERENCES profiles(id),
+  satisfaction_score DECIMAL(3,2),  -- 0.0–1.0
+  concerns TEXT[],
+  positive_signals TEXT[],
+  covers_period_start TIMESTAMPTZ,
+  covers_period_end TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_guardian_feedback_cluster
+  ON guardian_feedback_digest(cluster_id, guardian_id, created_at DESC);
 ```

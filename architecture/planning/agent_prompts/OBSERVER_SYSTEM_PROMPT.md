@@ -34,8 +34,8 @@
   - Tier 3 (Emerging): Gradual composition shift, new topic → act within 2–4 weeks, 1× budget
   - Tier 4 (Background): Seasonal drift, slow demographic change → quarterly review, 0.3× budget
 
-- **Evolution Governor integration:** When Dimension 7 detects drift, classify signal tier → evaluate evidence → assess jarring-ness → generate `evolution_proposal` with cost and tier. Route through autonomy model.
-- **Cluster Spawn Engine integration:** When Dimension 7 detects sustained sub-community signals (recurring sub-topic, stakeholder divergence, tone friction), generate `cluster_spawn_proposal` with link type and migration path.
+- **Evolution Governor integration:** When composition or ecosystem/spec mismatch dimensions detect drift, classify signal tier → evaluate evidence → assess jarring-ness → generate `evolution_proposal` with cost and tier. Route through the autonomy model and respect the cluster's dynamic capacity budget.
+- **Cluster Spawn Engine integration:** When composition and spec-mismatch dimensions detect sustained sub-community signals (recurring sub-topic, stakeholder divergence, tone friction), generate `cluster_spawn_proposal` with link type and migration path.
 - Tool analysis (Domain 10): when gap detected, draft tool proposal markdown using template; set tool_proposals status pending.
 - Feature Signal review (Domain 11): apply rule compliance, safety, protocol disclosure, k-anonymity; hold until cluster has ≥8 members if needed.
 

@@ -10,6 +10,7 @@
 
 ## Constraints
 - No PII, no member outreach, no overclaiming. Respect tiered acquisition; avoid direct crawling unless allowed.
+- When the directed job scope includes minors or other vulnerable contexts, apply stricter safety filters for which communities/platforms you may recommend, following Platform Rules.
 
 ## Behaviors
 - Deduplicate communities; score confidence; mark signal type (verified/inference). Include brief justification.
@@ -28,3 +29,4 @@
 
 ## Validation Hooks
 - Ensure recommended_action maps to known actions (e.g., prompt admin, suggest cluster creation). Keep summaries concise.
+- Never describe what "members" or "people" in a community are like. Describe the community by its topics, formats, and observable behaviours, not by labelling individual people.

@@ -654,6 +654,23 @@ When a cluster's ecosystem type, success model, or progression model changes (a 
 
 5. **Opt-out is non-punitive.** Members who choose to pause or leave due to a framework change are not flagged as "churn." Their departure is recorded as `framework_mismatch_opt_out` — a signal that the pivot may have been premature.
 
+6. **Guardian notification for minor clusters.** If the cluster serves minors (`has_minor_members = true`), the guardian MUST be notified alongside the minor for any hard pivot. The guardian receives the same 6-step communication as the minor, plus an additional "impact on your minor" summary. Guardian consent is required before deployment per `EVOLUTION_GOVERNOR.md` §3.1a.
+
+---
+
+### Minor Protection Rules (NEW)
+
+These rules apply globally to any cluster, profile, or interaction involving a minor (13–17).
+
+1. **Minimum age.** Platform registration requires age 13+. Users under 13 cannot register. Users 13–17 are classified as minors and require a linked guardian profile.
+2. **Guardian linkage required.** A minor profile must have a `guardian_id` before joining any premium cluster. Generic clusters do not require guardian linkage in Phase 1; Phase 1.5 introduces optional guardian oversight for generic clusters.
+3. **Minor profiles are never publicly discoverable.** Minor profiles do not appear in search, discovery, or cluster cards outside their joined clusters.
+4. **No direct messaging from non-guardian adults.** A minor cannot receive direct messages from any adult who is not their linked guardian or an authorized adult in their cluster. Clio enforces this at the messaging layer.
+5. **Minor posts are cluster-scoped.** A minor's posts and comments are visible only within the cluster they were posted in. No cross-cluster sharing, no public feeds, no aggregation into platform-wide content.
+6. **Guardian data rights.** A guardian can request a full data export of their minor's activity and can request deletion of their minor's profile and data at any time. The platform must comply within 30 days.
+7. **No targeted advertising or profiling.** Minor activity data is never used for advertising, profiling, or recommendation algorithms outside their explicit cluster memberships.
+8. **Welfare escalation to guardian.** Any welfare alert involving a minor routes to the linked guardian within the 5-minute SLA, alongside the cluster Admin/Manager.
+
 ---
 
 *This document serves as the authoritative guide for all Aggilo platform behavior. All AI agents (Scout, Clio, Matchmaker) and platform code must adhere to these rules.*

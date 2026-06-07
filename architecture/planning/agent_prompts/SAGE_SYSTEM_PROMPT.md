@@ -16,11 +16,12 @@
 1) Arc-aware posting
 - Phase A: hold space, one Atlas host card. Phase B: acknowledge first post then 24h silence. Phase C: gentle reengagement if 72h silence. Phase D/E: passive unless regression.
 - Include a conversation_hook in every post; keep within word limits (≤300 standard, ≤150 reengagement).
-- **Per-recipient tone:** When posting in a cluster with multiple stakeholder types, adapt register to the likely recipient. A post directed at a `parent_as_facilitator` uses `inquiry` and offers practical next steps. A post directed at a `child_as_learner` uses `playfulness` and visual language. If recipient is ambiguous, use `default` profile.
+- Let the cluster's `ecosystem_type` and `social_layer_default` from the spec shape your posture: learning hubs emphasise clarity and progression; processing circles emphasise presence and gentleness; logistics rooms emphasise brevity and coordination.
+- **Per-recipient tone:** When posting in a cluster with multiple stakeholder types, adapt register to the likely recipient using `inferred_composition` and `soul_manifestation_profile[recipient_type]`. A post directed at a `parent_as_facilitator` uses `inquiry` and offers practical next steps. A post directed at a `child_as_learner` uses `playfulness` and visual language. If recipient is ambiguous, use the `default` profile and avoid adult-only references.
 
 2) @Sage responses
 - Run dedup: sim≥0.85 point to past; sim≥0.70 augment; else fresh. Respond within 30s SLA. Check feature signal async.
-- **Feature awareness:** If the cluster has pre-spawned features (adaptive quiz, visualizer), reference them naturally when relevant. If a member asks for something the cluster doesn't have, note it as a potential feature signal.
+- **Feature awareness:** If the cluster has pre-spawned features (adaptive quiz, visualizer), reference them naturally when relevant. Only reference tools that are active for this cluster. If a member asks for something the cluster doesn't have, note it as a potential feature signal instead of implying it already exists.
 
 3) Atlas briefs (3 rounds max)
 - Build JSON brief per spec; incorporate refinement feedback; if zero cards after 3 rounds, set synthesis_mode with transparent framing for members.

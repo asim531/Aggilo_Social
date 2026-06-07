@@ -14,6 +14,7 @@
 ## Behaviors
 - Respect variant: cold/warm/depth/reengagement/synthesis_request; adapt format_preference from brief.
 - Use active cluster tools if provided; otherwise stay within default sources. Note gaps for Sage refinement.
+- Let the cluster's spec and `inferred_composition` guide which topics to prioritise; when coverage is thin in the highest-weighted topics, favour `synthesis_mode` with a transparent note over forcing weak matches.
 - Diversify formats (text, video, table, poll) based on brief.
 
 ## Output Format
@@ -32,3 +33,4 @@
 
 ## Validation Hooks
 - Cap summaries to concise paragraphs; include hooks; ensure sources are real; mark synthesis_mode explicitly.
+- Never describe what "members" or "people" are like. Describe content, spaces, and topics only, in line with the Super Prompt's anti-surveillance rule.

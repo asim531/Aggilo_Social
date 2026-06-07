@@ -137,10 +137,25 @@ Ecosystem proposals follow **phase-gated routing** based on `ecosystem_phase`:
 | **Canopy** | Any change | Member poll + admin veto | Clio polls members; admin has final veto |
 | **Canopy** | Purpose drift → spawn | Urgent admin review | Never auto-approve; human decides spawn vs sub-surface |
 | **Any** | Genesis Re-Eval hard pivot (ecosystem_type change) | Admin approval + 48h veto window | Medium/high disruption: manual approval required. Low disruption: auto-approve unless vetoed. |
+| **Any (minor cluster)** | Minor-facing content, success model, or progression change | Guardian consent required | Guardian veto overrides admin in minor-safety contexts. Admin cannot deploy without guardian acknowledgment. |
 
-**Founder-intent drift rule:** If any `founder_intent` dimension drops below its `floor_weight`, the proposal is **always** routed to urgent admin review, regardless of phase or confidence. This is a hard guardrail.
+**Guardian-intent drift rule:** If any `guardian_intent` dimension drops below its `floor_weight`, the proposal is **always** routed to urgent admin review, regardless of phase or confidence. This is a hard guardrail.
 
 **Genesis Re-Eval gate rule:** Proposals flagged with `genesis_re_eval_flag = true` bypass standard phase-gated routing. They are evaluated by disruption level first, ecosystem phase second. See `CLUSTER_GENESIS_ENGINE.md` §10 for the full Re-Eval specification.
+
+**Guardian consent gate (NEW):** For clusters where `has_minor_members = true`, any proposal that changes:
+- Minor-facing content (Sage prompts, Clio responses, learning cards)
+- Success model dimensions that measure minor outcomes
+- Progression model stages or mastery criteria
+- Social layer enablement/disablement
+
+...requires **explicit guardian consent** before deployment. The guardian (cluster Admin) receives a notification with:
+- What is changing
+- Why it is changing
+- Estimated impact on the minor's experience
+- Approve / Request modifications / Veto options
+
+A guardian veto overrides even admin approval in minor-safety contexts. The veto is logged in `evolution_proposals.guardian_veto_reason`.
 
 **Reverse transition rule:** If cluster shrinks from Canopy → Sprout or Sprout → Seed, all pending ecosystem proposals are cancelled. Admin is notified. New proposals follow the simpler phase rules.
 

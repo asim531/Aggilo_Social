@@ -3,7 +3,9 @@ name: Deploy Long Conversation
 on:
   push:
     branches: [chore/phase0-folder-reshape]
-    paths: ['phase0/lc/**']
+    paths:
+      - 'phase0/lc/**'
+      - '.github/workflows/deploy-long-conversation.yml'
 
 jobs:
   deploy:
@@ -15,6 +17,8 @@ jobs:
           node-version: 20
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
+      - name: Debug cwd
+        run: pwd && ls -la
       - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

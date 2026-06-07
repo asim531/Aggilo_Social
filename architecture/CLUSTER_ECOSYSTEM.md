@@ -71,15 +71,15 @@ intercepts the loop and asks: "Is the framework itself still valid?"
 
 ### 1.3 Ecosystem Types and Social Layer Defaults
 
-The ecosystem's success dimensions and progression model vary by `ecosystem_type`. Critically, **social interaction is not assumed** — it is an overlay that the founder elects.
+The ecosystem's success dimensions and progression model vary by `ecosystem_type`. Critically, **social interaction is not assumed** — it is an overlay that the guardian elects.
 
 | Ecosystem Type | Primary Beneficiary | Default Social Layer | Example |
 |---------------|---------------------|----------------------|---------|
-| `learning_management` | Individual learner (beneficiary, student) | **Disabled** — supporter gets dashboard, beneficiary gets learning surface | "Skill Mastery" — beneficiary learns core skills; supporter sees progress dashboard |
-| `social_learning` | Members collectively | **Enabled** — peer discussion, shared resources | "Quran Circle" — members study together, discuss, share insights |
-| `peer_support` | Members collectively | **Enabled** — mutual aid, shared experience | "New Parents Circle" — parents support each other through early parenthood |
-| `career_reintegration` | Individual job-seeker | **Disabled** by default — can opt into peer networking | "Returning to Work" — job-seeker gets coaching; optional peer group |
-| `community_health` | Members collectively | **Enabled** — group accountability, shared goals | "Morning Prayer Circle" — collective habit tracking |
+| `learning_management` | Minor (13–17) | **Disabled** — guardian gets dashboard, minor gets learning surface | "Quran Learning for Teens" — minor learns; guardian sees progress dashboard |
+| `social_learning` | Minors collectively | **Enabled** — peer discussion, shared resources | "Teen Study Circle" — minors study together, discuss, share insights |
+| `peer_support` | Minors collectively | **Enabled** — mutual aid, shared experience | "New Muslim Teens Circle" — minors support each other through shared journey |
+| `career_reintegration` | Minor (13–17) | **Disabled** by default — can opt into peer networking | "Teen Career Prep" — minor gets coaching; guardian sees summary; optional peer group |
+| `community_health` | Minors collectively | **Enabled** — group accountability, shared goals | "Teen Prayer Circle" — collective habit tracking with guardian visibility |
 
 #### Learning Management: Service-First, Social Optional
 
@@ -88,23 +88,23 @@ The ecosystem's success dimensions and progression model vary by `ecosystem_type
 For `ecosystem_type: learning_management`:
 
 **Default surface hierarchy:**
-1. **Beneficiary / Learner surface** — primary learning interface (cards, visual tools, adaptive challenges)
-2. **Supporter / Support dashboard** — progress view, scaffolding suggestions, struggle alerts
-3. **Social overlay** (disabled by default) — supporter Teaching Circle, peer tips, discussion — only if founder explicitly elects
+1. **Minor / Learner surface** — primary learning interface (cards, visual tools, adaptive challenges)
+2. **Guardian / Support dashboard** — progress view, scaffolding suggestions, struggle alerts
+3. **Social overlay** (disabled by default) — guardian Teaching Circle, peer tips, discussion — only if guardian explicitly elects
 
 **Default success dimension priority:**
-1. Beneficiary outcome dimensions (mastery, fluency, transfer) — highest weight
-2. Beneficiary experience dimensions (engagement, confidence, joy) — medium weight
-3. Support quality dimensions (supporter scaffolding, coaching quality) — lower weight
+1. Minor outcome dimensions (mastery, fluency, transfer) — highest weight
+2. Minor experience dimensions (engagement, confidence, joy) — medium weight
+3. Guardian quality dimensions (guardian scaffolding, coaching quality) — lower weight
 4. Community health dimensions (peer support, discussion quality) — **weight 0.0** unless social layer is enabled
 
-**When founder enables social layer:**
+**When guardian enables social layer:**
 - Community health dimensions become active with low initial weight
 - Observer evaluates whether social interaction actually improves learning outcomes
 - If peer support does not improve outcomes, Observer recommends disabling social layer
-- Admin retains veto
+- Guardian Admin retains veto
 
-**Why this matters:** A learning cluster is not "a social network with flashcards." It is a curriculum delivery system where the beneficiary is the primary user. Social features may help, but they must earn their place through evidence.
+**Why this matters:** A learning cluster is not "a social network with flashcards." It is a curriculum delivery system where the minor is the primary user. The guardian is the steward. Social features may help the minor learn from peers, but they must earn their place through evidence.
 
 ### 1.4 Creator Type and Ecosystem Scope
 
@@ -140,15 +140,15 @@ Every cluster records `service_mode` at Genesis. This determines the default soc
 
 | Service Mode | Description | Social Layer Default | UI Default | Can Convert |
 |--------------|-------------|----------------------|------------|-------------|
-| `individual` | Single beneficiary + supporters (e.g., one child + parent) | Disabled | Dashboard | Yes → `group` via founder invite |
-| `group` | Multiple beneficiaries (e.g., class, cohort, batch) | Enabled | Timeline | No (already group) |
-| `hybrid` | Starts individual, founder can invite others later | Disabled until founder opts in | Dashboard → Timeline on conversion | Yes → `group` via founder invite |
+| `individual` | Single minor + guardian (e.g., one teen + parent) | Disabled | Dashboard | Yes → `group` via guardian invite |
+| `group` | Multiple minors (e.g., class, cohort, batch) | Enabled | Timeline | No (already group) |
+| `hybrid` | Starts individual, guardian can invite others later | Disabled until guardian opts in | Dashboard → Timeline on conversion | Yes → `group` via guardian invite |
 
 **Implications:**
-- `individual` clusters prioritize beneficiary outcome over community interaction
+- `individual` clusters prioritize minor outcome over community interaction
 - `group` clusters prioritize peer support, shared experience, and collective learning
-- Founder can override social layer default at any time; this is a default, not a restriction
-- `service_mode` is inferred by Genesis from founder description (probe: "Is this just for you, or do you want others to join?")
+- Guardian can override social layer default at any time; this is a default, not a restriction
+- `service_mode` is inferred by Genesis from guardian description (probe: "Is this just for your minor, or do you want others to join?")
 
 ---
 
@@ -158,27 +158,26 @@ The ecosystem does not just track *who* the stakeholders are — it tracks **wha
 
 **Per-stakeholder fields (in `cluster_genesis_spec.stakeholders`):**
 
-| Field | Description | Example (Supporter) | Example (Beneficiary) |
+| Field | Description | Example (Guardian) | Example (Minor) |
 |-------|-------------|---------------------|---------------------|
-| `intended_goals` | What this stakeholder wants from the cluster | "See beneficiary succeed conceptually" | "Enjoy learning through engaging methods" |
+| `intended_goals` | What this stakeholder wants from the cluster | "See minor succeed conceptually" | "Enjoy learning through engaging methods" |
 | `relationship_dynamic.current_state` | Current emotional/behavioral pattern | "Anxious micromanager" | "Resistant learner" |
-| `relationship_dynamic.power_balance` | Who dominates the interaction | "Supporter dominant" | "Beneficiary avoids" |
+| `relationship_dynamic.power_balance` | Who dominates the interaction | "Guardian dominant" | "Minor avoids" |
 | `relationship_dynamic.conflict_pattern` | Recurring negative interaction cycle | "Pushes method → resists → both frustrated" | — |
-| `relationship_dynamic.observed_signals` | CIM signals to watch for | "Over-explains", "Completes task for beneficiary" | "Hides struggle", "Gives up after one mistake" |
+| `relationship_dynamic.observed_signals` | CIM signals to watch for | "Over-explains", "Completes task for minor" | "Hides struggle", "Gives up after one mistake" |
 | `transition_expectations` | Targeted evolution over time | Week 1-2: learn recommended methods; Week 3-4: shift to facilitating; Week 5+: confident independent exploration | Week 1-2: engage with interactive methods; Week 3-4: explain why; Week 5+: initiates practice in daily life |
-| `interaction_patterns.warning_signals` | Behaviors that trigger Sage intervention | "Asks leading questions", "Does task for beneficiary" | "Says 'I can't'", "Asks for answer without trying" |
-| `interaction_patterns.positive_signals` | Behaviors that confirm progress | "Asks 'What do you see?'", "Beneficiary volunteers explanation" | "Demonstrates without prompting", "Explains to supporter" |
+| `interaction_patterns.warning_signals` | Behaviors that trigger Sage intervention | "Asks leading questions", "Does task for minor" | "Says 'I can't'", "Asks for answer without trying" |
+| `interaction_patterns.positive_signals` | Behaviors that confirm progress | "Asks 'What do you see?'", "Minor volunteers explanation" | "Demonstrates without prompting", "Explains to guardian" |
 
 **Why this matters:**
 - Sage uses `intended_goals` to align responses with stakeholder motivation (not just their role)
-- Observer uses `relationship_dynamic` to detect when actual behavior deviates from expected (e.g., supporter still micromanaging at Week 6)
+- Observer uses `relationship_dynamic` to detect when actual behavior deviates from expected (e.g., guardian still micromanaging at Week 6)
 - Transition expectations set measurable behavioral targets for the ecosystem
 - Interaction patterns give Sage specific, actionable coaching cues
 
 **Domain-agnostic application:**
-- Career coaching: coach (wants client to succeed) + job_seeker (wants confidence and placement)
-- Patient-caregiver: caregiver (wants patient compliance) + patient (wants dignity and autonomy)
-- Mentor-mentee: mentor (wants mentee growth) + mentee (wants guidance without judgment)
+- Guardian-minor: guardian (wants minor to grow) + minor (wants guidance without judgment)
+- Authorized adult-minor: teacher (wants minor to succeed) + minor (wants engaging methods)
 
 The same relationship model applies — only the roles and goals change.
 
@@ -219,7 +218,7 @@ The ecosystem defines success as a **weighted set of dimensions** that Genesis i
 ```
 
 **Field definitions:**
-- `id`: Machine-readable identifier (e.g., `conceptual_understanding`, `supporter_confidence`, `beneficiary_engagement`)
+- `id`: Machine-readable identifier (e.g., `conceptual_understanding`, `guardian_confidence`, `minor_engagement`)
 - `name`: Human-readable label displayed in admin dashboard
 - `description`: What this dimension measures and how it is evaluated
 - `weight`: 0.0–1.0 relative importance. Sum of all weights = 1.0
@@ -234,16 +233,16 @@ The ecosystem defines success as a **weighted set of dimensions** that Genesis i
 
 | Source | Description | Confidence Range | Example |
 |--------|-------------|-----------------|---------|
-| `founder_intent` | Explicitly stated in founder description | 0.80–0.95 | "I want my beneficiary to understand the core concept" |
-| `latent_inference` | Inferred by Genesis from language patterns, but not explicitly stated | 0.50–0.75 | Founder says "I feel lost" → self-efficacy is a latent need |
-| `behavior_signal` | Detected from actual user behavior post-launch | 0.40–0.65 | Supporters reply 4× more to frustration posts than resource posts |
-| `emergent_need` | Discovered when users use the cluster in unexpected ways | 0.30–0.55 | Supporters start sharing related-topic anxiety — cluster scope broadens unexpectedly |
+| `guardian_intent` | Explicitly stated in guardian description | 0.80–0.95 | "I want my minor to understand the core concept" |
+| `latent_inference` | Inferred by Genesis from language patterns, but not explicitly stated | 0.50–0.75 | Guardian says "I feel lost" → self-efficacy is a latent need |
+| `behavior_signal` | Detected from actual user behavior post-launch | 0.40–0.65 | Guardians reply 4× more to frustration posts than resource posts |
+| `emergent_need` | Discovered when users use the cluster in unexpected ways | 0.30–0.55 | Guardians start sharing related-topic anxiety — cluster scope broadens unexpectedly |
 
 ### 2.3 Floor Weight Rule
 
 Every dimension has a `floor_weight` — the minimum weight it can hold without explicit admin override.
 
-- **Founder-intent dimensions** must have `floor_weight ≥ 0.20` — prevents the cluster from drifting away from its creator's purpose
+- **Guardian-intent dimensions** must have `floor_weight ≥ 0.20` — prevents the cluster from drifting away from its guardian's purpose
 - **Latent-inference dimensions** should have `floor_weight ≥ 0.05`
 - **Behavior-signal / emergent dimensions** can have `floor_weight = 0.00` — they are experimental and can be deprecated
 
@@ -297,7 +296,7 @@ Not all clusters have ordered progression. A "Grief Support" cluster may have no
         "id": "[stage_1_id]",
         "name": "[Stage 1 Name]",
         "prerequisite": null,
-        "mastery_criteria": "[What the beneficiary must demonstrate to complete this stage]",
+        "mastery_criteria": "[What the minor must demonstrate to complete this stage]",
         "representations_required": ["visual", "verbal", "symbolic"],
         "success_dimensions": ["[dimension_id_1]", "[dimension_id_2]"]
       },
@@ -305,7 +304,7 @@ Not all clusters have ordered progression. A "Grief Support" cluster may have no
         "id": "[stage_2_id]",
         "name": "[Stage 2 Name]",
         "prerequisite": "[stage_1_id]",
-        "mastery_criteria": "[What the beneficiary must demonstrate to complete this stage]",
+        "mastery_criteria": "[What the minor must demonstrate to complete this stage]",
         "representations_required": ["visual", "verbal"],
         "success_dimensions": ["[dimension_id_1]", "[dimension_id_3]"]
       },
@@ -313,15 +312,15 @@ Not all clusters have ordered progression. A "Grief Support" cluster may have no
         "id": "[stage_3_id]",
         "name": "[Stage 3 Name]",
         "prerequisite": "[stage_2_id]",
-        "mastery_criteria": "[What the beneficiary must demonstrate to complete this stage]",
+        "mastery_criteria": "[What the minor must demonstrate to complete this stage]",
         "representations_required": ["visual", "verbal", "symbolic"],
         "success_dimensions": ["[dimension_id_1]", "[dimension_id_4]"]
       }
     ],
     "instructional_approach": "[approach_name]",
     "entry_points": {
-      "beneficiary_1": "[stage_1_id]",
-      "supporter_1": "[observer_stage_1_id]"
+      "minor_1": "[stage_1_id]",
+      "guardian_1": "[observer_stage_1_id]"
     }
   }
 }
@@ -388,15 +387,15 @@ The ecosystem defines which tools serve which success dimensions. This prevents 
     "triggered_by_signal": [
       {
         "tool": "[adaptive_assessment_tool]",
-        "trigger": "[beneficiary_attempts_stage_without_support_N_times]",
+        "trigger": "[minor_attempts_stage_without_guardian_support_N_times]",
         "serves_dimensions": ["[dimension_id_1]"],
         "rationale": "[Why this tool triggers on this signal]"
       },
       {
-        "tool": "[supporter_coach_panel]",
-        "trigger": "[supporter_signals_frustration_or_despair]",
-        "serves_dimensions": ["[supporter_confidence_dimension]"],
-        "rationale": "Just-in-time coaching when supporter signals need for help"
+        "tool": "[guardian_coach_panel]",
+        "trigger": "[guardian_signals_frustration_or_despair]",
+        "serves_dimensions": ["[guardian_confidence_dimension]"],
+        "rationale": "Just-in-time coaching when guardian signals need for help"
       }
     ]
   }
@@ -456,7 +455,7 @@ These tell CIMs what to measure and Observer what to watch.
 |------|-----------|--------|
 | **Health score computation** | Weekly | `ecosystem_health_report` JSON |
 | **Anomaly flagging** | Weekly | `ecosystem_anomaly_flags` array |
-| **Dimension drift detection** | Bi-weekly | `dimension_drift_alert` if founder-intent dimension drops below floor |
+| **Dimension drift detection** | Bi-weekly | `dimension_drift_alert` if guardian-intent dimension drops below floor |
 | **Latent need detection** | Monthly | `latent_need_signal` (low-confidence, informational only) |
 
 ### 6.2 Anomaly Types (v1)
@@ -465,8 +464,8 @@ These tell CIMs what to measure and Observer what to watch.
 |---------|---------|--------------|
 | **Dimension underperformance** | `[core_dimension_id]` performance = 0.25 for 14 days | Review: Is the primary tool working? Is the stage too hard? |
 | **Dimension conflict** | `[dimension_a]` and `[dimension_b]` inversely correlated (r = -0.68) | Review: Should one dimension be deprioritized? |
-| **Founder-intent drift** | `[core_dimension_id]` weight dropped from 0.40 to 0.15 (below floor 0.20) | **Urgent:** Cluster is losing its purpose. Admin must intervene. |
-| **Emergent need signal** | Supporters posting about related-topic anxiety | Review: Is this a latent need to capture, or a signal for cluster spawn? |
+| **Guardian-intent drift** | `[core_dimension_id]` weight dropped from 0.40 to 0.15 (below floor 0.20) | **Urgent:** Cluster is losing its purpose. Admin must intervene. |
+| **Emergent need signal** | Guardians posting about related-topic anxiety | Review: Is this a latent need to capture, or a signal for cluster spawn? |
 
 ### 6.3 Anomaly Report Format
 
@@ -491,13 +490,13 @@ These tell CIMs what to measure and Observer what to watch.
     },
     {
       "id": "anom_002",
-      "type": "founder_intent_drift",
+      "type": "guardian_intent_drift",
       "severity": "high",
       "dimension": "[core_dimension_id]",
       "current_weight": 0.15,
       "floor_weight": 0.20,
       "drift_cause": "[secondary_dimension] weight increased to 0.45, absorbing budget",
-      "recommended_action": "Urgent: Restore [core_dimension_id] to minimum floor. Consider spawning supporter sub-cluster.",
+      "recommended_action": "Urgent: Restore [core_dimension_id] to minimum floor. Consider spawning guardian sub-cluster.",
       "auto_action": null
     }
   ]

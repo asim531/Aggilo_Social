@@ -5,7 +5,7 @@
 > `PRD — Aggilo Social Network`
 
 > [!IMPORTANT]
-> **Phase 1 Feature.** Premium Clusters are available from Day 1 via the "Make Your Crowd" tab on the evangelist landing page. They serve as Aggilo's primary cold start supply-side strategy — each approved Premium Cluster Founder seeds 20-50 community members into a purpose-built room, solving the empty-room problem before public launch.
+> **Phase 1 Feature.** Premium Clusters are available from Day 1 via the "Make Your Crowd" tab on the evangelist landing page. They serve as Aggilo's primary cold start supply-side strategy — each approved Premium Cluster Guardian seeds 20-50 community members into a purpose-built room, solving the empty-room problem before public launch.
 
 ---
 
@@ -20,7 +20,7 @@ Aggilo's current cold start strategy relies on:
 
 **The consequence:** New users arrive and see clusters with AI-generated discussion starters but zero real humans. They accurately identify this as a ghost town. Trust collapses before it forms.
 
-**The solution:** Premium Clusters — a credibility-gated creation path for individuals with existing micro-communities. Each approved Founder brings their pre-formed social graph into Aggilo, producing real activity from Day 1.
+**The solution:** Premium Clusters — a credibility-gated creation path for individuals with existing micro-communities. Each approved Guardian brings their pre-formed social graph into Aggilo, producing real activity from Day 1.
 
 ---
 
@@ -29,7 +29,7 @@ Aggilo's current cold start strategy relies on:
 | Dimension | Profile |
 |-----------|---------|
 | **Identity** | Someone who already influences 10–500 people around a topic — not a traditional "influencer" but a natural convener |
-| **Examples** | College senior with an informal study circle · Fitness enthusiast with a 30-person WhatsApp gym group · Local food blogger with 400 followers · Young professional who organizes chai meetups · Teacher creating a space for students |
+| **Examples** | Parent creating a Quran learning space for their teen · Teacher building a science prep circle for 15-year-old students · Mosque youth coordinator organizing a teen discussion group · Homeschooling parent seeking structured learning for their child · Counselor creating a safe space for Muslim teens navigating identity |
 | **Psychology** | They don't think of themselves as leaders. They think: *"I already have these people. I wish there was a better way to organize around what we care about."* |
 | **What they want** | Not followers. Not reach. A **room with walls** — a space that is theirs, that matches their crowd's demographics, and that they can fill from their existing relationships |
 | **Cold start value** | Each Atomic Crowd Leader brings 20–50 pre-existing members. 10–20 approved leaders = 200–1,000 users in genuinely active clusters before public launch |
@@ -46,34 +46,34 @@ Aggilo's current cold start strategy relies on:
 | **Creator profile** | Any registered user | Individual with an existing community and a credible unmet need |
 | **AGGIL constraints** | Optional filters, soft language matching | **Hard location + Hard language** required — the defining features |
 | **Evaluation** | Cluster Score (U-shaped) | Cluster Score + **Credibility Evaluation** |
-| **Population model** | Wait for Clio, Scout, and organic discovery | Founder **brings their own initial members** via invite |
-| **Founder admin rights** | No member removal, no comment deletion | **Full admin rights** — remove members, delete comments, manage content |
-| **Governance model** | Clio-enforced platform rules only | Founder-governed with Clio oversight for platform-level violations |
+| **Population model** | Wait for Clio, Scout, and organic discovery | Guardian **brings their own initial members** (the minor + peers) via invite |
+| **Guardian admin rights** | No member removal, no comment deletion | **Full admin rights** — remove members, delete comments, manage content |
+| **Governance model** | Clio-enforced platform rules only | Guardian-governed with Clio oversight for platform-level violations |
 | **Phase 1 availability** | ✅ | ✅ (via landing page "Make Your Crowd" tab) |
 | **Cost** | Free | **Free** — "Premium" refers to evaluation standards, not pricing |
 
 > [!WARNING]
 > **"Premium" = premium evaluation standards, NOT premium pricing.** This feature is free in Phase 1. Charging before the platform has proven value would kill adoption. The premium is the credibility gate itself — it signals quality without requiring payment.
 
-### 3.2 Premium Cluster Founder Admin Rights
+### 3.2 Premium Cluster Guardian Admin Rights
 
 > [!IMPORTANT]
-> **This is a significant governance departure from regular clusters.** Regular cluster Founders cannot remove members or delete content (Platform Rules §Membership). Premium Cluster Founders have full admin authority over their cluster because they built and populated it — they are accountable for the community they brought.
+> **This is a significant governance departure from regular clusters.** Regular cluster creators cannot remove members or delete content (Platform Rules §Membership). Premium Cluster Guardians have full admin authority over their cluster because they are the stewards of the minors they serve — they are accountable for the community they built.
 
 | Admin Right | Scope | Constraint |
 |------------|-------|-----------|
-| **Remove members** | Can remove any member from their Premium Cluster | Removed member is notified neutrally: *"The Founder has adjusted this room's membership."* Member can request reinstatement via Clio. |
+| **Remove members** | Can remove any member from their Premium Cluster | Removed member is notified neutrally: *"The Guardian has adjusted this room's membership."* Member can request reinstatement via Clio. |
 | **Delete comments/posts** | Can delete any post or comment in their cluster | Clio logs all deletions for abuse monitoring. Pattern of excessive deletion triggers Clio advisory. |
 | **Pin posts** | Can pin important posts to top of Timeline | Max 3 pinned posts |
 | **Mute members** | Can temporarily mute members (24h/72h/7d) | Muted member can still read but not post. Clio notifies them. |
-| **Appoint Managers** | Can appoint up to 3 trusted members as Managers | Managers assist in reviewing Sage intervention flags and general governance. Founder can revoke status at any time. |
-| **Edit cluster settings** | Standard post-spawn rules apply, with one exception: | Founder can tighten demographic settings if all current members still qualify after the change |
-| **Recognized Founder status** | Visible Founder badge within the cluster | Clio acknowledges: *"This room was built by someone who brought their people here."* |
+| **Appoint Managers** | Can appoint up to 3 trusted members as Managers | Managers assist in reviewing Sage intervention flags and general governance. Guardian can revoke status at any time. |
+| **Edit cluster settings** | Standard post-spawn rules apply, with one exception: | Guardian can tighten demographic settings if all current members still qualify after the change |
+| **Recognized Guardian status** | Visible Guardian badge within the cluster | Clio acknowledges: *"This room was built by a guardian who brought their people here."* |
 
 **Constraints on Admin Power:**
-- Founder admin rights do **not** override platform-level moderation. Clio still enforces content safety rules (threats, CSAM, harassment → platform action, not Founder action).
-- If a Founder abuses admin rights (e.g., removing members for disagreement rather than community harm), Clio flags the cluster for platform review.
-- Founder cannot transfer admin rights in Phase 1. (Future: delegation to trusted members.)
+- Guardian admin rights do **not** override platform-level moderation. Clio still enforces content safety rules (threats, CSAM, harassment → platform action, not Guardian action).
+- If a Guardian abuses admin rights (e.g., removing members for disagreement rather than community harm), Clio flags the cluster for platform review.
+- Guardian cannot transfer admin rights in Phase 1. (Future: delegation to trusted members.)
 
 ---
 
@@ -109,11 +109,11 @@ Premium Clusters require a **hard location anchor** — the cluster is tied to a
 ## 5. Hard Language Constraints
 
 > [!IMPORTANT]
-> **Phase 1 exception for Premium Clusters only.** While regular clusters use language as a soft-match signal in Phase 1, Premium Clusters can enforce **hard language gates** from Day 1. This is because the Founder's existing community already speaks a specific language — the gate reflects reality, not aspiration.
+> **Phase 1 exception for Premium Clusters only.** While regular clusters use language as a soft-match signal in Phase 1, Premium Clusters can enforce **hard language gates** from Day 1. This is because the Guardian's existing community already speaks a specific language — the gate reflects reality, not aspiration.
 
 | Rule | Detail |
 |------|--------|
-| **Hard gate available** | Premium Cluster Founders can require specific language(s) for membership |
+| **Hard gate available** | Premium Cluster Guardians can require specific language(s) for membership |
 | **OR logic** | If multiple languages are hard-gated, user must speak at least one |
 | **English does NOT bypass** | A hard Telugu gate means English-only speakers cannot see the cluster |
 | **Post-spawn immutable** | Language gates cannot be tightened after members join |
@@ -156,17 +156,17 @@ Premium Clusters require a **hard location anchor** — the cluster is tied to a
 
 | ✅ Approved | Why |
 |------------|-----|
-| "I run a study group for 25 GATE aspirants in Hyderabad. We use WhatsApp but it's chaos — topics get lost in the scroll. I need a space where we can discuss by topic." | Clear community (25 people), named platform pain (WhatsApp topic loss), specific location, specific purpose |
-| "I mentor 15 women in early careers in Bengaluru. They speak Kannada. There's nothing like this for us." | Existing mentoring relationship, language-specific need, demographic coherence, genuine gap |
-| "Our Telugu film appreciation circle (40 people) has outgrown our Telegram group. We need threads, not chat." | Large existing community, named platform limitation, specific content format need |
-| "I organize weekend chess meetups at Necklace Road. 30 regulars. No good way to coordinate timing." | Offline community with digital coordination gap, specific hyper-location |
+| "I'm teaching Quran to my 14-year-old and three of their friends. We use WhatsApp but it's hard to track progress. I need a space where they can learn by topic and I can see how they're doing." | Clear minor community (4 teens), named platform pain (no progress tracking), guardian-led, specific purpose |
+| "I mentor 6 Muslim teens in my mosque youth group in Bengaluru. They speak Kannada and Urdu. I need a structured space for them to discuss faith and identity." | Existing guardian-teen relationship, language-specific need, demographic coherence, genuine gap |
+| "Our teen hifz circle (8 students) has outgrown our Telegram group. We need progress tracking, not just chat." | Existing learning community, named platform limitation, specific content format need |
+| "I organize weekend youth discussions at our community center. 12 regular teens. No good way to share resources and keep parents in the loop." | Offline minor community with digital coordination gap, specific hyper-location, guardian visibility need |
 
 | ❌ Redirected | Why |
 |--------------|-----|
-| "I want to make a fitness group" | No existing community, no specificity, generic need met by countless apps |
-| "I want to be a community leader" | Supply-side aspiration without demand evidence |
-| "Let me test this app with my friends" | No genuine community need — this is an explorer, better served by regular onboarding |
-| "I want a cool club for cool people" | No unmet need, no demographic coherence, no platform gap |
+| "I want to make a general teen group" | No existing minor community, no specificity, generic need met by countless apps |
+| "I want to be a youth leader" | Supply-side aspiration without demand evidence or existing minors |
+| "Let me test this app with my friends" | No genuine minor community need — this is an explorer, better served by regular onboarding |
+| "I want a cool club for teens" | No unmet need, no demographic coherence, no guardian-minor relationship evidence |
 
 ---
 
@@ -303,13 +303,13 @@ Application Submitted
 
 ### 8.1 Custom Invite Link Onboarding
 
-When a Premium Cluster Founder shares their invite link, the invitee experiences a streamlined onboarding:
+When a Premium Cluster Guardian shares their invite link, the invitee experiences a streamlined onboarding:
 
-1. **Cluster preview** — Name, purpose, member count, Founder recognition
+1. **Cluster preview** — Name, purpose, member count, Guardian recognition
 2. **Simplified registration** — Phone OTP → birth year + gender → language → nickname
 3. **AGGIL gate check** — Must pass the cluster's hard constraints (location, language, age, gender)
 4. **Auto-join** — Immediately placed in the cluster after registration
-5. **Clio greeting** — *"Welcome. [Founder nickname] built this room for people like you. Take a look around."*
+5. **Clio greeting** — *"Welcome. [Guardian nickname] built this room for people like you. Take a look around."*
 
 ---
 
@@ -321,7 +321,7 @@ When a Premium Cluster Founder shares their invite link, the invitee experiences
 |------|--------|
 | OTP authentication | ✅ Applies |
 | Nickname-only identity | ✅ Applies |
-| AI content moderation (threats, CSAM, harassment) | ✅ Applies — overrides Founder admin |
+| AI content moderation (threats, CSAM, harassment) | ✅ Applies — overrides Guardian admin |
 | No deletion of clusters | ✅ Applies |
 | Age progression over time | ✅ Applies |
 | Post-spawn expansion rules (can add tags, not remove) | ✅ Applies |
@@ -330,15 +330,15 @@ When a Premium Cluster Founder shares their invite link, the invitee experiences
 
 | Regular Rule | Premium Cluster Override | Rationale |
 |-------------|------------------------|-----------|
-| **No member removal** | Founder can remove members | Founder brought these people — they are accountable for the community's health |
-| **No content deletion by creators** | Founder can delete posts/comments | Same accountability principle |
+| **No member removal** | Guardian can remove members | Guardian brought these people — they are accountable for the community's health |
+| **No content deletion by creators** | Guardian can delete posts/comments | Same accountability principle |
 | **Language is soft match (Phase 1)** | Hard language gate active from Day 1 | The existing community already speaks specific language(s) — the gate reflects reality |
 | **Geography is optional** | Hard location required | Premium Clusters are anchored to real places by definition |
-| **No Founder special status** | Recognized Founder with admin badge | The person who built and populated the cluster deserves visible stewardship |
+| **No Guardian special status** | Recognized Guardian with admin badge | The person who built and populated the cluster deserves visible stewardship |
 
 ### 9.3 New Platform Rule — Premium Cluster Governance
 
-> **Premium Cluster Governance Principle:** A Premium Cluster Founder has earned admin authority by demonstrating a credible community need and populating their cluster with real members. This authority is a stewardship responsibility, not an ownership privilege. Platform-level moderation (threats, CSAM, harassment) always supersedes Founder admin actions. Abuse of admin rights triggers platform review and potential revocation of admin status — not cluster deletion.
+> **Premium Cluster Governance Principle:** A Premium Cluster Guardian has earned admin authority by demonstrating a credible community need and populating their cluster with real members. This authority is a stewardship responsibility, not an ownership privilege. Platform-level moderation (threats, CSAM, harassment) always supersedes Guardian admin actions. Abuse of admin rights triggers platform review and potential revocation of admin status — not cluster deletion.
 
 ---
 
@@ -389,11 +389,11 @@ When a Premium Cluster Founder shares their invite link, the invitee experiences
 | `POST /api/premium-cluster/apply` | POST | Submit "Make Your Crowd" application |
 | `GET /api/premium-cluster/status/{id}` | GET | Check application review status |
 | `POST /api/premium-cluster/review` | POST | Admin: approve/clarify/redirect an application |
-| `POST /api/cluster/{id}/admin/remove-member` | POST | Founder: remove a member (Premium clusters only) |
-| `DELETE /api/cluster/{id}/admin/content/{postId}` | DELETE | Founder: delete a post/comment (Premium clusters only) |
-| `POST /api/cluster/{id}/admin/mute/{nickname}` | POST | Founder: mute a member (Premium clusters only) |
-| `POST /api/cluster/{id}/admin/pin/{postId}` | POST | Founder: pin a post (Premium clusters only) |
-| `GET /api/cluster/{id}/admin/audit-log` | GET | Founder: view admin action history (Premium clusters only) |
+| `POST /api/cluster/{id}/admin/remove-member` | POST | Guardian: remove a member (Premium clusters only) |
+| `DELETE /api/cluster/{id}/admin/content/{postId}` | DELETE | Guardian: delete a post/comment (Premium clusters only) |
+| `POST /api/cluster/{id}/admin/mute/{nickname}` | POST | Guardian: mute a member (Premium clusters only) |
+| `POST /api/cluster/{id}/admin/pin/{postId}` | POST | Guardian: pin a post (Premium clusters only) |
+| `GET /api/cluster/{id}/admin/audit-log` | GET | Guardian: view admin action history (Premium clusters only) |
 
 ---
 
