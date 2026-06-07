@@ -1,7 +1,7 @@
 /**
  * Analysis worker — core logic extracted from /api/upload/analyze
  * so the upload route can call it directly without an HTTP hop.
- * Deploy trigger: 2026-06-07
+ * Deploy trigger: 2026-06-08
  *
  * This eliminates a whole class of Vercel serverless failures:
  * - the /api/upload route timing out while waiting for a child HTTP call

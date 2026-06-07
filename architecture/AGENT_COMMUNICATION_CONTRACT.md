@@ -101,6 +101,19 @@ CLUSTER INTAKE LAYER (pre-creation — Pattern 7)
         ▼ (admin approves)
     ClusterCreationJob → cluster live → founder invite link
 
+Intake Interpreter normalisation (ecosystem lens)
+    Before Draft v1 is ever passed into Genesis, the Intake Interpreter
+    also normalises each raw cluster signal into a conceptual,
+    cluster-agnostic **ecosystem intake lens** (see
+    `architecture/CLUSTER_ECOSYSTEM.md` §1.7). This lens captures
+    failure/gaps, primary outcomes, stakeholders, interaction mode,
+    temporal and social-layer shape, risks, cadence, and
+    non‑negotiables in the founder's own language. It is
+    **descriptive, not prescriptive** — no archetype gates or
+    hard-coded cluster types. Genesis then uses this lens to
+    co-generate both `cluster_genesis_spec` and `cluster_ecosystem_spec`
+    from the same underlying intent.
+
 MEMBER-FACING AGENT HIERARCHY
     Clio  (orchestrator + member voice)
         │
@@ -532,6 +545,18 @@ explicit interpretive assumption.
     "target_profile": "string — who Scout is looking for",
     "calibration_notes": "string — any gender balance or demographic weighting"
   },
+  "ecosystem_intake_lens": {
+    "failure_gaps": ["string — what keeps going wrong in current tools/groups"],
+    "primary_outcomes": ["string — what changes if this cluster works"],
+    "primary_stakeholders": ["string — who this room is really for"],
+    "interaction_mode": "string — what people actually do together here",
+    "temporal_shape": "string — live, persistent, or both; cohort vs ongoing",
+    "social_layer_shape": "string — solo/dyad/small-group/room + privacy notes",
+    "tool_capability_needs": ["string — obvious shared capabilities this room needs"],
+    "risk_profile": ["string — likely harms if the cluster goes wrong"],
+    "cadence_arc_hints": "string — drop-in vs weekly vs long arc",
+    "non_negotiables": ["string — what this cluster must never become"]
+  },
   "interpretive_assumptions": [
     {
       "field": "string — which field this assumption affects",
@@ -570,6 +595,7 @@ which produces Draft v2.
 | **Name/framing fit** | Does the cluster name centre the right thing? Does it work in Clio's mouth? Does it filter correctly — attracting the right people and letting the wrong ones self-select out? Is it dramatic, cold, too professional, too casual? |
 | **Purpose clarity** | Is the internal thesis clear? Is the public description honest about what the cluster is and is not? |
 | **Assumption validity** | For each interpretive assumption in the v1 block: is the confidence rating correct? Is the alternative reading plausible enough to warrant a different decision? |
+| **Ecosystem lens fit** | Does the `ecosystem_intake_lens` summary fairly describe what the signal says about failures, outcomes, stakeholders, interaction mode, time-shape, privacy, risks, cadence, and non-negotiables — without adding unjustified constraints or archetype labels? |
 
 **The critique format:**
 

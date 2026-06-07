@@ -197,6 +197,32 @@ The same relationship model applies — only the roles and goals change.
 
 ---
 
+### 1.7 Ecosystem Intake Lens (Cluster-agnostic)
+
+Genesis and the Intake Interpreter treat every incoming cluster idea as a **prospective ecosystem**, not just a set of tags. Before any domain-specific archetype is applied, they infer a small, cluster-agnostic set of dimensions — the **ecosystem intake lens**. This lens is what later shapes both `cluster_genesis_spec` and `cluster_ecosystem_spec`.
+
+At minimum, the intake lens captures:
+
+- **Failure & gap** — what keeps going wrong in the current tools or groups the founder is using (for example, "content gets lost in scroll", "conversations never go beyond surface depth").
+- **Primary outcome** — what changes in the member's life if the cluster works (for example, "feel known", "keep documents findable", "have a place to process faith struggles").
+- **Primary beneficiaries & stakeholders** — who the room is really for, and who else is involved or affected (beneficiaries, supporters, scholars, institutions) — later mapped into `stakeholders[]` (§1.6).
+- **Interaction mode** — what members are actually doing together when the cluster works (depth conversation, topics + documents, coordination, broadcast, mixed).
+- **Temporal shape & persistence** — whether value is in live moments, persistent artefacts, or both (for example, ongoing circle vs document archive vs time-bounded cohort).
+- **Social layer shape** — how exposed participation is (solo, dyad, small group, large room) and any anonymity, gender, or privacy constraints.
+- **Tool & capability needs** — whether the room obviously needs shared capabilities such as topic threads, private tips, vault-backed references, matching, or others from the platform tools registry.
+- **Risk & guardrails** — what kinds of harm are most likely if the cluster goes wrong (for example, bad advice, harassment, burnout, theological overreach) — later informing Observer welfare profiles and Platform Rules checks.
+- **Cadence & arc hints** — whether the room is a drop-in space, a weekly rhythm, or a long arc — later informing any ordered or unordered `progression_model`.
+- **Non-negotiables** — what the cluster must *never* become (for example, a dating app, a fatwa hotline, a noisy chat group) — later enforced via success dimensions, tools, and Observer stewardship.
+
+These intake dimensions **do not add new tables**. They are a conceptual normalization step between raw signals (waitlist forms, Scout reports, Clio inference) and the concrete specs that already exist:
+
+- `cluster_genesis_spec` — composition, stakeholders, tools, vibe, soul manifestation profile, and related fields (see `CLUSTER_GENESIS_ENGINE.md` §3.3).
+- `cluster_ecosystem_spec` — success model, progression model (if any), tool requirements, introspection targets (§2–§5 of this document).
+
+The intake lens keeps Genesis prompts **stable and cluster-agnostic** even as new archetypes, tools, and domains are added. Archetypes remain advisory overlays on top of this lens, not replacements for it. This keeps the architecture descriptive rather than prescriptive: new cluster shapes can still emerge, as long as they can be described in terms of failure, outcome, stakeholders, interaction, time-shape, and risk.
+
+---
+
 ## 2. Multi-Dimensional Success Model
 
 The ecosystem defines success as a **weighted set of dimensions** that Genesis infers from founder intent and Observer reweights based on evidence.

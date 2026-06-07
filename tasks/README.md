@@ -47,6 +47,7 @@
 - **A08 — Genesis Engine: soul manifestation profile generation (Dep: B08, F03)**
 - **A09 — Cluster persona override: runtime merge (Dep: A01, A08)**
 - **A10 — Observer Dimension 6: Manifestation Alignment + drift (Dep: B09, A08)**
+ - **A11 — Ecosystem intake lens implementation (Intake + Genesis, non-rigid) (Dep: B08, A08)**
 
 ## Admin / QA / Maintenance
 - AD01 — Admin dashboard **(+ Soul Manifestation Panel, Voice Preview, Persona Override Manager, expanded)** (Dep: B03, B05, B07, B09)
