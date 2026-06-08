@@ -218,6 +218,13 @@ export async function runAnalyzeStep(
     return { outcome: "error", step: currentStep, error: "attachment not found" };
   }
 
+  // Skip if this step is already done (duplicate trigger from polling)
+  const existingProgress = (rawAtt as any).analysis_progress;
+  if (existingProgress?.steps?.[currentStep]) {
+    console.log("[analyze-step] step already done, skipping:", currentStep);
+    return { outcome: "step_complete", step: currentStep, next: null };
+  }
+
   const att = rawAtt as any;
   const extractedText: string = att.extracted_text ?? "";
   const docTitle: string | null = att.doc_title ?? null;

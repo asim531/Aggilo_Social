@@ -32,6 +32,7 @@ import ThinkingIndicator from "@/components/ThinkingIndicator";
 import { track } from "@/lib/track";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
+import { STEPS } from "@/lib/analyze-step-worker";
 
 interface PostCardProps {
   post: PostWithAuthor;
@@ -654,16 +655,32 @@ function PostMetaRow({ postId, userId, onSelectTopic }: { postId: string; userId
       if (!cancelled) {
         setTopics(fetchedTopics);
         setAttachments((attRows ?? []) as PostAttachment[]);
+
+        // Trigger next analysis step for PDFs being analyzed
+        for (const att of (attRows ?? []) as PostAttachment[]) {
+          const prog = att.analysis_progress;
+          if (!prog || prog.completed >= prog.total) continue;
+          const currentIdx = STEPS.indexOf(prog.current_step);
+          if (prog.steps[prog.current_step] && currentIdx >= 0 && currentIdx < STEPS.length - 1) {
+            const nextStep = STEPS[currentIdx + 1];
+            if (!prog.steps[nextStep]) {
+              void fetch(withBasePath("/api/upload/analyze-step"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ attachment_id: att.id, step: nextStep }),
+              });
+            }
+          }
+        }
       }
     }
     load();
 
-    // Polling fallback: re-fetch attachments for 2 min after mount
-    // to catch uploads + analysis (~60-90s) that complete after mount
+    // Polling: re-fetch attachments + trigger next steps for 5 min
     let pollCount = 0;
     const pollInterval = setInterval(() => {
       pollCount++;
-      if (pollCount > 40) {
+      if (pollCount > 100) {
         clearInterval(pollInterval);
         return;
       }
