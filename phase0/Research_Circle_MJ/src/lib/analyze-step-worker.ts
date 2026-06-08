@@ -13,7 +13,7 @@ import { buildCitationExtractPrompt } from "@/lib/prompts/white-paper/citation-e
 import { withBasePath } from "@/lib/path";
 import { chunkText } from "@/lib/chunking";
 
-const STEPS = [
+export const STEPS = [
   "embedding",
   "citations",
   "diagram_concept_map",
@@ -436,18 +436,8 @@ export async function runAnalyzeStep(
   steps[currentStep] = true;
   await writeProgress(admin, attachment_id, steps, currentStep);
 
-  // ── Trigger next step ────────────────────────────────────────
-  const nextStep = STEPS[stepIdx + 1];
-  if (nextStep && triggerUrl) {
-    console.log("[analyze-step] triggering next step:", nextStep, "at", triggerUrl);
-    void fetch(triggerUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ attachment_id, step: nextStep }),
-    }).catch((err) => {
-      console.error("[analyze-step] next-step trigger failed:", err);
-    });
-  }
-
-  return { outcome: "step_complete", step: currentStep, next: nextStep ?? null };
+  // Next step is triggered by the route handler BEFORE this function runs,
+  // so the chain survives even if this step times out on Vercel.
+  const nextStep = STEPS[stepIdx + 1] ?? null;
+  return { outcome: "step_complete", step: currentStep, next: nextStep };
 }
