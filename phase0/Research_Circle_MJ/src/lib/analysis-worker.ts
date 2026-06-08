@@ -15,17 +15,7 @@ import { extractTextFromPdf } from "@/lib/pdf-extract";
 import { llmCall } from "@/lib/llm";
 import { buildCimMessages } from "@/lib/prompts/content-intelligence";
 import { buildMetadataExtractPrompt } from "@/lib/prompts/white-paper/metadata-extract";
-import { withBasePath } from "@/lib/path";
 import type { PostAttachment } from "@/lib/types";
-
-// Build the public URL for triggering the next step in the chain.
-// Vercel rewrites from mvp.aggilo.in, so we hardcode the public origin.
-function getAnalyzeStepUrl(): string {
-  const origin = process.env.VERCEL_URL
-    ? `https://mvp.aggilo.in`
-    : "http://localhost:3002";
-  return `${origin}${withBasePath("/api/upload/analyze-step")}`;
-}
 
 export async function runAnalysis(
   attachmentId: string
@@ -211,17 +201,8 @@ export async function runAnalysis(
     })
     .eq("id", attachmentId);
 
-  const analyzeStepUrl = getAnalyzeStepUrl();
-  console.log("[analysis-worker] triggering analyze-step at:", analyzeStepUrl);
-
-  void fetch(analyzeStepUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ attachment_id: attachmentId, step: "embedding" }),
-  }).catch((err) => {
-    console.error("[analysis-worker] analyze-step trigger failed:", err);
-  });
-
-  console.log("[analysis-worker] kicked off chunked deep analysis");
+  // First analyze-step is triggered from the frontend (PostComposer)
+  // because void fetch in serverless is unreliable on Vercel.
+  console.log("[analysis-worker] analysis ready — frontend will trigger analyze-step");
   return { outcome: "chunked_analysis_started", doc_type: "processing" };
 }

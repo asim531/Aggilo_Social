@@ -270,6 +270,15 @@ export default function PostComposer({
               if (data.attachment) {
                 setAttachmentRecord(data.attachment);
                 setAnalysisStatus("analyzing");
+                // Trigger first analysis step from frontend —
+                // void fetch in serverless is unreliable on Vercel
+                if (data.attachment.file_type === "application/pdf") {
+                  void fetch(withBasePath("/api/upload/analyze-step"), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ attachment_id: data.attachment.id, step: "embedding" }),
+                  });
+                }
               }
               setSelectedFile(null);
             } else if (res.status === 409) {
