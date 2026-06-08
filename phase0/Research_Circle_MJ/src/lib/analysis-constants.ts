@@ -13,4 +13,4 @@ export const STEPS = [
   "decompose_results",
   "decompose_compression",
   "tags_and_finalize",
-] as const;
+];
