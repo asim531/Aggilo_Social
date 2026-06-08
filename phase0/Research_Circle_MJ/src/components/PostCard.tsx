@@ -656,20 +656,18 @@ function PostMetaRow({ postId, userId, onSelectTopic }: { postId: string; userId
         setTopics(fetchedTopics);
         setAttachments((attRows ?? []) as PostAttachment[]);
 
-        // Trigger next analysis step for PDFs being analyzed
+        // Trigger next analysis step for PDFs being analyzed.
+        // Find the first step not yet done and trigger it.
         for (const att of (attRows ?? []) as PostAttachment[]) {
           const prog = att.analysis_progress;
           if (!prog || prog.completed >= prog.total) continue;
-          const currentIdx = STEPS.indexOf(prog.current_step);
-          if (prog.steps[prog.current_step] && currentIdx >= 0 && currentIdx < STEPS.length - 1) {
-            const nextStep = STEPS[currentIdx + 1];
-            if (!prog.steps[nextStep]) {
-              void fetch(withBasePath("/api/upload/analyze-step"), {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ attachment_id: att.id, step: nextStep }),
-              });
-            }
+          const nextStep = STEPS.find((s) => !prog.steps[s]);
+          if (nextStep) {
+            void fetch(withBasePath("/api/upload/analyze-step"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ attachment_id: att.id, step: nextStep }),
+            });
           }
         }
       }
