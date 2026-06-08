@@ -32,7 +32,7 @@ import ThinkingIndicator from "@/components/ThinkingIndicator";
 import { track } from "@/lib/track";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
-import { STEPS } from "@/lib/analyze-step-worker";
+import { STEPS } from "@/lib/analysis-constants";
 
 interface PostCardProps {
   post: PostWithAuthor;

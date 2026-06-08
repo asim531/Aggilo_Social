@@ -12,23 +12,7 @@ import { buildDecompositionPrompt } from "@/lib/prompts/white-paper/decompose-pr
 import { buildCitationExtractPrompt } from "@/lib/prompts/white-paper/citation-extract";
 import { withBasePath } from "@/lib/path";
 import { chunkText } from "@/lib/chunking";
-
-export const STEPS = [
-  "embedding",
-  "citations",
-  "diagram_concept_map",
-  "diagram_process_flow",
-  "diagram_architecture",
-  "diagram_argument_tree",
-  "decompose_problem",
-  "decompose_structure",
-  "decompose_argument",
-  "decompose_terminology",
-  "decompose_gaps",
-  "decompose_results",
-  "decompose_compression",
-  "tags_and_finalize",
-];
+import { STEPS } from "@/lib/analysis-constants";
 
 const DIAGRAM_TYPES: Array<"concept_map" | "process_flow" | "architecture" | "argument_tree"> = [
   "concept_map",

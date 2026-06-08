@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
 import { withBasePath } from "@/lib/path";
-import { STEPS } from "@/lib/analyze-step-worker";
+import { STEPS } from "@/lib/analysis-constants";
 import PaperDecomposition from "./PaperDecomposition";
 import PaperDiagramViewer from "./PaperDiagramViewer";
 import PaperTagThreads from "./PaperTagThreads";

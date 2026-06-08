@@ -1,0 +1,16 @@
+export const STEPS = [
+  "embedding",
+  "citations",
+  "diagram_concept_map",
+  "diagram_process_flow",
+  "diagram_architecture",
+  "diagram_argument_tree",
+  "decompose_problem",
+  "decompose_structure",
+  "decompose_argument",
+  "decompose_terminology",
+  "decompose_gaps",
+  "decompose_results",
+  "decompose_compression",
+  "tags_and_finalize",
+] as const;
