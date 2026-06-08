@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { CLUSTER_ID } from "@/lib/cluster";
 import { withBasePath } from "@/lib/path";
+import { STEPS } from "@/lib/analyze-step-worker";
 import PaperDecomposition from "./PaperDecomposition";
 import PaperDiagramViewer from "./PaperDiagramViewer";
 import PaperTagThreads from "./PaperTagThreads";
@@ -44,7 +45,9 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
 
   const supabase = createClient();
 
-  // Poll analysis_progress every 3s during analysis for real-time UI updates
+  // Poll analysis_progress every 3s during analysis.
+  // Also triggers the next step when the current one completes —
+  // the browser is the only reliable orchestrator on Vercel.
   useEffect(() => {
     if (!isAnalyzing) return;
     let cancelled = false;
@@ -54,14 +57,28 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
         .select("analysis_progress")
         .eq("id", attachment.id)
         .single();
-      if (!cancelled && data?.analysis_progress) {
-        setLiveProgress(data.analysis_progress);
-        if (data.analysis_progress.done) {
-          clearInterval(interval);
+      if (cancelled || !data?.analysis_progress) return;
+      const prog = data.analysis_progress;
+      setLiveProgress(prog);
+
+      // If current step is done, trigger the next one
+      const currentIdx = STEPS.indexOf(prog.current_step);
+      if (prog.steps[prog.current_step] && currentIdx >= 0 && currentIdx < STEPS.length - 1) {
+        const nextStep = STEPS[currentIdx + 1];
+        if (!prog.steps[nextStep]) {
+          void fetch(withBasePath("/api/upload/analyze-step"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ attachment_id: attachment.id, step: nextStep }),
+          });
         }
       }
+
+      if (prog.done || prog.completed >= prog.total) {
+        clearInterval(interval);
+      }
     }, 3000);
-    const timeout = setTimeout(() => clearInterval(interval), 180000);
+    const timeout = setTimeout(() => clearInterval(interval), 300000);
     return () => {
       cancelled = true;
       clearInterval(interval);
