@@ -27,7 +27,8 @@ interface ResearchPaperCardProps {
 }
 
 export default function ResearchPaperCard({ attachment, userId }: ResearchPaperCardProps) {
-  const prog = attachment.analysis_progress;
+  const [liveProgress, setLiveProgress] = useState(attachment.analysis_progress);
+  const prog = liveProgress ?? attachment.analysis_progress;
   const isAnalyzing = prog ? prog.completed < prog.total : false;
   const [activeTab, setActiveTab] = useState<TabKey>("analysis");
   const [decompositions, setDecompositions] = useState<any[]>([]);
@@ -42,6 +43,31 @@ export default function ResearchPaperCard({ attachment, userId }: ResearchPaperC
   const [showVersions, setShowVersions] = useState(false);
 
   const supabase = createClient();
+
+  // Poll analysis_progress every 3s during analysis for real-time UI updates
+  useEffect(() => {
+    if (!isAnalyzing) return;
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("post_attachments")
+        .select("analysis_progress")
+        .eq("id", attachment.id)
+        .single();
+      if (!cancelled && data?.analysis_progress) {
+        setLiveProgress(data.analysis_progress);
+        if (data.analysis_progress.done) {
+          clearInterval(interval);
+        }
+      }
+    }, 3000);
+    const timeout = setTimeout(() => clearInterval(interval), 180000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [attachment.id, isAnalyzing]);
 
   useEffect(() => {
     let cancelled = false;
